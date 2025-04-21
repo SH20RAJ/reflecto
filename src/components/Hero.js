@@ -1,11 +1,12 @@
+/* eslint-disable react/no-unescaped-entities */
 import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="pt-32 pb-16 md:pt-40 md:pb-24 bg-white dark:bg-black">
+    <section className="pt-32 pb-16 md:pt-40 md:pb-24 bg-white dark:bg-black text-black dark:text-white">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-black dark:text-white">
             Your thoughts, <span className="text-primary">organized</span>.
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
@@ -14,7 +15,7 @@ export default function Hero() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/signup"
+              href="/notebook"
               className="bg-primary text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-primary-hover transition-colors"
             >
               Start your journal
@@ -29,15 +30,15 @@ export default function Hero() {
         </div>
 
         <div className="mt-16 max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-lg border border-gray-200 dark:border-gray-800">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center">
               <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
               <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
               <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <div className="ml-4 text-sm font-medium text-gray-500 dark:text-gray-400">Today's Reflection</div>
+              <div className="ml-4 text-sm font-medium text-gray-500 dark:text-gray-300">Today's Reflection</div>
             </div>
             <div className="p-8">
-              <div className="text-2xl font-medium mb-4">Tuesday, June 4, 2024</div>
+              <div className="text-2xl font-medium mb-4 text-black dark:text-white">Tuesday, June 4, 2024</div>
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
                 <p>Today was productive. I finally finished the presentation for tomorrow's meeting. I was nervous about it, but after practicing a few times, I feel more confident.</p>
                 <p>I noticed I've been procrastinating less this week. The new morning routine is helping me stay focused throughout the day.</p>

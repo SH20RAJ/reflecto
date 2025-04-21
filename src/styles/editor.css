@@ -1,0 +1,207 @@
+/* Editor.js Custom Styles */
+
+/* Main editor container */
+.codex-editor {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--foreground);
+}
+
+/* Dark mode adjustments */
+.dark .codex-editor {
+  color: var(--foreground);
+}
+
+/* Editor blocks */
+.ce-block {
+  padding: 0.5em 0;
+}
+
+/* Paragraph */
+.ce-paragraph {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Headers */
+.ce-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.ce-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.ce-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.ce-header h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Lists */
+.cdx-list {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.cdx-list__item {
+  margin-bottom: 0.25rem;
+}
+
+/* Checklist */
+.cdx-checklist__item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.cdx-checklist__item-checkbox {
+  margin-right: 0.5rem;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.dark .cdx-checklist__item-checkbox {
+  border-color: var(--border);
+}
+
+/* Quote */
+.cdx-quote {
+  padding-left: 1rem;
+  border-left: 3px solid var(--primary);
+  margin: 1rem 0;
+  font-style: italic;
+}
+
+/* Code */
+.cdx-block.ce-code {
+  background-color: var(--muted);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-family: monospace;
+  margin: 1rem 0;
+}
+
+.dark .cdx-block.ce-code {
+  background-color: var(--muted);
+}
+
+/* Toolbar */
+.ce-toolbar__content {
+  max-width: 100% !important;
+}
+
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn {
+  color: var(--foreground);
+  background-color: var(--background);
+  border: 1px solid var(--border);
+}
+
+.dark .ce-toolbar__plus,
+.dark .ce-toolbar__settings-btn {
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+.ce-toolbar__plus:hover,
+.ce-toolbar__settings-btn:hover {
+  background-color: var(--muted);
+}
+
+/* Inline tools */
+.ce-inline-toolbar {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 3px 15px -3px rgba(13, 20, 33, 0.13);
+}
+
+.dark .ce-inline-toolbar {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+.ce-inline-tool {
+  color: var(--foreground);
+}
+
+.dark .ce-inline-tool {
+  color: var(--foreground);
+}
+
+.ce-inline-tool:hover {
+  background-color: var(--muted);
+}
+
+.ce-inline-tool--active {
+  color: var(--primary);
+}
+
+/* Block tools */
+.ce-conversion-toolbar {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 3px 15px -3px rgba(13, 20, 33, 0.13);
+}
+
+.dark .ce-conversion-toolbar {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+.ce-conversion-tool {
+  color: var(--foreground);
+}
+
+.dark .ce-conversion-tool {
+  color: var(--foreground);
+}
+
+.ce-conversion-tool:hover {
+  background-color: var(--muted);
+}
+
+/* Block settings */
+.ce-settings {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 3px 15px -3px rgba(13, 20, 33, 0.13);
+}
+
+.dark .ce-settings {
+  background-color: var(--card);
+  border-color: var(--border);
+}
+
+.ce-settings__button {
+  color: var(--foreground);
+}
+
+.dark .ce-settings__button {
+  color: var(--foreground);
+}
+
+.ce-settings__button:hover {
+  background-color: var(--muted);
+}
+
+/* Placeholder */
+.ce-block::before {
+  color: var(--muted-foreground);
+}
+
+.dark .ce-block::before {
+  color: var(--muted-foreground);
+}

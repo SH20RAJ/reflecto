@@ -7,10 +7,10 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800 text-black dark:text-white">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="text-xl font-bold tracking-tight">
+          <Link href="/" className="text-xl font-bold tracking-tight text-black dark:text-white">
             Reflecto
           </Link>
 
@@ -28,6 +28,9 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center space-x-6">
+            <Link href="/notebook" className="hidden md:block text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">
+              Notebook
+            </Link>
             <Link href="/login" className="hidden md:block text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">
               Log in
             </Link>
@@ -57,7 +60,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden py-4 px-4 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800">
+        <div className="md:hidden py-4 px-4 bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 text-black dark:text-white">
           <nav className="flex flex-col space-y-4">
             <Link
               href="#features"
@@ -79,6 +82,13 @@ export default function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               FAQ
+            </Link>
+            <Link
+              href="/notebook"
+              className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Notebook
             </Link>
             <Link
               href="/login"

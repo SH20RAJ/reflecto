@@ -43,10 +43,10 @@ export default function FAQ() {
   ];
 
   return (
-    <section id="faq" className="py-24 bg-gray-50 dark:bg-gray-950">
+    <section id="faq" className="py-24 bg-gray-50 dark:bg-gray-950 text-black dark:text-white">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
             Frequently Asked Questions
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -54,23 +54,23 @@ export default function FAQ() {
           </p>
         </div>
 
-        <div className="max-w-3xl mx-auto divide-y divide-gray-200 dark:divide-gray-800">
+        <div className="max-w-3xl mx-auto divide-y divide-gray-200 dark:divide-gray-700">
           {faqs.map((faq, index) => (
             <div key={index} className="py-6">
               <button
                 onClick={() => toggleFaq(index)}
                 className="flex justify-between items-center w-full text-left focus:outline-none"
               >
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                <h3 className="text-lg font-medium text-black dark:text-white">
                   {faq.question}
                 </h3>
                 <span className="ml-6 flex-shrink-0">
                   {openIndex === index ? (
-                    <svg className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                     </svg>
                   ) : (
-                    <svg className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   )}
@@ -78,7 +78,7 @@ export default function FAQ() {
               </button>
               {openIndex === index && (
                 <div className="mt-4 pr-12">
-                  <p className="text-base text-gray-600 dark:text-gray-300">
+                  <p className="text-base text-gray-700 dark:text-gray-300">
                     {faq.answer}
                   </p>
                 </div>
