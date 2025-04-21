@@ -2,28 +2,30 @@ import Link from "next/link";
 
 export default function CTA() {
   return (
-    <section className="bg-primary dark:bg-primary">
-      <div className="py-8 px-4 mx-auto max-w-screen-xl sm:py-16 lg:px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="mb-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl dark:text-white">
+    <section className="bg-black text-white dark:bg-white dark:text-black">
+      <div className="max-w-screen-xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Start your reflection journey today
           </h2>
-          <p className="mb-6 font-light text-white md:text-lg">
+          <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto">
             Join thousands of users who have transformed their lives through mindful reflection with Reflecto.
           </p>
-          <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
-            <Link href="/signup">
-              <button className="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-primary rounded-lg bg-white hover:bg-gray-100 focus:ring-4 focus:ring-white">
-                Get started for free
-                <svg className="w-5 h-5 ml-2 -mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd"></path>
-                </svg>
-              </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/signup"
+              className="bg-white text-black dark:bg-black dark:text-white px-8 py-3 rounded-md text-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+            >
+              Get started for free
+              <svg className="ml-2 h-4 w-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </Link>
-            <Link href="#pricing">
-              <button className="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center border border-white rounded-lg hover:bg-white hover:text-primary focus:ring-4 focus:ring-gray-100 text-white">
-                View pricing
-              </button>
+            <Link
+              href="#how-it-works"
+              className="border border-white dark:border-black px-8 py-3 rounded-md text-lg font-medium hover:bg-white/10 dark:hover:bg-black/10 transition-colors"
+            >
+              Learn more
             </Link>
           </div>
         </div>
