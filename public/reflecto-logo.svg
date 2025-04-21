@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Book/Journal shape -->
+  <rect x="10" y="10" width="30" height="30" rx="3" fill="#6366F1" />
+  <rect x="12" y="12" width="26" height="26" rx="2" fill="#F9FAFB" />
+
+  <!-- Reflection lines -->
+  <rect x="16" y="18" width="18" height="2" rx="1" fill="#6366F1" />
+  <rect x="16" y="24" width="14" height="2" rx="1" fill="#6366F1" />
+  <rect x="16" y="30" width="16" height="2" rx="1" fill="#6366F1" />
+
+  <!-- AI element (brain-like) -->
+  <circle cx="30" cy="32" r="4" fill="#4F46E5" />
+  <path d="M30 28 L32 31 L28 31 Z" fill="#4F46E5" />
+
+  <!-- Text -->
+  <path d="M90 20H95C97.7614 20 100 22.2386 100 25V25C100 27.7614 97.7614 30 95 30H90V20Z" fill="#6366F1"/>
+  <path d="M90 30H95C97.7614 30 100 32.2386 100 35V35C100 37.7614 97.7614 40 95 40H90V30Z" fill="#4F46E5"/>
+  <path d="M105 20H110V40H105V20Z" fill="#6366F1"/>
+  <path d="M115 20H125C127.761 20 130 22.2386 130 25V25C130 27.7614 127.761 30 125 30H115V20Z" fill="#6366F1"/>
+  <path d="M115 30H125C127.761 30 130 32.2386 130 35V35C130 37.7614 127.761 40 125 40H115V30Z" fill="#4F46E5"/>
+  <path d="M135 20H140V40H135V20Z" fill="#6366F1"/>
+  <path d="M145 20H155C157.761 20 160 22.2386 160 25V25C160 27.7614 157.761 30 155 30H145V20Z" fill="#6366F1"/>
+  <path d="M145 30H150V40H145V30Z" fill="#4F46E5"/>
+  <path d="M165 20H175C177.761 20 180 22.2386 180 25V35C180 37.7614 177.761 40 175 40H165V20Z" fill="#6366F1"/>
+  <path d="M165 30H175V40H165V30Z" fill="#4F46E5"/>
+</svg>

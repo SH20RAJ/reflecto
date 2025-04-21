@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Book/Journal shape -->
+  <rect x="4" y="4" width="24" height="24" rx="2" fill="#6366F1" />
+  <rect x="6" y="6" width="20" height="20" rx="1" fill="#F9FAFB" />
+  
+  <!-- Reflection symbol (mirror-like) -->
+  <rect x="9" y="10" width="14" height="2" rx="1" fill="#6366F1" />
+  <rect x="9" y="14" width="10" height="2" rx="1" fill="#6366F1" />
+  <rect x="9" y="18" width="12" height="2" rx="1" fill="#6366F1" />
+  
+  <!-- AI element (brain-like) -->
+  <circle cx="22" cy="20" r="3" fill="#4F46E5" />
+  <path d="M22 17 L23 19 L21 19 Z" fill="#4F46E5" />
+</svg>

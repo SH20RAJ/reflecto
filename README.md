@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## 🧠 **Startup Name: "Reflecto"**  
+**Tagline:** *Simple reflections, deeper insights.*
 
-## Getting Started
+---
 
-First, run the development server:
+## 🌟 **Startup Idea**
+A **minimal yet smart** daily reflection app designed for busy students, creators, and professionals. The twist? It doesn’t just let you write—it *talks back*, nudges your thoughts, and evolves with you.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 💡 Core Philosophy:
+> "Minimal input, meaningful output."  
+Just 2–3 questions a day, personalized insights over time, optional voice input, and reflective nudges—not just journaling, but guided self-conversation.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ **Feature List**
 
-## Learn More
+### 🔸 Core Features
+| Feature | Description |
+|--------|-------------|
+| 📝 Smart Reflection Prompts | AI-curated 2–3 questions based on your mood, past answers, or habits. |
+| 🗣️ Voice Journaling | Talk instead of type. Quick voice input with transcription. |
+| ⌛ Time Capsule | Auto-saves “reflection memories” that resurface weekly/monthly. |
+| 🧭 Mood-to-Reflection Map | Select mood → get targeted reflection style (e.g., calm, anxious, grateful). |
+| 🔁 Daily Recap | End-of-day summary: mood graph, positive highlight, learning. |
+| 🎯 Micro Goals | Set 1 small goal per day post-reflection. Tracked gently. |
+| 📊 Weekly Review | Get patterns: words you repeat, most common mood, goal success. |
+| ⏱️ 30-Second Mode | 3-emoji rating + 1 voice/text line → reflection in <1 min. |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🧠 AI-Enhanced Features
+| Feature | Description |
+|--------|-------------|
+| 💬 AI-Coach Feedback | Smart suggestions based on your entries: “You seem tired lately, try slowing down?” |
+| 🧩 Personal Growth Tracker | AI detects themes: growth, stress, creativity over time. |
+| 🧠 Conversation Mode | Chat-like mode where the app responds to your thoughts and helps dive deeper. |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+### 🌈 Bonus & Community Features
+| Feature | Description |
+|--------|-------------|
+| 📚 Reflection Library | Browse anonymous public entries for inspiration. |
+| ✨ Prompt Market | Users create/share prompts others can subscribe to. |
+| 🧘 Reflective Soundscapes | Calming background music during journaling (optional). |
+| 🧑‍🎨 Daily Sketch | Draw a quick doodle to reflect your day—save or share. |
+| 🔐 Fully Private | Everything local-first or encrypted cloud storage. No tracking, no ads. |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎯 Target Users
+- Students (esp. college folks like you!)
+- Creators and founders
+- Mindfulness lovers
+- Burnout-prone professionals
