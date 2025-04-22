@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import SimpleRichEditor from "@/components/SimpleRichEditor";
+import MarkdownEditor from "@/components/MarkdownEditor";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -328,7 +328,7 @@ export default function NotebooksPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="content">Content</Label>
                   <div className="border rounded-md p-1">
-                    <SimpleRichEditor
+                    <MarkdownEditor
                       initialValue={newNotebook.content}
                       onChange={(data) => setNewNotebook({...newNotebook, content: data})}
                       readOnly={false}
@@ -403,31 +403,31 @@ export default function NotebooksPage() {
                 <CardContent>
                   <p className="text-gray-600 dark:text-gray-300 line-clamp-3">
                     {notebook.content ? (
-                      // Try to parse JSON content for Yoopta data
+                      // Display markdown content
                       (() => {
                         try {
-                          const parsed = JSON.parse(notebook.content);
-                          if (Array.isArray(parsed)) {
-                            // Yoopta format
-                            return parsed
-                              .filter(block => block.type === 'paragraph')
-                              .map(block => {
-                                if (block.children && Array.isArray(block.children)) {
-                                  return block.children.map(child => child.text || '').join('');
-                                }
-                                return '';
-                              })
-                              .join(' ')
-                              .substring(0, 150) + (parsed.length > 0 ? '...' : '');
-                          } else if (parsed.blocks) {
-                            // Legacy Editor.js format
-                            return parsed.blocks
-                              .filter(block => block.type === 'paragraph')
-                              .map(block => block.data.text)
-                              .join(' ')
-                              .substring(0, 150) + '...';
+                          // Check if it's JSON (legacy format)
+                          if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
+                            try {
+                              const parsed = JSON.parse(notebook.content);
+                              if (parsed.blocks) {
+                                // Legacy Editor.js format
+                                return parsed.blocks
+                                  .filter(block => block.type === 'paragraph')
+                                  .map(block => block.data.text)
+                                  .join(' ')
+                                  .substring(0, 150) + '...';
+                              }
+                            } catch (e) {
+                              // Not valid JSON, treat as markdown
+                            }
                           }
-                          return notebook.content.substring(0, 150) + '...';
+                          // Plain markdown - strip any markdown syntax for preview
+                          return notebook.content
+                            .replace(/[#*`>_~\[\]]/g, '') // Remove markdown symbols
+                            .replace(/\n/g, ' ') // Replace newlines with spaces
+                            .trim()
+                            .substring(0, 150) + (notebook.content.length > 150 ? '...' : '');
                         } catch (e) {
                           return notebook.content.substring(0, 150) + '...';
                         }

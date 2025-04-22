@@ -26,45 +26,44 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-import SimpleRichEditor from "@/components/SimpleRichEditor";
-import MarkdownView from "@/components/MarkdownView";
+import MarkdownEditor from "@/components/MarkdownEditor";
 
-// Import the htmlToMarkdown function
-import { htmlToMarkdown } from '@/lib/html-to-markdown';
-
-// Function to generate markdown from HTML content
-const generateMarkdownFromContent = (content) => {
+// Function to convert legacy content to markdown
+const convertToMarkdown = (content) => {
   try {
-    // If content is a string, check if it's HTML or JSON
+    // If content is a string, check if it's JSON
     if (typeof content === 'string') {
       // Check if it looks like JSON
       if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
         try {
           const parsed = JSON.parse(content);
-          // If it's Editor.js format, extract text
+          // If it's Editor.js format, convert to markdown
           if (parsed.blocks) {
             return parsed.blocks
               .map(block => {
                 if (block.type === 'paragraph') return block.data.text;
                 if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
+                if (block.type === 'list') {
+                  return block.data.items.map(item => `- ${item}`).join('\n');
+                }
+                if (block.type === 'quote') return `> ${block.data.text}`;
+                if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
                 return '';
               })
+              .filter(text => text)
               .join('\n\n');
           }
           return content;
         } catch (e) {
-          // If it's not valid JSON, treat it as HTML
-          return htmlToMarkdown(content);
+          // If it's not valid JSON, return as is
+          return content;
         }
-      } else {
-        // Treat as HTML
-        return htmlToMarkdown(content);
       }
     }
 
     return content || '';
   } catch (error) {
-    console.error('Error generating markdown:', error);
+    console.error('Error converting to markdown:', error);
     return '';
   }
 };
@@ -120,16 +119,22 @@ export default function NotebookPage({ params }) {
           if (data.content.trim().startsWith('{') || data.content.trim().startsWith('[')) {
             try {
               const parsedContent = JSON.parse(data.content);
-              // If it's Editor.js format, convert to HTML
+              // If it's Editor.js format, convert to markdown
               if (parsedContent.blocks) {
-                const html = parsedContent.blocks
+                const markdown = parsedContent.blocks
                   .map(block => {
-                    if (block.type === 'paragraph') return `<p>${block.data.text}</p>`;
-                    if (block.type === 'header') return `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
+                    if (block.type === 'paragraph') return block.data.text;
+                    if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
+                    if (block.type === 'list') {
+                      return block.data.items.map(item => `- ${item}`).join('\n');
+                    }
+                    if (block.type === 'quote') return `> ${block.data.text}`;
+                    if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
                     return '';
                   })
-                  .join('');
-                setEditorData(html);
+                  .filter(text => text)
+                  .join('\n\n');
+                setEditorData(markdown);
               } else {
                 // It's already in our format
                 setEditorData(data.content);
@@ -139,7 +144,7 @@ export default function NotebookPage({ params }) {
               setEditorData(data.content);
             }
           } else {
-            // Content is plain text or HTML, use as is
+            // Content is plain text or markdown, use as is
             setEditorData(data.content);
           }
         } catch (error) {
@@ -223,16 +228,22 @@ export default function NotebookPage({ params }) {
         if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
           try {
             const parsedContent = JSON.parse(notebook.content);
-            // If it's Editor.js format, convert to HTML
+            // If it's Editor.js format, convert to markdown
             if (parsedContent.blocks) {
-              const html = parsedContent.blocks
+              const markdown = parsedContent.blocks
                 .map(block => {
-                  if (block.type === 'paragraph') return `<p>${block.data.text}</p>`;
-                  if (block.type === 'header') return `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
+                  if (block.type === 'paragraph') return block.data.text;
+                  if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
+                  if (block.type === 'list') {
+                    return block.data.items.map(item => `- ${item}`).join('\n');
+                  }
+                  if (block.type === 'quote') return `> ${block.data.text}`;
+                  if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
                   return '';
                 })
-                .join('');
-              setEditorData(html);
+                .filter(text => text)
+                .join('\n\n');
+              setEditorData(markdown);
             } else {
               // It's already in our format
               setEditorData(notebook.content);
@@ -242,7 +253,7 @@ export default function NotebookPage({ params }) {
             setEditorData(notebook.content);
           }
         } else {
-          // Content is plain text or HTML, use as is
+          // Content is plain text or markdown, use as is
           setEditorData(notebook.content);
         }
       } catch (error) {
@@ -410,7 +421,7 @@ export default function NotebookPage({ params }) {
           <CardContent>
             {isEditing ? (
               editorData && (
-                <SimpleRichEditor
+                <MarkdownEditor
                   initialValue={editorData}
                   onChange={(data) => setEditorData(data)}
                   readOnly={false}
@@ -420,7 +431,7 @@ export default function NotebookPage({ params }) {
               <Tabs value={viewMode} className="w-full">
                 <TabsContent value="editor">
                   {editorData && (
-                    <SimpleRichEditor
+                    <MarkdownEditor
                       initialValue={editorData}
                       onChange={(data) => setEditorData(data)}
                       readOnly={true}
@@ -428,9 +439,10 @@ export default function NotebookPage({ params }) {
                   )}
                 </TabsContent>
                 <TabsContent value="markdown">
-                  {/* Generate markdown from content on-the-fly */}
-                  <MarkdownView
-                    markdown={notebook.content ? generateMarkdownFromContent(notebook.content) : ''}
+                  {/* Display markdown directly */}
+                  <MarkdownEditor
+                    initialValue={notebook.content || ''}
+                    readOnly={true}
                   />
                 </TabsContent>
               </Tabs>
