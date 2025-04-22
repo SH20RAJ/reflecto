@@ -2,7 +2,8 @@ import { db } from '@/db/index';
 import { notebooks, tags, notebooksTags, users } from '@/db/schema';
 import { eq, and, or, like, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { editorJsToMarkdown, extractPlainText } from './editorjs-to-markdown';
+// We no longer need these imports as we're only storing the content field
+// import { editorJsToMarkdown, extractPlainText } from './editorjs-to-markdown';
 
 /**
  * Service for handling notebook operations using Drizzle ORM
@@ -123,18 +124,12 @@ export const NotebookService = {
         }
       }
 
-      // Convert Editor.js data to Markdown and plain text
-      const markdown = editorJsToMarkdown(contentObj);
-      const plainText = extractPlainText(contentObj);
-
       // Create the notebook with explicit timestamps
       const now = new Date();
       await db.insert(notebooks).values({
         id: notebookId,
         title: notebookData.title,
         content: typeof notebookData.content === 'string' ? notebookData.content : JSON.stringify(contentObj),
-        markdown,
-        plainText,
         userId,
         createdAt: now,
         updatedAt: now,
@@ -209,18 +204,12 @@ export const NotebookService = {
         }
       }
 
-      // Convert Editor.js data to Markdown and plain text
-      const markdown = editorJsToMarkdown(contentObj);
-      const plainText = extractPlainText(contentObj);
-
       // Update the notebook
       await db
         .update(notebooks)
         .set({
           ...notebookData,
           content: typeof notebookData.content === 'string' ? notebookData.content : JSON.stringify(contentObj),
-          markdown,
-          plainText,
           updatedAt: new Date(),
         })
         .where(eq(notebooks.id, id));
@@ -311,6 +300,7 @@ export const NotebookService = {
             or(
               like(notebooks.title, `%${query}%`),
               like(notebooks.content, `%${query}%`)
+              // We no longer need to search in markdown and plainText fields
             )
           )
         )

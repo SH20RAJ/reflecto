@@ -7,6 +7,9 @@ import { useSession } from "next-auth/react";
 import { ArrowLeft, Edit, Trash, FileText, Code, Save, X, Tag as TagIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
+// Import the editorJsToMarkdown function
+import { editorJsToMarkdown } from '@/lib/editorjs-to-markdown';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +31,28 @@ import { toast } from "sonner";
 
 import RichEditor from "@/components/RichEditor";
 import MarkdownView from "@/components/MarkdownView";
+
+// Function to generate markdown from Editor.js content
+const generateMarkdownFromContent = (content) => {
+  try {
+    // If content is a string, try to parse it as JSON
+    let contentObj = content;
+    if (typeof content === 'string') {
+      try {
+        contentObj = JSON.parse(content);
+      } catch (e) {
+        // If parsing fails, return the content as is
+        return content;
+      }
+    }
+
+    // Use the editorJsToMarkdown function to convert to markdown
+    return editorJsToMarkdown(contentObj);
+  } catch (error) {
+    console.error('Error generating markdown:', error);
+    return '';
+  }
+};
 
 export default function NotebookPage({ params }) {
   // Unwrap params using React.use()
@@ -409,7 +434,10 @@ export default function NotebookPage({ params }) {
                   )}
                 </TabsContent>
                 <TabsContent value="markdown">
-                  <MarkdownView markdown={notebook.markdown || ''} />
+                  {/* Generate markdown from content on-the-fly */}
+                  <MarkdownView
+                    markdown={notebook.content ? generateMarkdownFromContent(notebook.content) : ''}
+                  />
                 </TabsContent>
               </Tabs>
             )}
