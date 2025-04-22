@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import SimpleRichEditor from "@/components/SimpleRichEditor";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -327,13 +327,13 @@ export default function NotebooksPage() {
 
                 <div className="grid gap-2">
                   <Label htmlFor="content">Content</Label>
-                  <Textarea
-                    id="content"
-                    placeholder="What's on your mind today?"
-                    rows={5}
-                    value={newNotebook.content}
-                    onChange={(e) => setNewNotebook({...newNotebook, content: e.target.value})}
-                  />
+                  <div className="border rounded-md p-1">
+                    <SimpleRichEditor
+                      initialValue={newNotebook.content}
+                      onChange={(data) => setNewNotebook({...newNotebook, content: data})}
+                      readOnly={false}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid gap-2">
@@ -403,11 +403,24 @@ export default function NotebooksPage() {
                 <CardContent>
                   <p className="text-gray-600 dark:text-gray-300 line-clamp-3">
                     {notebook.content ? (
-                      // Try to parse JSON content for Editor.js data
+                      // Try to parse JSON content for Yoopta data
                       (() => {
                         try {
                           const parsed = JSON.parse(notebook.content);
-                          if (parsed.blocks) {
+                          if (Array.isArray(parsed)) {
+                            // Yoopta format
+                            return parsed
+                              .filter(block => block.type === 'paragraph')
+                              .map(block => {
+                                if (block.children && Array.isArray(block.children)) {
+                                  return block.children.map(child => child.text || '').join('');
+                                }
+                                return '';
+                              })
+                              .join(' ')
+                              .substring(0, 150) + (parsed.length > 0 ? '...' : '');
+                          } else if (parsed.blocks) {
+                            // Legacy Editor.js format
                             return parsed.blocks
                               .filter(block => block.type === 'paragraph')
                               .map(block => block.data.text)

@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { ArrowLeft, Edit, Trash, FileText, Code, Save, X, Tag as TagIcon } from 'lucide-react';
 import { format } from 'date-fns';
-
-// Import the editorJsToMarkdown function
-import { editorJsToMarkdown } from '@/lib/editorjs-to-markdown';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,25 +26,43 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-import RichEditor from "@/components/RichEditor";
+import SimpleRichEditor from "@/components/SimpleRichEditor";
 import MarkdownView from "@/components/MarkdownView";
 
-// Function to generate markdown from Editor.js content
+// Import the htmlToMarkdown function
+import { htmlToMarkdown } from '@/lib/html-to-markdown';
+
+// Function to generate markdown from HTML content
 const generateMarkdownFromContent = (content) => {
   try {
-    // If content is a string, try to parse it as JSON
-    let contentObj = content;
+    // If content is a string, check if it's HTML or JSON
     if (typeof content === 'string') {
-      try {
-        contentObj = JSON.parse(content);
-      } catch (e) {
-        // If parsing fails, return the content as is
-        return content;
+      // Check if it looks like JSON
+      if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+        try {
+          const parsed = JSON.parse(content);
+          // If it's Editor.js format, extract text
+          if (parsed.blocks) {
+            return parsed.blocks
+              .map(block => {
+                if (block.type === 'paragraph') return block.data.text;
+                if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
+                return '';
+              })
+              .join('\n\n');
+          }
+          return content;
+        } catch (e) {
+          // If it's not valid JSON, treat it as HTML
+          return htmlToMarkdown(content);
+        }
+      } else {
+        // Treat as HTML
+        return htmlToMarkdown(content);
       }
     }
 
-    // Use the editorJsToMarkdown function to convert to markdown
-    return editorJsToMarkdown(contentObj);
+    return content || '';
   } catch (error) {
     console.error('Error generating markdown:', error);
     return '';
@@ -71,8 +86,6 @@ export default function NotebookPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const editorRef = useRef(null);
 
   useEffect(() => {
     if (isAuthenticated && notebookId) {
@@ -100,51 +113,42 @@ export default function NotebookPage({ params }) {
       setNotebook(data);
       setTitle(data.title);
 
-      // Parse content if it's a string
+      // Set editor data from content
       if (typeof data.content === 'string' && data.content) {
         try {
           // Check if the content looks like JSON (starts with { or [)
           if (data.content.trim().startsWith('{') || data.content.trim().startsWith('[')) {
-            const parsedContent = JSON.parse(data.content);
-            setEditorData(parsedContent);
-          } else {
-            // Content is plain text, create a paragraph block
-            setEditorData({
-              time: new Date().getTime(),
-              blocks: [
-                {
-                  type: 'paragraph',
-                  data: {
-                    text: data.content
-                  }
-                }
-              ],
-              version: "2.28.2"
-            });
-          }
-        } catch (e) {
-          console.error('Error parsing notebook content:', e);
-          // Create a simple editor data with the content as a paragraph
-          setEditorData({
-            time: new Date().getTime(),
-            blocks: [
-              {
-                type: 'paragraph',
-                data: {
-                  text: data.content
-                }
+            try {
+              const parsedContent = JSON.parse(data.content);
+              // If it's Editor.js format, convert to HTML
+              if (parsedContent.blocks) {
+                const html = parsedContent.blocks
+                  .map(block => {
+                    if (block.type === 'paragraph') return `<p>${block.data.text}</p>`;
+                    if (block.type === 'header') return `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
+                    return '';
+                  })
+                  .join('');
+                setEditorData(html);
+              } else {
+                // It's already in our format
+                setEditorData(data.content);
               }
-            ],
-            version: "2.28.2"
-          });
+            } catch (e) {
+              // If parsing fails, use content as is
+              setEditorData(data.content);
+            }
+          } else {
+            // Content is plain text or HTML, use as is
+            setEditorData(data.content);
+          }
+        } catch (error) {
+          console.error('Error handling notebook content:', error);
+          setEditorData(data.content || '');
         }
       } else {
         // Set empty editor data
-        setEditorData({
-          time: new Date().getTime(),
-          blocks: [],
-          version: "2.28.2"
-        });
+        setEditorData('');
       }
     } catch (error) {
       console.error('Error fetching notebook:', error);
@@ -154,7 +158,7 @@ export default function NotebookPage({ params }) {
     }
   };
 
-  const handleEditorSave = async (data) => {
+  const handleEditorSave = async () => {
     if (!isEditing) return;
 
     try {
@@ -167,7 +171,7 @@ export default function NotebookPage({ params }) {
         },
         body: JSON.stringify({
           title,
-          content: JSON.stringify(data),
+          content: JSON.stringify(editorData),
         }),
       });
 
@@ -177,7 +181,6 @@ export default function NotebookPage({ params }) {
 
       const updatedNotebook = await response.json();
       setNotebook(updatedNotebook);
-      setEditorData(data);
       setIsEditing(false);
       toast.success("Notebook saved successfully");
     } catch (error) {
@@ -218,39 +221,37 @@ export default function NotebookPage({ params }) {
       try {
         // Check if the content looks like JSON (starts with { or [)
         if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
-          const parsedContent = JSON.parse(notebook.content);
-          setEditorData(parsedContent);
-        } else {
-          // Content is plain text, create a paragraph block
-          setEditorData({
-            time: new Date().getTime(),
-            blocks: [
-              {
-                type: 'paragraph',
-                data: {
-                  text: notebook.content
-                }
-              }
-            ],
-            version: "2.28.2"
-          });
-        }
-      } catch (e) {
-        console.error('Error parsing notebook content:', e);
-        // Create a simple editor data with the content as a paragraph
-        setEditorData({
-          time: new Date().getTime(),
-          blocks: [
-            {
-              type: 'paragraph',
-              data: {
-                text: notebook.content
-              }
+          try {
+            const parsedContent = JSON.parse(notebook.content);
+            // If it's Editor.js format, convert to HTML
+            if (parsedContent.blocks) {
+              const html = parsedContent.blocks
+                .map(block => {
+                  if (block.type === 'paragraph') return `<p>${block.data.text}</p>`;
+                  if (block.type === 'header') return `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
+                  return '';
+                })
+                .join('');
+              setEditorData(html);
+            } else {
+              // It's already in our format
+              setEditorData(notebook.content);
             }
-          ],
-          version: "2.28.2"
-        });
+          } catch (e) {
+            // If parsing fails, use content as is
+            setEditorData(notebook.content);
+          }
+        } else {
+          // Content is plain text or HTML, use as is
+          setEditorData(notebook.content);
+        }
+      } catch (error) {
+        console.error('Error handling notebook content:', error);
+        setEditorData(notebook.content || '');
       }
+    } else {
+      // Set empty editor data
+      setEditorData('');
     }
   };
 
@@ -320,11 +321,7 @@ export default function NotebookPage({ params }) {
             <Button
               variant="default"
               size="sm"
-              onClick={() => {
-                if (editorRef.current) {
-                  editorRef.current.handleSave();
-                }
-              }}
+              onClick={handleEditorSave}
               disabled={isSaving}
               className="gap-1"
             >
@@ -413,23 +410,20 @@ export default function NotebookPage({ params }) {
           <CardContent>
             {isEditing ? (
               editorData && (
-                <RichEditor
-                  ref={editorRef}
-                  initialData={editorData}
-                  onSave={handleEditorSave}
+                <SimpleRichEditor
+                  initialValue={editorData}
+                  onChange={(data) => setEditorData(data)}
                   readOnly={false}
-                  autofocus={true}
                 />
               )
             ) : (
               <Tabs value={viewMode} className="w-full">
                 <TabsContent value="editor">
                   {editorData && (
-                    <RichEditor
-                      initialData={editorData}
-                      onSave={handleEditorSave}
+                    <SimpleRichEditor
+                      initialValue={editorData}
+                      onChange={(data) => setEditorData(data)}
                       readOnly={true}
-                      autofocus={false}
                     />
                   )}
                 </TabsContent>
