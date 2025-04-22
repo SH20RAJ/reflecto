@@ -77,30 +77,43 @@ export default function ProfilePage() {
         throw new Error('Failed to fetch notebooks');
       }
       const data = await response.json();
-      // This line is now handled below
+
+      // Extract notebooks from the response
+      const notebooksData = data.notebooks || [];
 
       // Calculate stats
       const uniqueTags = new Set();
-      if (Array.isArray(data)) {
-        data.forEach(notebook => {
-          notebook.tags?.forEach(tag => uniqueTags.add(tag.id));
-        });
-      }
+      notebooksData.forEach(notebook => {
+        notebook.tags?.forEach(tag => uniqueTags.add(tag.id));
+      });
 
       // Find the most recent update
       let lastUpdated = null;
-      if (Array.isArray(data) && data.length > 0) {
-        lastUpdated = new Date(Math.max(...data.map(n => new Date(n.updatedAt))));
+      if (notebooksData.length > 0) {
+        lastUpdated = new Date(Math.max(...notebooksData.map(n => new Date(n.updatedAt))));
       }
 
       setStats({
-        notebooksCount: Array.isArray(data) ? data.length : 0,
+        notebooksCount: notebooksData.length,
         tagsCount: uniqueTags.size,
         lastUpdated
       });
 
       // Set notebooks state
-      setNotebooks(Array.isArray(data) ? data : []);
+      setNotebooks(notebooksData);
+      console.log('Fetched notebooks:', notebooksData);
+
+      // Debug the data structure
+      if (notebooksData.length > 0) {
+        console.log('Sample notebook structure:', {
+          id: notebooksData[0].id,
+          title: notebooksData[0].title,
+          contentPreview: notebooksData[0].content ? notebooksData[0].content.substring(0, 50) + '...' : 'No content',
+          tags: notebooksData[0].tags,
+          createdAt: notebooksData[0].createdAt,
+          updatedAt: notebooksData[0].updatedAt
+        });
+      }
     } catch (error) {
       console.error('Error fetching notebooks:', error);
       toast.error("Failed to load notebooks");
@@ -277,13 +290,13 @@ export default function ProfilePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                     <h3 className="text-white font-medium line-clamp-1">{notebook.title}</h3>
                     <p className="text-white/80 text-sm line-clamp-2">
-                      {notebook.plainText || notebook.markdown || 'No content'}
+                      {notebook.content ? notebook.content.substring(0, 150) : 'No content'}
                     </p>
                   </div>
 
                   <div className="h-full w-full flex items-center justify-center bg-accent/50 p-4">
                     <div className="max-h-full overflow-hidden text-sm line-clamp-[12]">
-                      {notebook.plainText || notebook.markdown || notebook.title}
+                      {notebook.content ? notebook.content.substring(0, 300) : notebook.title}
                     </div>
                   </div>
 
@@ -345,7 +358,7 @@ export default function ProfilePage() {
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
-                          {notebook.plainText || notebook.markdown || 'No content'}
+                          {notebook.content ? notebook.content.substring(0, 150) : 'No content'}
                         </p>
                       </div>
                     </div>

@@ -4,12 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
-import { ArrowLeft, Edit, Trash, Save, X, Tag as TagIcon, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Edit, Trash, Save, X, Tag as TagIcon, Calendar, Clock, Plus, Check } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useTags } from '@/lib/hooks';
 
 import {
   AlertDialog,
@@ -77,6 +80,12 @@ export default function NotebookPage({ params }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editorData, setEditorData] = useState(null);
   const [title, setTitle] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [newTag, setNewTag] = useState('');
+  const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
+
+  // Fetch all available tags
+  const { tags: allTags } = useTags();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -99,6 +108,7 @@ export default function NotebookPage({ params }) {
       const data = await response.json();
       setNotebook(data);
       setTitle(data.title);
+      setSelectedTags(data.tags || []);
 
       // Set editor data from content
       if (typeof data.content === 'string' && data.content) {
@@ -125,6 +135,12 @@ export default function NotebookPage({ params }) {
   useEffect(() => {
     if (isAuthenticated && notebookId) {
       fetchNotebook();
+
+      // Check if edit mode is requested via URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('edit') === 'true') {
+        setIsEditing(true);
+      }
     } else if (status === "unauthenticated") {
       router.push('/auth/signin');
     }
@@ -146,6 +162,7 @@ export default function NotebookPage({ params }) {
         body: JSON.stringify({
           title,
           content: editorData,
+          tags: selectedTags.map(tag => tag.id),
         }),
       });
 
@@ -189,6 +206,7 @@ export default function NotebookPage({ params }) {
   const handleCancel = () => {
     setIsEditing(false);
     setTitle(notebook.title);
+    setSelectedTags(notebook.tags || []);
 
     // Reset editor data to original
     if (typeof notebook.content === 'string' && notebook.content) {
@@ -337,15 +355,102 @@ export default function NotebookPage({ params }) {
                   <span>Updated {format(new Date(notebook.updatedAt), 'MMMM d, yyyy h:mm a')}</span>
                 </div>
 
-                {notebook.tags && notebook.tags.length > 0 && (
+                {!isEditing ? (
+                  notebook.tags && notebook.tags.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <TagIcon className="h-3.5 w-3.5" />
+                      <div className="flex flex-wrap gap-1.5">
+                        {notebook.tags.map(tag => (
+                          <Badge key={tag.id} variant="outline" className="text-xs rounded-full px-2 py-0 h-5">
+                            {tag.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ) : (
                   <div className="flex items-center gap-1.5">
                     <TagIcon className="h-3.5 w-3.5" />
-                    <div className="flex flex-wrap gap-1.5">
-                      {notebook.tags.map(tag => (
-                        <Badge key={tag.id} variant="outline" className="text-xs rounded-full px-2 py-0 h-5">
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {selectedTags.map(tag => (
+                        <Badge
+                          key={tag.id}
+                          variant="outline"
+                          className="text-xs rounded-full px-2 py-0 h-5 flex items-center gap-1"
+                        >
                           {tag.name}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+                            }}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </Badge>
                       ))}
+
+                      <Popover open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-5 px-2 text-xs rounded-full">
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Tag
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0" side="right" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search tags..." />
+                            <CommandList>
+                              <CommandEmpty>
+                                <div className="p-2 text-sm">
+                                  <div className="mb-2">No tags found</div>
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      value={newTag}
+                                      onChange={(e) => setNewTag(e.target.value)}
+                                      placeholder="Create new tag"
+                                      className="h-7 text-xs"
+                                    />
+                                    <Button
+                                      size="sm"
+                                      className="h-7 px-2"
+                                      onClick={() => {
+                                        if (newTag.trim()) {
+                                          const newTagObj = { id: `new-${Date.now()}`, name: newTag.trim() };
+                                          setSelectedTags([...selectedTags, newTagObj]);
+                                          setNewTag('');
+                                          setIsTagPopoverOpen(false);
+                                        }
+                                      }}
+                                    >
+                                      <Check className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {allTags
+                                  .filter(tag => !selectedTags.some(selectedTag => selectedTag.id === tag.id))
+                                  .map(tag => (
+                                    <CommandItem
+                                      key={tag.id}
+                                      onSelect={() => {
+                                        setSelectedTags([...selectedTags, tag]);
+                                        setIsTagPopoverOpen(false);
+                                      }}
+                                    >
+                                      <TagIcon className="h-3 w-3 mr-2" />
+                                      {tag.name}
+                                    </CommandItem>
+                                  ))
+                                }
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
                 )}

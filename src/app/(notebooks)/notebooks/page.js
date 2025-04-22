@@ -6,9 +6,10 @@ import { useSession } from "next-auth/react";
 import { useNotebooks, useNotebooksByTag, useSearchNotebooks, useTags } from '@/lib/hooks';
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
-import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash, Search, LayoutGrid, List } from 'lucide-react';
+import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash, Search, LayoutGrid, List, MoreVertical, Edit, Trash, Eye } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,14 +140,19 @@ export default function NotebooksPage() {
       });
 
       if (response.ok) {
-        await response.json(); // We don't need the data, just check if it's successful
-        mutateNotebooks(); // Refresh the notebooks list
+        const data = await response.json();
+        toast.success('Notebook created successfully!');
         setNewNotebook({ title: '', content: '', tags: '' });
         setIsDialogOpen(false);
+
+        // Navigate to the new notebook in edit mode
+        router.push(`/notebooks/${data.id}?edit=true`);
       } else {
+        toast.error('Failed to create notebook');
         console.error('Failed to create notebook');
       }
     } catch (error) {
+      toast.error('Error creating notebook');
       console.error('Error creating notebook:', error);
     } finally {
       setIsSubmitting(false);
@@ -154,8 +160,37 @@ export default function NotebooksPage() {
   };
 
   // View a notebook
-  const handleViewNotebook = (id) => {
+  const handleViewNotebook = (id, e) => {
+    // If the click came from the dropdown menu, don't navigate
+    if (e && e.defaultPrevented) return;
     router.push(`/notebooks/${id}`);
+  };
+
+  const handleEditNotebook = (id, e) => {
+    e.preventDefault();
+    router.push(`/notebooks/${id}?edit=true`);
+  };
+
+  const handleDeleteNotebook = async (id, e) => {
+    e.preventDefault();
+
+    if (!confirm('Are you sure you want to delete this notebook?')) return;
+
+    try {
+      const response = await fetch(`/api/notebooks/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('Notebook deleted successfully');
+        mutateNotebooks(); // Refresh the list
+      } else {
+        toast.error('Failed to delete notebook');
+      }
+    } catch (error) {
+      console.error('Error deleting notebook:', error);
+      toast.error('An error occurred while deleting the notebook');
+    }
   };
 
   // Sort notebooks
@@ -386,7 +421,13 @@ export default function NotebooksPage() {
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-1.5">
+                <Button
+                  className="gap-1.5"
+                  onClick={() => {
+                    setNewNotebook({ title: 'Untitled Notebook', content: '', tags: '' });
+                    setIsDialogOpen(true);
+                  }}
+                >
                   <Sparkles className="h-4 w-4" /> New Notebook
                 </Button>
               </DialogTrigger>
@@ -482,7 +523,10 @@ export default function NotebooksPage() {
               {searchQuery ? 'No notebooks found matching your search.' : 'You don\'t have any notebooks yet.'}
             </p>
             {!searchQuery && (
-              <Button onClick={() => setIsDialogOpen(true)}>Create Your First Notebook</Button>
+              <Button onClick={() => {
+                setNewNotebook({ title: 'Untitled Notebook', content: '', tags: '' });
+                setIsDialogOpen(true);
+              }}>Create Your First Notebook</Button>
             )}
           </div>
         ) : (
@@ -492,9 +536,36 @@ export default function NotebooksPage() {
                 return viewMode === 'grid' ? (
                   <Card
                     key={notebook.id}
-                    className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group"
-                    onClick={() => handleViewNotebook(notebook.id)}
+                    className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group relative"
+                    onClick={(e) => handleViewNotebook(notebook.id, e)}
                   >
+                    <div className="absolute top-2 right-2 z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => handleViewNotebook(notebook.id, e)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handleEditNotebook(notebook.id, e)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={(e) => handleDeleteNotebook(notebook.id, e)}
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                     <CardHeader className="pb-2 pt-5">
                       <div className="flex items-center text-xs text-muted-foreground mb-1.5">
                         <Clock className="h-3 w-3 mr-1.5" />
@@ -552,9 +623,36 @@ export default function NotebooksPage() {
                 ) : (
                   <div
                     key={notebook.id}
-                    className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group flex flex-col md:flex-row gap-4"
-                    onClick={() => handleViewNotebook(notebook.id)}
+                    className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group flex flex-col md:flex-row gap-4 relative"
+                    onClick={(e) => handleViewNotebook(notebook.id, e)}
                   >
+                    <div className="absolute top-2 right-2 z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => handleViewNotebook(notebook.id, e)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handleEditNotebook(notebook.id, e)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={(e) => handleDeleteNotebook(notebook.id, e)}
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                     <div className="flex-1">
                       <div className="flex items-center text-xs text-muted-foreground mb-1.5">
                         <Clock className="h-3 w-3 mr-1.5" />
