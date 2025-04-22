@@ -1,4 +1,4 @@
-import { db } from '@/db/index';
+import { db } from '@/db';
 import { notebooks, tags, notebooksTags, users } from '@/db/schema';
 import { eq, and, or, like, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';

@@ -77,25 +77,30 @@ export default function ProfilePage() {
         throw new Error('Failed to fetch notebooks');
       }
       const data = await response.json();
-      setNotebooks(data);
+      // This line is now handled below
 
       // Calculate stats
       const uniqueTags = new Set();
-      data.forEach(notebook => {
-        notebook.tags?.forEach(tag => uniqueTags.add(tag.id));
-      });
+      if (Array.isArray(data)) {
+        data.forEach(notebook => {
+          notebook.tags?.forEach(tag => uniqueTags.add(tag.id));
+        });
+      }
 
       // Find the most recent update
       let lastUpdated = null;
-      if (data.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         lastUpdated = new Date(Math.max(...data.map(n => new Date(n.updatedAt))));
       }
 
       setStats({
-        notebooksCount: data.length,
+        notebooksCount: Array.isArray(data) ? data.length : 0,
         tagsCount: uniqueTags.size,
         lastUpdated
       });
+
+      // Set notebooks state
+      setNotebooks(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching notebooks:', error);
       toast.error("Failed to load notebooks");
@@ -251,7 +256,7 @@ export default function ProfilePage() {
                 <Skeleton key={i} className="aspect-square rounded-md" />
               ))}
             </div>
-          ) : notebooks.length === 0 ? (
+          ) : !notebooks || notebooks.length === 0 ? (
             <div className="text-center py-12 border border-dashed rounded-lg">
               <h3 className="text-lg font-medium mb-2">No notebooks yet</h3>
               <p className="text-muted-foreground mb-4">
@@ -263,7 +268,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {notebooks.map((notebook) => (
+              {Array.isArray(notebooks) && notebooks.map((notebook) => (
                 <div
                   key={notebook.id}
                   className="aspect-square border rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity relative group"
@@ -317,13 +322,13 @@ export default function ProfilePage() {
                     </div>
                   ))}
                 </div>
-              ) : notebooks.length === 0 ? (
+              ) : !notebooks || notebooks.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-muted-foreground">No recent activity</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {notebooks.slice(0, 5).map((notebook) => (
+                  {Array.isArray(notebooks) && notebooks.slice(0, 5).map((notebook) => (
                     <div
                       key={notebook.id}
                       className="flex items-start gap-4 p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
@@ -348,7 +353,7 @@ export default function ProfilePage() {
                 </div>
               )}
             </CardContent>
-            {notebooks.length > 5 && (
+            {Array.isArray(notebooks) && notebooks.length > 5 && (
               <CardFooter>
                 <Button
                   variant="outline"
@@ -444,7 +449,7 @@ export default function ProfilePage() {
               <CardHeader>
                 <CardTitle className="text-destructive">Danger Zone</CardTitle>
                 <CardDescription>
-                  Actions that can't be undone
+                  Actions that can&apos;t be undone
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

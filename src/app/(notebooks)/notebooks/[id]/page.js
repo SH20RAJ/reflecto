@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
@@ -82,15 +82,7 @@ export default function NotebookPage({ params }) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated && notebookId) {
-      fetchNotebook();
-    } else if (status === "unauthenticated") {
-      router.push('/auth/signin');
-    }
-  }, [isAuthenticated, notebookId, status]);
-
-  const fetchNotebook = async () => {
+  const fetchNotebook = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/notebooks/${notebookId}`);
@@ -128,7 +120,17 @@ export default function NotebookPage({ params }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [notebookId, router]);
+
+  useEffect(() => {
+    if (isAuthenticated && notebookId) {
+      fetchNotebook();
+    } else if (status === "unauthenticated") {
+      router.push('/auth/signin');
+    }
+  }, [isAuthenticated, notebookId, status, fetchNotebook, router]);
+
+
 
   const handleEditorSave = async () => {
     if (!isEditing) return;

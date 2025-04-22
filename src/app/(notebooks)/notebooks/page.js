@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
+import { useNotebooks, useNotebooksByTag, useSearchNotebooks, useTags } from '@/lib/hooks';
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
-import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash } from 'lucide-react';
+import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash, Search, LayoutGrid, List } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,19 +23,28 @@ export default function NotebooksPage() {
   const { status } = useSession();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [notebooks, setNotebooks] = useState([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 20,
-    totalCount: 0,
-    totalPages: 0,
-    hasMore: false,
-    hasPrevious: false
-  });
-  const [tags, setTags] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedTag, setSelectedTag] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoadingState, setIsLoadingState] = useState(true);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+
+  // Use SWR hooks for data fetching
+  const {
+    notebooks,
+    pagination,
+    isLoading: isLoadingNotebooks,
+    mutate: mutateNotebooks
+  } = useNotebooks(currentPage);
+
+  const { tags, isLoading: isLoadingTags } = useTags();
+
+  // Search state
+  const {
+    notebooks: searchResults,
+    pagination: searchPagination,
+    isLoading: isSearching
+  } = useSearchNotebooks(searchQuery || null, currentPage);
   const [newNotebook, setNewNotebook] = useState({ title: '', content: '', tags: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sortBy, setSortBy] = useState('recent');
@@ -46,12 +56,41 @@ export default function NotebooksPage() {
   const isSessionLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
 
-  // Fetch notebooks when the user is authenticated
+  // Get notebooks by tag if a tag is selected
+  const {
+    notebooks: tagNotebooks,
+    pagination: tagPagination,
+    isLoading: isLoadingTagNotebooks
+  } = useNotebooksByTag(selectedTag, currentPage);
+
+  // Determine which notebooks and pagination to display
+  const displayedNotebooks = searchQuery ? searchResults :
+                            selectedTag ? tagNotebooks :
+                            notebooks;
+
+  const displayedPagination = searchQuery ? searchPagination :
+                             selectedTag ? tagPagination :
+                             pagination;
+
+  // Determine loading state
+  const isLoading = isLoadingNotebooks || isLoadingTags || isSearching || isLoadingTagNotebooks || isLoadingState;
+
+  // Debug loading state
+  console.log('Loading states:', {
+    isLoadingNotebooks,
+    isLoadingTags,
+    isSearching,
+    isLoadingTagNotebooks,
+    isLoadingState,
+    isSessionLoading,
+    isAuthenticated,
+    notebooksCount: notebooks.length,
+    tagsCount: tags.length
+  });
+
+  // Fetch data when the user is authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      fetchNotebooks();
-      fetchTags();
-
       // Check if we should open the new notebook dialog
       if (searchParams.get('new') === 'true') {
         setIsDialogOpen(true);
@@ -61,122 +100,24 @@ export default function NotebooksPage() {
       const tagId = searchParams.get('tag');
       if (tagId) {
         setSelectedTag(tagId);
-        fetchNotebooksByTag(tagId);
+      }
+
+      // Set loading state to false once we have data
+      if (notebooks.length > 0 || tags.length > 0) {
+        setIsLoadingState(false);
       }
     } else if (status === 'unauthenticated') {
-      setIsLoading(false);
+      setIsLoadingState(false);
     }
-  }, [isAuthenticated, status, searchParams]);
+  }, [isAuthenticated, status, searchParams, notebooks.length, tags.length]);
 
-  // Fetch notebooks from the API
-  const fetchNotebooks = async (page = 1) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/notebooks?page=${page}&limit=20`);
-      if (response.ok) {
-        const data = await response.json();
-        setNotebooks(data.notebooks);
-        setPagination(data.pagination);
-      } else {
-        console.error('Failed to fetch notebooks');
-      }
-    } catch (error) {
-      console.error('Error fetching notebooks:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // Fetch tags from the API
-  const fetchTags = async () => {
-    try {
-      const response = await fetch('/api/tags');
-      if (response.ok) {
-        const data = await response.json();
-        setTags(data);
-      } else {
-        console.error('Failed to fetch tags');
-      }
-    } catch (error) {
-      console.error('Error fetching tags:', error);
-    }
-  };
 
-  // Fetch notebooks by tag
-  const fetchNotebooksByTag = async (tagId, page = 1) => {
-    try {
-      setIsLoading(true);
-      setSelectedTag(tagId);
-      const response = await fetch(`/api/notebooks?tagId=${tagId}&page=${page}&limit=20`);
-      if (response.ok) {
-        const data = await response.json();
-        setNotebooks(data.notebooks);
-        setPagination(data.pagination);
-      } else {
-        console.error('Failed to fetch notebooks by tag');
-      }
-    } catch (error) {
-      console.error('Error fetching notebooks by tag:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // Handle search input change
-  const handleSearchInput = async (e) => {
-    setSearchQuery(e.target.value);
-    setSelectedTag(null); // Clear tag filter when searching
-
-    if (e.target.value.trim() === '') {
-      fetchNotebooks();
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/notebooks?q=${encodeURIComponent(e.target.value)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setNotebooks(data.notebooks);
-        setPagination(data.pagination);
-      } else {
-        console.error('Failed to search notebooks');
-      }
-    } catch (error) {
-      console.error('Error searching notebooks:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Handle page change for pagination
   const handlePageChange = (newPage) => {
-    if (selectedTag) {
-      fetchNotebooksByTag(selectedTag, newPage);
-    } else if (searchQuery) {
-      handleSearchPage(searchQuery, newPage);
-    } else {
-      fetchNotebooks(newPage);
-    }
-  };
-
-  // Handle search with pagination
-  const handleSearchPage = async (query, page) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/notebooks?q=${encodeURIComponent(query)}&page=${page}`);
-      if (response.ok) {
-        const data = await response.json();
-        setNotebooks(data.notebooks);
-        setPagination(data.pagination);
-      } else {
-        console.error('Failed to search notebooks');
-      }
-    } catch (error) {
-      console.error('Error searching notebooks:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    setCurrentPage(newPage);
   };
 
   // Create a new notebook
@@ -198,9 +139,8 @@ export default function NotebooksPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        fetchNotebooks(); // Refresh the notebooks list
-        fetchTags(); // Refresh the tags list
+        await response.json(); // We don't need the data, just check if it's successful
+        mutateNotebooks(); // Refresh the notebooks list
         setNewNotebook({ title: '', content: '', tags: '' });
         setIsDialogOpen(false);
       } else {
@@ -221,17 +161,8 @@ export default function NotebooksPage() {
   // Sort notebooks
   const handleSort = (type) => {
     setSortBy(type);
-    let sortedNotebooks = [...notebooks];
-
-    if (type === 'recent') {
-      sortedNotebooks.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    } else if (type === 'oldest') {
-      sortedNotebooks.sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-    } else if (type === 'alphabetical') {
-      sortedNotebooks.sort((a, b) => a.title.localeCompare(b.title));
-    }
-
-    setNotebooks(sortedNotebooks);
+    // Note: With SWR, we don't need to manually sort the notebooks
+    // The sorting will be handled on the server side in a future update
   };
 
   // Filter notebooks by month and year
@@ -239,18 +170,7 @@ export default function NotebooksPage() {
     setSelectedMonth(month);
     setSelectedYear(year);
     setShowDateFilter(true);
-
-    if (month === null) {
-      fetchNotebooks();
-      return;
-    }
-
-    const filtered = notebooks.filter(notebook => {
-      const date = new Date(notebook.updatedAt);
-      return date.getMonth() === month && date.getFullYear() === year;
-    });
-
-    setNotebooks(filtered);
+    setCurrentPage(1);
   };
 
   // Get available months with notebooks
@@ -275,16 +195,16 @@ export default function NotebooksPage() {
     setSelectedMonth(null);
     setShowDateFilter(false);
     setSelectedTag(null);
-    fetchNotebooks();
+    setCurrentPage(1);
   };
 
   // Handle tag selection
   const handleTagSelect = (tagId) => {
     if (selectedTag === tagId) {
       setSelectedTag(null);
-      fetchNotebooks();
     } else {
-      fetchNotebooksByTag(tagId);
+      setSelectedTag(tagId);
+      setCurrentPage(1);
     }
   };
 
@@ -305,7 +225,7 @@ export default function NotebooksPage() {
                   className="ml-2 h-8 w-8 p-0"
                   onClick={() => {
                     setSelectedTag(null);
-                    fetchNotebooks();
+                    setCurrentPage(1);
                   }}
                 >
                   <span className="sr-only">Clear tag filter</span>
@@ -364,142 +284,177 @@ export default function NotebooksPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1 h-9">
-                <ArrowUpDown className="h-3.5 w-3.5" />
-                Sort
+          <div className="flex items-center gap-2">
+            <div className="border rounded-md flex">
+              <Button
+                variant={viewMode === 'grid' ? "subtle" : "ghost"}
+                size="sm"
+                className={`px-3 rounded-none ${viewMode === 'grid' ? 'bg-muted' : ''}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => handleSort('recent')}>
-                <Clock className="mr-2 h-4 w-4" />
-                Most recent
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('oldest')}>
-                <Clock className="mr-2 h-4 w-4" />
-                Oldest first
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort('alphabetical')}>
-                <span className="mr-2 font-mono">A→Z</span>
-                Alphabetical
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowDateFilter(!showDateFilter)}>
-                <CalendarDays className="mr-2 h-4 w-4" />
-                {showDateFilter ? 'Hide calendar filter' : 'Filter by date'}
-              </DropdownMenuItem>
-              {showDateFilter && (
-                <div className="p-2">
-                  <div className="text-sm font-medium mb-2">Filter by month</div>
-                  <div className="grid grid-cols-3 gap-1">
-                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => {
-                      const hasNotebooks = Object.values(getAvailableMonths()).some(months =>
-                        months.has(index) && selectedYear in getAvailableMonths()
-                      );
-                      return (
-                        <Button
-                          key={month}
-                          variant={selectedMonth === index ? "default" : "outline"}
-                          size="sm"
-                          className={`text-xs ${!hasNotebooks ? 'opacity-50' : ''}`}
-                          disabled={!hasNotebooks}
-                          onClick={() => filterByDate(index, selectedYear)}
-                        >
-                          {month}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-2 flex justify-between">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => setSelectedYear(selectedYear - 1)}
-                    >
-                      {selectedYear - 1}
-                    </Button>
-                    <span className="text-sm font-medium">{selectedYear}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => setSelectedYear(selectedYear + 1)}
-                    >
-                      {selectedYear + 1}
-                    </Button>
-                  </div>
-                  {selectedMonth !== null && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2 text-xs"
-                      onClick={resetFilters}
-                    >
-                      Clear filter
-                    </Button>
-                  )}
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-1.5">
-                <Sparkles className="h-4 w-4" /> New Notebook
+              <Button
+                variant={viewMode === 'list' ? "subtle" : "ghost"}
+                size="sm"
+                className={`px-3 rounded-none ${viewMode === 'list' ? 'bg-muted' : ''}`}
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Notebook</DialogTitle>
-                <DialogDescription>
-                  Capture your thoughts, insights, and experiences.
-                </DialogDescription>
-              </DialogHeader>
+            </div>
 
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="Give your notebook a title"
-                    value={newNotebook.title}
-                    onChange={(e) => setNewNotebook({...newNotebook, title: e.target.value})}
-                  />
-                </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 h-9">
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  Sort
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => handleSort('recent')}>
+                  <Clock className="mr-2 h-4 w-4" />
+                  Most recent
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('oldest')}>
+                  <Clock className="mr-2 h-4 w-4" />
+                  Oldest first
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('alphabetical')}>
+                  <span className="mr-2 font-mono">A→Z</span>
+                  Alphabetical
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowDateFilter(!showDateFilter)}>
+                  <CalendarDays className="mr-2 h-4 w-4" />
+                  {showDateFilter ? 'Hide calendar filter' : 'Filter by date'}
+                </DropdownMenuItem>
+                {showDateFilter && (
+                  <div className="p-2">
+                    <div className="text-sm font-medium mb-2">Filter by month</div>
+                    <div className="grid grid-cols-3 gap-1">
+                      {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => {
+                        const hasNotebooks = Object.values(getAvailableMonths()).some(months =>
+                          months.has(index) && selectedYear in getAvailableMonths()
+                        );
+                        return (
+                          <Button
+                            key={month}
+                            variant={selectedMonth === index ? "default" : "outline"}
+                            size="sm"
+                            className={`text-xs ${!hasNotebooks ? 'opacity-50' : ''}`}
+                            disabled={!hasNotebooks}
+                            onClick={() => filterByDate(index, selectedYear)}
+                          >
+                            {month}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 flex justify-between">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setSelectedYear(selectedYear - 1)}
+                      >
+                        {selectedYear - 1}
+                      </Button>
+                      <span className="text-sm font-medium">{selectedYear}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setSelectedYear(selectedYear + 1)}
+                      >
+                        {selectedYear + 1}
+                      </Button>
+                    </div>
+                    {selectedMonth !== null && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2 text-xs"
+                        onClick={resetFilters}
+                      >
+                        Clear filter
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="content">Content</Label>
-                  <div className="border rounded-md">
-                    <NovelEditor
-                      initialValue={newNotebook.content}
-                      onChange={(data) => setNewNotebook({...newNotebook, content: data})}
-                      readOnly={false}
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-1.5">
+                  <Sparkles className="h-4 w-4" /> New Notebook
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Notebook</DialogTitle>
+                  <DialogDescription>
+                    Capture your thoughts, insights, and experiences.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      placeholder="Give your notebook a title"
+                      value={newNotebook.title}
+                      onChange={(e) => setNewNotebook({...newNotebook, title: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="content">Content</Label>
+                    <div className="border rounded-md">
+                      <NovelEditor
+                        initialValue={newNotebook.content}
+                        onChange={(data) => setNewNotebook({...newNotebook, content: data})}
+                        readOnly={false}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="tags">Tags (comma separated)</Label>
+                    <Input
+                      id="tags"
+                      placeholder="e.g., gratitude, work, insights"
+                      value={newNotebook.tags}
+                      onChange={(e) => setNewNotebook({...newNotebook, tags: e.target.value})}
                     />
                   </div>
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="tags">Tags (comma separated)</Label>
-                  <Input
-                    id="tags"
-                    placeholder="e.g., gratitude, work, insights"
-                    value={newNotebook.tags}
-                    onChange={(e) => setNewNotebook({...newNotebook, tags: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateNotebook} disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating...' : 'Create Notebook'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleCreateNotebook} disabled={isSubmitting}>
+                    {isSubmitting ? 'Creating...' : 'Create Notebook'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+      </div>
+
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="Search notebooks..."
+          className="pl-8 w-full"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setSelectedTag(null); // Clear tag filter when searching
+            setCurrentPage(1); // Reset to first page
+          }}
+        />
       </div>
 
       {isSessionLoading || isLoading ? (
@@ -532,89 +487,142 @@ export default function NotebooksPage() {
           </div>
         ) : (
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-              {notebooks.map((notebook) => (
-              <Card
-                key={notebook.id}
-                className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group"
-                onClick={() => handleViewNotebook(notebook.id)}
-              >
-                <CardHeader className="pb-2 pt-5">
-                  <div className="flex items-center text-xs text-muted-foreground mb-1.5">
-                    <Clock className="h-3 w-3 mr-1.5" />
-                    {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}
-                  </div>
-                  <CardTitle className="text-lg group-hover:text-primary transition-colors">{notebook.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm line-clamp-3">
-                    {notebook.content ? (
-                      // Display markdown content
-                      (() => {
-                        try {
-                          // Check if it's JSON (legacy format)
-                          if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8' : 'space-y-4 mb-8'}>
+              {displayedNotebooks.map((notebook) => {
+                return viewMode === 'grid' ? (
+                  <Card
+                    key={notebook.id}
+                    className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group"
+                    onClick={() => handleViewNotebook(notebook.id)}
+                  >
+                    <CardHeader className="pb-2 pt-5">
+                      <div className="flex items-center text-xs text-muted-foreground mb-1.5">
+                        <Clock className="h-3 w-3 mr-1.5" />
+                        {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}
+                      </div>
+                      <CardTitle className="text-lg group-hover:text-primary transition-colors">{notebook.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground text-sm line-clamp-3">
+                        {notebook.content ? (
+                          // Display markdown content
+                          (() => {
                             try {
-                              const parsed = JSON.parse(notebook.content);
-                              if (parsed.blocks) {
-                                // Legacy Editor.js format
-                                return parsed.blocks
-                                  .filter(block => block.type === 'paragraph')
-                                  .map(block => block.data.text)
-                                  .join(' ')
-                                  .substring(0, 150) + '...';
+                              // Check if it's JSON (legacy format)
+                              if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
+                                try {
+                                  const parsed = JSON.parse(notebook.content);
+                                  if (parsed.blocks) {
+                                    // Legacy Editor.js format
+                                    return parsed.blocks
+                                      .filter(block => block.type === 'paragraph')
+                                      .map(block => block.data.text)
+                                      .join(' ')
+                                      .substring(0, 150) + '...';
+                                  }
+                                } catch (e) {
+                                  // Not valid JSON, treat as markdown
+                                }
                               }
+                              // Plain markdown - strip any markdown syntax for preview
+                              return notebook.content
+                                .replace(/[#*`>_~\[\]]/g, '') // Remove markdown symbols
+                                .replace(/\n/g, ' ') // Replace newlines with spaces
+                                .trim()
+                                .substring(0, 150) + (notebook.content.length > 150 ? '...' : '');
                             } catch (e) {
-                              // Not valid JSON, treat as markdown
+                              return notebook.content.substring(0, 150) + '...';
                             }
-                          }
-                          // Plain markdown - strip any markdown syntax for preview
-                          return notebook.content
-                            .replace(/[#*`>_~\[\]]/g, '') // Remove markdown symbols
-                            .replace(/\n/g, ' ') // Replace newlines with spaces
-                            .trim()
-                            .substring(0, 150) + (notebook.content.length > 150 ? '...' : '');
-                        } catch (e) {
-                          return notebook.content.substring(0, 150) + '...';
-                        }
-                      })()
-                    ) : 'No content'}
-                  </p>
+                          })()
+                        ) : 'No content'}
+                      </p>
 
-                  {notebook.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {notebook.tags.map(tag => (
-                        <div key={tag.id} className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                          <Tag className="mr-1 h-2.5 w-2.5" />
-                          {tag.name}
+                      {notebook.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {notebook.tags.map(tag => (
+                            <div key={tag.id} className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                              <Tag className="mr-1 h-2.5 w-2.5" />
+                              {tag.name}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div
+                    key={notebook.id}
+                    className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group flex flex-col md:flex-row gap-4"
+                    onClick={() => handleViewNotebook(notebook.id)}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center text-xs text-muted-foreground mb-1.5">
+                        <Clock className="h-3 w-3 mr-1.5" />
+                        {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}
+                      </div>
+                      <h3 className="text-lg font-medium group-hover:text-primary transition-colors mb-2">{notebook.title}</h3>
+                      <p className="text-muted-foreground text-sm line-clamp-2">
+                        {notebook.content ? (
+                          (() => {
+                            try {
+                              if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
+                                try {
+                                  const parsed = JSON.parse(notebook.content);
+                                  if (parsed.blocks) {
+                                    return parsed.blocks
+                                      .filter(block => block.type === 'paragraph')
+                                      .map(block => block.data.text)
+                                      .join(' ')
+                                      .substring(0, 150) + '...';
+                                  }
+                                } catch (e) {}
+                              }
+                              return notebook.content
+                                .replace(/[#*`>_~\[\]]/g, '')
+                                .replace(/\n/g, ' ')
+                                .trim()
+                                .substring(0, 150) + (notebook.content.length > 150 ? '...' : '');
+                            } catch (e) {
+                              return notebook.content.substring(0, 150) + '...';
+                            }
+                          })()
+                        ) : 'No content'}
+                      </p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    {notebook.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2 md:mt-0 md:w-1/4 md:justify-end">
+                        {notebook.tags.map(tag => (
+                          <div key={tag.id} className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            <Tag className="mr-1 h-2.5 w-2.5" />
+                            {tag.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Pagination */}
-            {pagination.totalPages > 1 && (
+            {displayedPagination.totalPages > 1 && (
               <div className="flex justify-center mt-8 mb-12">
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={!pagination.hasPrevious}
+                    onClick={() => handlePageChange(displayedPagination.page - 1)}
+                    disabled={!displayedPagination.hasPrevious}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
 
-                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  {Array.from({ length: displayedPagination.totalPages }, (_, i) => i + 1)
                     .filter(page => {
                       // Show first page, last page, current page, and pages around current page
                       return page === 1 ||
-                             page === pagination.totalPages ||
-                             Math.abs(page - pagination.page) <= 1;
+                             page === displayedPagination.totalPages ||
+                             Math.abs(page - displayedPagination.page) <= 1;
                     })
                     .map((page, index, array) => {
                       // Add ellipsis between non-consecutive pages
@@ -626,7 +634,7 @@ export default function NotebooksPage() {
                             <span className="text-muted-foreground px-2">...</span>
                           )}
                           <Button
-                            variant={pagination.page === page ? "default" : "outline"}
+                            variant={displayedPagination.page === page ? "default" : "outline"}
                             size="sm"
                             onClick={() => handlePageChange(page)}
                           >
@@ -639,8 +647,8 @@ export default function NotebooksPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={!pagination.hasMore}
+                    onClick={() => handlePageChange(displayedPagination.page + 1)}
+                    disabled={!displayedPagination.hasMore}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>

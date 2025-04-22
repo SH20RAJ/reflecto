@@ -58,7 +58,7 @@ export default function SignIn() {
               </div>
 
               <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                <p>By continuing, you agree to Reflecto's</p>
+                <p>By continuing, you agree to Reflecto&apos;s</p>
                 <p className="mt-1">
                   <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
                   {" "}&amp;{" "}

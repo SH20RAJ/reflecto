@@ -1,82 +1,56 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from "next-auth/react";
+import { useNotebooks } from '@/lib/hooks';
 import { useRouter } from "next/navigation";
-import { format, parse, startOfMonth, endOfMonth, getYear, getMonth } from 'date-fns';
-import { Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, getMonth, getYear } from 'date-fns';
+import { CalendarIcon, ChevronDown, Book } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function CalendarPage() {
-  const router = useRouter();
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [years, setYears] = useState([]);
+  const [monthlyNotebooks, setMonthlyNotebooks] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  const { notebooks, isLoading: isLoadingNotebooks } = useNotebooks();
   const isAuthenticated = status === "authenticated";
 
-  const [notebooks, setNotebooks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [years, setYears] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(null);
-  const [monthlyNotebooks, setMonthlyNotebooks] = useState({});
-
-  // Fetch notebooks when the user is authenticated
+  // Set loading state based on authentication and data loading
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchNotebooks();
+    if (isAuthenticated && !isLoadingNotebooks) {
+      setIsLoading(false);
     } else if (status === "unauthenticated") {
       setIsLoading(false);
     }
-  }, [isAuthenticated, status]);
+  }, [isAuthenticated, status, isLoadingNotebooks]);
 
-  // Process notebooks to get years and monthly counts
-  useEffect(() => {
-    if (notebooks.length > 0) {
-      processNotebooks();
-    }
-  }, [notebooks]);
-
-  const fetchNotebooks = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/notebooks');
-      if (!response.ok) {
-        throw new Error('Failed to fetch notebooks');
+  // Define processNotebooks function before using it
+  const processNotebooks = useCallback(() => {
+    // Fix any notebooks with invalid dates
+    const fixedNotebooks = notebooks.map(notebook => {
+      const notebookCopy = {...notebook};
+      // Check if createdAt or updatedAt is null or invalid
+      if (!notebookCopy.createdAt || new Date(notebookCopy.createdAt).getFullYear() < 2000) {
+        notebookCopy.createdAt = new Date().toISOString();
       }
-      const data = await response.json();
+      if (!notebookCopy.updatedAt || new Date(notebookCopy.updatedAt).getFullYear() < 2000) {
+        notebookCopy.updatedAt = new Date().toISOString();
+      }
+      return notebookCopy;
+    });
 
-      // Fix any notebooks with invalid dates
-      const fixedData = data.map(notebook => {
-        // Check if createdAt or updatedAt is null or invalid
-        if (!notebook.createdAt || new Date(notebook.createdAt).getFullYear() < 2000) {
-          notebook.createdAt = new Date().toISOString();
-        }
-        if (!notebook.updatedAt || new Date(notebook.updatedAt).getFullYear() < 2000) {
-          notebook.updatedAt = new Date().toISOString();
-        }
-        return notebook;
-      });
-
-      setNotebooks(fixedData);
-    } catch (error) {
-      console.error('Error fetching notebooks:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const processNotebooks = () => {
     // Extract all years from notebook dates
-    const notebookYears = [...new Set(notebooks.map(notebook =>
+    const notebookYears = [...new Set(fixedNotebooks.map(notebook =>
       getYear(new Date(notebook.updatedAt))
     ))].sort((a, b) => b - a); // Sort descending
 
@@ -95,7 +69,7 @@ export default function CalendarPage() {
     }
 
     // Group notebooks by month
-    notebooks.forEach(notebook => {
+    fixedNotebooks.forEach(notebook => {
       const date = new Date(notebook.updatedAt);
       const year = getYear(date);
       const month = getMonth(date);
@@ -109,7 +83,14 @@ export default function CalendarPage() {
     });
 
     setMonthlyNotebooks(monthlyData);
-  };
+  }, [notebooks, selectedYear, setYears, setSelectedYear, setMonthlyNotebooks]);
+
+  // Process notebooks to get years and monthly counts
+  useEffect(() => {
+    if (notebooks.length > 0) {
+      processNotebooks();
+    }
+  }, [notebooks, selectedYear, processNotebooks]);
 
   const handleYearChange = (year) => {
     setSelectedYear(year);
@@ -257,7 +238,7 @@ export default function CalendarPage() {
                     <div className="flex-1">
                       <h3 className="font-medium">{notebook.title}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-1">
-                        {notebook.plainText || notebook.markdown || 'No content'}
+                        {notebook.content ? notebook.content.substring(0, 100) : 'No content'}
                       </p>
                     </div>
                     <div className="text-sm text-muted-foreground">
