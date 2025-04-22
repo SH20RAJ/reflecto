@@ -5,24 +5,34 @@ import { useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
-import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles } from 'lucide-react';
+import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import MarkdownEditor from "@/components/MarkdownEditor";
+import NovelEditor from "@/components/NovelEditor";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+
 
 export default function NotebooksPage() {
   const { status } = useSession();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notebooks, setNotebooks] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    totalCount: 0,
+    totalPages: 0,
+    hasMore: false,
+    hasPrevious: false
+  });
+  const [tags, setTags] = useState([]);
+  const [selectedTag, setSelectedTag] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [newNotebook, setNewNotebook] = useState({ title: '', content: '', tags: '' });
@@ -40,10 +50,18 @@ export default function NotebooksPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotebooks();
+      fetchTags();
 
       // Check if we should open the new notebook dialog
       if (searchParams.get('new') === 'true') {
         setIsDialogOpen(true);
+      }
+
+      // Check if we should filter by tag
+      const tagId = searchParams.get('tag');
+      if (tagId) {
+        setSelectedTag(tagId);
+        fetchNotebooksByTag(tagId);
       }
     } else if (status === 'unauthenticated') {
       setIsLoading(false);
@@ -51,13 +69,14 @@ export default function NotebooksPage() {
   }, [isAuthenticated, status, searchParams]);
 
   // Fetch notebooks from the API
-  const fetchNotebooks = async () => {
+  const fetchNotebooks = async (page = 1) => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/notebooks');
+      const response = await fetch(`/api/notebooks?page=${page}&limit=20`);
       if (response.ok) {
         const data = await response.json();
-        setNotebooks(data);
+        setNotebooks(data.notebooks);
+        setPagination(data.pagination);
       } else {
         console.error('Failed to fetch notebooks');
       }
@@ -68,9 +87,46 @@ export default function NotebooksPage() {
     }
   };
 
-  // Handle search
-  const handleSearch = async (e) => {
+  // Fetch tags from the API
+  const fetchTags = async () => {
+    try {
+      const response = await fetch('/api/tags');
+      if (response.ok) {
+        const data = await response.json();
+        setTags(data);
+      } else {
+        console.error('Failed to fetch tags');
+      }
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
+
+  // Fetch notebooks by tag
+  const fetchNotebooksByTag = async (tagId, page = 1) => {
+    try {
+      setIsLoading(true);
+      setSelectedTag(tagId);
+      const response = await fetch(`/api/notebooks?tagId=${tagId}&page=${page}&limit=20`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotebooks(data.notebooks);
+        setPagination(data.pagination);
+      } else {
+        console.error('Failed to fetch notebooks by tag');
+      }
+    } catch (error) {
+      console.error('Error fetching notebooks by tag:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle search input change
+  const handleSearchInput = async (e) => {
     setSearchQuery(e.target.value);
+    setSelectedTag(null); // Clear tag filter when searching
+
     if (e.target.value.trim() === '') {
       fetchNotebooks();
       return;
@@ -81,7 +137,38 @@ export default function NotebooksPage() {
       const response = await fetch(`/api/notebooks?q=${encodeURIComponent(e.target.value)}`);
       if (response.ok) {
         const data = await response.json();
-        setNotebooks(data);
+        setNotebooks(data.notebooks);
+        setPagination(data.pagination);
+      } else {
+        console.error('Failed to search notebooks');
+      }
+    } catch (error) {
+      console.error('Error searching notebooks:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle page change for pagination
+  const handlePageChange = (newPage) => {
+    if (selectedTag) {
+      fetchNotebooksByTag(selectedTag, newPage);
+    } else if (searchQuery) {
+      handleSearchPage(searchQuery, newPage);
+    } else {
+      fetchNotebooks(newPage);
+    }
+  };
+
+  // Handle search with pagination
+  const handleSearchPage = async (query, page) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/notebooks?q=${encodeURIComponent(query)}&page=${page}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotebooks(data.notebooks);
+        setPagination(data.pagination);
       } else {
         console.error('Failed to search notebooks');
       }
@@ -112,7 +199,8 @@ export default function NotebooksPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setNotebooks([data, ...notebooks]);
+        fetchNotebooks(); // Refresh the notebooks list
+        fetchTags(); // Refresh the tags list
         setNewNotebook({ title: '', content: '', tags: '' });
         setIsDialogOpen(false);
       } else {
@@ -186,15 +274,45 @@ export default function NotebooksPage() {
   const resetFilters = () => {
     setSelectedMonth(null);
     setShowDateFilter(false);
+    setSelectedTag(null);
     fetchNotebooks();
+  };
+
+  // Handle tag selection
+  const handleTagSelect = (tagId) => {
+    if (selectedTag === tagId) {
+      setSelectedTag(null);
+      fetchNotebooks();
+    } else {
+      fetchNotebooksByTag(tagId);
+    }
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            All Notebooks
+            {selectedTag ? (
+              <div className="flex items-center gap-2">
+                <span>Tag:</span>
+                <Badge variant="outline" className="text-base font-normal py-1 px-3">
+                  {tags.find(t => t.id === selectedTag)?.name || 'Loading...'}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2 h-8 w-8 p-0"
+                  onClick={() => {
+                    setSelectedTag(null);
+                    fetchNotebooks();
+                  }}
+                >
+                  <span className="sr-only">Clear tag filter</span>
+                  ×
+                </Button>
+              </div>
+            ) : 'All Notebooks'}
           </h1>
           {showDateFilter && selectedMonth !== null && (
             <div className="mt-2 flex items-center gap-2">
@@ -216,6 +334,36 @@ export default function NotebooksPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1 h-9">
+                <Tag className="h-3.5 w-3.5" />
+                Tags
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Filter by tag</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {tags.length > 0 ? (
+                tags.map(tag => (
+                  <DropdownMenuItem
+                    key={tag.id}
+                    className="flex justify-between"
+                    onClick={() => handleTagSelect(tag.id)}
+                  >
+                    <div className="flex items-center">
+                      <Hash className="mr-2 h-3.5 w-3.5" />
+                      {tag.name}
+                    </div>
+                    <Badge variant="secondary" className="ml-auto">{tag.count}</Badge>
+                  </DropdownMenuItem>
+                ))
+              ) : (
+                <DropdownMenuItem disabled>No tags found</DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1 h-9">
@@ -323,8 +471,8 @@ export default function NotebooksPage() {
 
                 <div className="grid gap-2">
                   <Label htmlFor="content">Content</Label>
-                  <div className="border rounded-md p-1">
-                    <MarkdownEditor
+                  <div className="border rounded-md">
+                    <NovelEditor
                       initialValue={newNotebook.content}
                       onChange={(data) => setNewNotebook({...newNotebook, content: data})}
                       readOnly={false}
@@ -383,8 +531,9 @@ export default function NotebooksPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {notebooks.map((notebook) => (
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+              {notebooks.map((notebook) => (
               <Card
                 key={notebook.id}
                 className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group"
@@ -445,6 +594,59 @@ export default function NotebooksPage() {
                 </CardContent>
               </Card>
             ))}
+            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center mt-8 mb-12">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={!pagination.hasPrevious}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      // Show first page, last page, current page, and pages around current page
+                      return page === 1 ||
+                             page === pagination.totalPages ||
+                             Math.abs(page - pagination.page) <= 1;
+                    })
+                    .map((page, index, array) => {
+                      // Add ellipsis between non-consecutive pages
+                      const showEllipsis = index > 0 && page - array[index - 1] > 1;
+
+                      return (
+                        <React.Fragment key={page}>
+                          {showEllipsis && (
+                            <span className="text-muted-foreground px-2">...</span>
+                          )}
+                          <Button
+                            variant={pagination.page === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(page)}
+                          >
+                            {page}
+                          </Button>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={!pagination.hasMore}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )
       ) : (

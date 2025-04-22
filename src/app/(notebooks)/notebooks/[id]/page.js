@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
-import { ArrowLeft, Edit, Trash, FileText, Code, Save, X, Tag as TagIcon, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Edit, Trash, Save, X, Tag as TagIcon, Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-import MarkdownEditor from "@/components/MarkdownEditor";
+import NovelEditor from "@/components/NovelEditor";
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 // Helper function to ensure content is in markdown format
@@ -77,7 +77,7 @@ export default function NotebookPage({ params }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editorData, setEditorData] = useState(null);
   const [title, setTitle] = useState('');
-  const [viewMode, setViewMode] = useState('editor');
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -143,7 +143,7 @@ export default function NotebookPage({ params }) {
         },
         body: JSON.stringify({
           title,
-          content: JSON.stringify(editorData),
+          content: editorData,
         }),
       });
 
@@ -350,53 +350,15 @@ export default function NotebookPage({ params }) {
               </div>
             </div>
 
-            <div className="flex justify-end mt-4">
-              {!isEditing && (
-                <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
-                  <TabsList className="bg-muted/50">
-                    <TabsTrigger value="editor" className="flex items-center gap-1.5 text-xs">
-                      <Code className="h-3.5 w-3.5" />
-                      Preview
-                    </TabsTrigger>
-                    <TabsTrigger value="markdown" className="flex items-center gap-1.5 text-xs">
-                      <FileText className="h-3.5 w-3.5" />
-                      Raw Markdown
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              )}
-            </div>
+
           </div>
 
           <div className="pt-4 border-t">
-            {isEditing ? (
-              editorData && (
-                <MarkdownEditor
-                  initialValue={editorData}
-                  onChange={(data) => setEditorData(data)}
-                  readOnly={false}
-                />
-              )
-            ) : (
-              <Tabs value={viewMode} className="w-full">
-                <TabsContent value="editor">
-                  {editorData && (
-                    <MarkdownEditor
-                      initialValue={editorData}
-                      onChange={(data) => setEditorData(data)}
-                      readOnly={true}
-                    />
-                  )}
-                </TabsContent>
-                <TabsContent value="markdown">
-                  {/* Display markdown directly */}
-                  <MarkdownEditor
-                    initialValue={notebook.content || ''}
-                    readOnly={true}
-                  />
-                </TabsContent>
-              </Tabs>
-            )}
+            <NovelEditor
+              initialValue={editorData}
+              onChange={(data) => setEditorData(data)}
+              readOnly={!isEditing}
+            />
           </div>
         </div>
       ) : (

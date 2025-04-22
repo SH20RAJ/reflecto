@@ -6,7 +6,8 @@ import { NotebookService } from '@/lib/notebook-service-drizzle';
  * GET /api/notebooks/[id]
  * Get a notebook by ID
  */
-export async function GET(request, { params }) {
+export async function GET(request, context) {
+  const params = context.params;
   try {
     // Get the user session
     const session = await auth()
@@ -39,7 +40,8 @@ export async function GET(request, { params }) {
  * PUT /api/notebooks/[id]
  * Update a notebook
  */
-export async function PUT(request, { params }) {
+export async function PUT(request, context) {
+  const params = context.params;
   try {
     // Get the user session
     const session = await auth()
@@ -84,7 +86,8 @@ export async function PUT(request, { params }) {
  * DELETE /api/notebooks/[id]
  * Delete a notebook
  */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
+  const params = context.params;
   try {
     // Get the user session
     const session = await auth()
