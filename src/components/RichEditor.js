@@ -8,9 +8,9 @@ import { format } from 'date-fns';
 import { Save } from 'lucide-react';
 import '@/styles/editor.css';
 
-export default function RichEditor({ 
-  initialData = null, 
-  onSave = () => {}, 
+export default function RichEditor({
+  initialData = null,
+  onSave = () => {},
   placeholder = "Start writing your thoughts...",
   readOnly = false,
   autofocus = true
@@ -28,19 +28,19 @@ export default function RichEditor({
         if (typeof window !== 'undefined') {
           // Core Editor
           const EditorJS = (await import('@editorjs/editorjs')).default;
-          
+
           // Block Tools
           const Header = (await import('@editorjs/header')).default;
           const List = (await import('@editorjs/list')).default;
           const Checklist = (await import('@editorjs/checklist')).default;
           const Quote = (await import('@editorjs/quote')).default;
           const Code = (await import('@editorjs/code')).default;
-          
+
           // Inline Tools
           const Marker = (await import('@editorjs/marker')).default;
           const Underline = (await import('@editorjs/underline')).default;
           const InlineCode = (await import('@editorjs/inline-code')).default;
-          
+
           // Initialize Editor.js
           if (!editorRef.current) return;
 
@@ -159,6 +159,20 @@ export default function RichEditor({
     }
   };
 
+  // Method to get the editor content as Markdown
+  const getMarkdown = async () => {
+    if (!editorInstance) return '';
+    try {
+      const savedData = await editorInstance.save();
+      // Import the conversion function dynamically to avoid SSR issues
+      const { editorJsToMarkdown } = await import('@/lib/editorjs-to-markdown');
+      return editorJsToMarkdown(savedData);
+    } catch (error) {
+      console.error('Error converting to Markdown:', error);
+      return '';
+    }
+  };
+
   return (
     <Card className="overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm">
       <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
@@ -170,10 +184,10 @@ export default function RichEditor({
             {format(new Date(), 'EEEE, MMMM d, yyyy')}
           </div>
         </div>
-        
+
         {!readOnly && (
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             disabled={isSaving || !isLoaded}
             size="sm"
             className="flex items-center gap-1"

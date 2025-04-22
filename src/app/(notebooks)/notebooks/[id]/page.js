@@ -3,13 +3,15 @@
 import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
-import { ArrowLeft, Edit, Trash } from 'lucide-react';
+import { ArrowLeft, Edit, Trash, FileText, Code } from 'lucide-react';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RichEditor from "@/components/RichEditor";
+import MarkdownView from "@/components/MarkdownView";
 
 
 
@@ -22,6 +24,7 @@ export default function NotebookPage({ params }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editorData, setEditorData] = useState(null);
   const [title, setTitle] = useState('');
+  const [viewMode, setViewMode] = useState('editor'); // 'editor' or 'markdown'
 
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
@@ -193,25 +196,62 @@ export default function NotebookPage({ params }) {
 
                     <Card className="max-w-3xl mx-auto mb-8">
                       <CardHeader>
-                        {isEditing ? (
-                          <Input
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="text-xl font-semibold mb-2"
-                            placeholder="Notebook Title"
-                          />
-                        ) : (
-                          <CardTitle>{notebook.title}</CardTitle>
-                        )}
+                        <div className="flex justify-between items-center">
+                          <div>
+                            {isEditing ? (
+                              <Input
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="text-xl font-semibold mb-2"
+                                placeholder="Notebook Title"
+                              />
+                            ) : (
+                              <CardTitle>{notebook.title}</CardTitle>
+                            )}
+                          </div>
+
+                          {!isEditing && (
+                            <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
+                              <TabsList>
+                                <TabsTrigger value="editor" className="flex items-center gap-1">
+                                  <Code className="h-4 w-4" />
+                                  Editor
+                                </TabsTrigger>
+                                <TabsTrigger value="markdown" className="flex items-center gap-1">
+                                  <FileText className="h-4 w-4" />
+                                  Markdown
+                                </TabsTrigger>
+                              </TabsList>
+                            </Tabs>
+                          )}
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        {editorData && (
-                          <RichEditor
-                            initialData={editorData}
-                            onSave={handleEditorSave}
-                            readOnly={!isEditing}
-                            autofocus={isEditing}
-                          />
+                        {isEditing ? (
+                          editorData && (
+                            <RichEditor
+                              initialData={editorData}
+                              onSave={handleEditorSave}
+                              readOnly={false}
+                              autofocus={true}
+                            />
+                          )
+                        ) : (
+                          <Tabs value={viewMode} className="w-full">
+                            <TabsContent value="editor">
+                              {editorData && (
+                                <RichEditor
+                                  initialData={editorData}
+                                  onSave={handleEditorSave}
+                                  readOnly={true}
+                                  autofocus={false}
+                                />
+                              )}
+                            </TabsContent>
+                            <TabsContent value="markdown">
+                              <MarkdownView markdown={notebook.markdown || ''} />
+                            </TabsContent>
+                          </Tabs>
                         )}
                       </CardContent>
                     </Card>

@@ -56,6 +56,8 @@ export const notebooks = sqliteTable("notebooks", {
   id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   title: text("title").notNull(),
   content: text("content").default(""),
+  markdown: text("markdown").default(""),
+  plainText: text("plain_text").default(""),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),

@@ -2,6 +2,7 @@ import { db } from '@/db/index';
 import { notebooks, tags, notebooksTags, users } from '@/db/schema';
 import { eq, and, or, like, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { editorJsToMarkdown, extractPlainText } from './editorjs-to-markdown';
 
 /**
  * Service for handling notebook operations using Drizzle ORM
@@ -111,11 +112,28 @@ export const NotebookService = {
         throw new Error('User does not exist in the database');
       }
 
+      // Parse content if it's a JSON string
+      let contentObj = notebookData.content;
+      if (typeof notebookData.content === 'string' && notebookData.content.trim() !== '') {
+        try {
+          contentObj = JSON.parse(notebookData.content);
+        } catch (e) {
+          console.error('Error parsing content JSON:', e);
+          contentObj = { blocks: [] };
+        }
+      }
+
+      // Convert Editor.js data to Markdown and plain text
+      const markdown = editorJsToMarkdown(contentObj);
+      const plainText = extractPlainText(contentObj);
+
       // Create the notebook
       await db.insert(notebooks).values({
         id: notebookId,
         title: notebookData.title,
-        content: notebookData.content || '',
+        content: typeof notebookData.content === 'string' ? notebookData.content : JSON.stringify(contentObj),
+        markdown,
+        plainText,
         userId,
       });
 
@@ -177,11 +195,29 @@ export const NotebookService = {
 
       const { tags: tagNames = [], ...notebookData } = data;
 
+      // Parse content if it's a JSON string
+      let contentObj = notebookData.content;
+      if (typeof notebookData.content === 'string' && notebookData.content.trim() !== '') {
+        try {
+          contentObj = JSON.parse(notebookData.content);
+        } catch (e) {
+          console.error('Error parsing content JSON:', e);
+          contentObj = { blocks: [] };
+        }
+      }
+
+      // Convert Editor.js data to Markdown and plain text
+      const markdown = editorJsToMarkdown(contentObj);
+      const plainText = extractPlainText(contentObj);
+
       // Update the notebook
       await db
         .update(notebooks)
         .set({
           ...notebookData,
+          content: typeof notebookData.content === 'string' ? notebookData.content : JSON.stringify(contentObj),
+          markdown,
+          plainText,
           updatedAt: new Date(),
         })
         .where(eq(notebooks.id, id));
