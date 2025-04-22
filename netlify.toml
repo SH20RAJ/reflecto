@@ -5,6 +5,11 @@
 [build.environment]
   NODE_VERSION = "20.17.0"
   NPM_FLAGS = "--legacy-peer-deps"
+  NEXT_FORCE_EDGE_IMAGES = "true"
+  NEXT_PUBLIC_FORCE_STATIC = "true"
+  NEXT_PRIVATE_STANDALONE = "true"
+  NEXT_USE_NETLIFY_EDGE = "true"
+  NEXT_TELEMETRY_DISABLED = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
