@@ -21,14 +21,14 @@ export default function CalendarPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
-  
+
   const [notebooks, setNotebooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [monthlyNotebooks, setMonthlyNotebooks] = useState({});
-  
+
   // Fetch notebooks when the user is authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -37,14 +37,14 @@ export default function CalendarPage() {
       setIsLoading(false);
     }
   }, [isAuthenticated, status]);
-  
+
   // Process notebooks to get years and monthly counts
   useEffect(() => {
     if (notebooks.length > 0) {
       processNotebooks();
     }
   }, [notebooks]);
-  
+
   const fetchNotebooks = async () => {
     try {
       setIsLoading(true);
@@ -53,7 +53,7 @@ export default function CalendarPage() {
         throw new Error('Failed to fetch notebooks');
       }
       const data = await response.json();
-      
+
       // Fix any notebooks with invalid dates
       const fixedData = data.map(notebook => {
         // Check if createdAt or updatedAt is null or invalid
@@ -65,7 +65,7 @@ export default function CalendarPage() {
         }
         return notebook;
       });
-      
+
       setNotebooks(fixedData);
     } catch (error) {
       console.error('Error fetching notebooks:', error);
@@ -73,33 +73,33 @@ export default function CalendarPage() {
       setIsLoading(false);
     }
   };
-  
+
   const processNotebooks = () => {
     // Extract all years from notebook dates
-    const notebookYears = [...new Set(notebooks.map(notebook => 
+    const notebookYears = [...new Set(notebooks.map(notebook =>
       getYear(new Date(notebook.updatedAt))
     ))].sort((a, b) => b - a); // Sort descending
-    
+
     setYears(notebookYears);
-    
+
     if (notebookYears.length > 0 && !notebookYears.includes(selectedYear)) {
       setSelectedYear(notebookYears[0]);
     }
-    
+
     // Group notebooks by month for the selected year
     const monthlyData = {};
-    
+
     // Initialize all months
     for (let i = 0; i < 12; i++) {
       monthlyData[i] = [];
     }
-    
+
     // Group notebooks by month
     notebooks.forEach(notebook => {
       const date = new Date(notebook.updatedAt);
       const year = getYear(date);
       const month = getMonth(date);
-      
+
       if (year === selectedYear) {
         if (!monthlyData[month]) {
           monthlyData[month] = [];
@@ -107,27 +107,27 @@ export default function CalendarPage() {
         monthlyData[month].push(notebook);
       }
     });
-    
+
     setMonthlyNotebooks(monthlyData);
   };
-  
+
   const handleYearChange = (year) => {
     setSelectedYear(year);
     setSelectedMonth(null);
   };
-  
+
   const handleMonthSelect = (month) => {
     setSelectedMonth(month === selectedMonth ? null : month);
   };
-  
+
   const handleViewNotebook = (id) => {
     router.push(`/notebooks/${id}`);
   };
-  
+
   const getMonthName = (month) => {
     return format(new Date(selectedYear, month, 1), 'MMMM');
   };
-  
+
   if (!isAuthenticated && status !== "loading") {
     return (
       <div className="flex flex-col items-center justify-center py-12 border border-dashed rounded-lg">
@@ -139,9 +139,9 @@ export default function CalendarPage() {
       </div>
     );
   }
-  
+
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
@@ -149,7 +149,7 @@ export default function CalendarPage() {
             View your notebooks organized by date
           </p>
         </div>
-        
+
         {!isLoading && years.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -160,8 +160,8 @@ export default function CalendarPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {years.map(year => (
-                <DropdownMenuItem 
-                  key={year} 
+                <DropdownMenuItem
+                  key={year}
                   onClick={() => handleYearChange(year)}
                   className={selectedYear === year ? "bg-accent" : ""}
                 >
@@ -172,9 +172,9 @@ export default function CalendarPage() {
           </DropdownMenu>
         )}
       </div>
-      
+
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {[...Array(12)].map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <CardHeader className="pb-2">
@@ -194,8 +194,8 @@ export default function CalendarPage() {
             <p className="text-muted-foreground">
               Create your first notebook to see it in the calendar.
             </p>
-            <Button 
-              onClick={() => router.push('/notebooks')} 
+            <Button
+              onClick={() => router.push('/notebooks')}
               className="mt-2"
             >
               Go to Notebooks
@@ -204,10 +204,10 @@ export default function CalendarPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {Array.from({ length: 12 }, (_, month) => (
-              <Card 
-                key={month} 
+              <Card
+                key={month}
                 className={`overflow-hidden cursor-pointer transition-colors ${
                   selectedMonth === month ? 'border-primary' : 'hover:border-primary/50'
                 }`}
@@ -238,7 +238,7 @@ export default function CalendarPage() {
               </Card>
             ))}
           </div>
-          
+
           {selectedMonth !== null && monthlyNotebooks[selectedMonth]?.length > 0 && (
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4">
@@ -246,10 +246,10 @@ export default function CalendarPage() {
                   Notebooks from {getMonthName(selectedMonth)} {selectedYear}
                 </h2>
               </div>
-              
+
               <div className="space-y-2">
                 {monthlyNotebooks[selectedMonth].map(notebook => (
-                  <div 
+                  <div
                     key={notebook.id}
                     className="flex items-center p-4 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
                     onClick={() => handleViewNotebook(notebook.id)}

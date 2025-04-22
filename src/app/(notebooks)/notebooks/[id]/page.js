@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { ArrowLeft, Edit, Trash, FileText, Code, Save, X, Tag as TagIcon } from 'lucide-react';
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -29,10 +30,14 @@ import RichEditor from "@/components/RichEditor";
 import MarkdownView from "@/components/MarkdownView";
 
 export default function NotebookPage({ params }) {
+  // Unwrap params using React.use()
+  const unwrappedParams = React.use(params);
+  const notebookId = unwrappedParams.id;
+
   const router = useRouter();
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
-  
+
   const [notebook, setNotebook] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editorData, setEditorData] = useState(null);
@@ -41,22 +46,22 @@ export default function NotebookPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const editorRef = useRef(null);
 
   useEffect(() => {
-    if (isAuthenticated && params.id) {
+    if (isAuthenticated && notebookId) {
       fetchNotebook();
     } else if (status === "unauthenticated") {
       router.push('/auth/signin');
     }
-  }, [isAuthenticated, params.id, status]);
+  }, [isAuthenticated, notebookId, status]);
 
   const fetchNotebook = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/notebooks/${params.id}`);
-      
+      const response = await fetch(`/api/notebooks/${notebookId}`);
+
       if (!response.ok) {
         if (response.status === 404) {
           toast.error("Notebook not found");
@@ -65,20 +70,38 @@ export default function NotebookPage({ params }) {
         }
         throw new Error('Failed to fetch notebook');
       }
-      
+
       const data = await response.json();
       setNotebook(data);
       setTitle(data.title);
-      
+
       // Parse content if it's a string
       if (typeof data.content === 'string' && data.content) {
         try {
-          const parsedContent = JSON.parse(data.content);
-          setEditorData(parsedContent);
+          // Check if the content looks like JSON (starts with { or [)
+          if (data.content.trim().startsWith('{') || data.content.trim().startsWith('[')) {
+            const parsedContent = JSON.parse(data.content);
+            setEditorData(parsedContent);
+          } else {
+            // Content is plain text, create a paragraph block
+            setEditorData({
+              time: new Date().getTime(),
+              blocks: [
+                {
+                  type: 'paragraph',
+                  data: {
+                    text: data.content
+                  }
+                }
+              ],
+              version: "2.28.2"
+            });
+          }
         } catch (e) {
           console.error('Error parsing notebook content:', e);
           // Create a simple editor data with the content as a paragraph
           setEditorData({
+            time: new Date().getTime(),
             blocks: [
               {
                 type: 'paragraph',
@@ -86,13 +109,16 @@ export default function NotebookPage({ params }) {
                   text: data.content
                 }
               }
-            ]
+            ],
+            version: "2.28.2"
           });
         }
       } else {
         // Set empty editor data
         setEditorData({
-          blocks: []
+          time: new Date().getTime(),
+          blocks: [],
+          version: "2.28.2"
         });
       }
     } catch (error) {
@@ -105,11 +131,11 @@ export default function NotebookPage({ params }) {
 
   const handleEditorSave = async (data) => {
     if (!isEditing) return;
-    
+
     try {
       setIsSaving(true);
-      
-      const response = await fetch(`/api/notebooks/${params.id}`, {
+
+      const response = await fetch(`/api/notebooks/${notebookId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -119,11 +145,11 @@ export default function NotebookPage({ params }) {
           content: JSON.stringify(data),
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update notebook');
       }
-      
+
       const updatedNotebook = await response.json();
       setNotebook(updatedNotebook);
       setEditorData(data);
@@ -140,15 +166,15 @@ export default function NotebookPage({ params }) {
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      
-      const response = await fetch(`/api/notebooks/${params.id}`, {
+
+      const response = await fetch(`/api/notebooks/${notebookId}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete notebook');
       }
-      
+
       toast.success("Notebook deleted successfully");
       router.push('/notebooks');
     } catch (error) {
@@ -161,14 +187,44 @@ export default function NotebookPage({ params }) {
   const handleCancel = () => {
     setIsEditing(false);
     setTitle(notebook.title);
-    
+
     // Reset editor data to original
     if (typeof notebook.content === 'string' && notebook.content) {
       try {
-        const parsedContent = JSON.parse(notebook.content);
-        setEditorData(parsedContent);
+        // Check if the content looks like JSON (starts with { or [)
+        if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
+          const parsedContent = JSON.parse(notebook.content);
+          setEditorData(parsedContent);
+        } else {
+          // Content is plain text, create a paragraph block
+          setEditorData({
+            time: new Date().getTime(),
+            blocks: [
+              {
+                type: 'paragraph',
+                data: {
+                  text: notebook.content
+                }
+              }
+            ],
+            version: "2.28.2"
+          });
+        }
       } catch (e) {
         console.error('Error parsing notebook content:', e);
+        // Create a simple editor data with the content as a paragraph
+        setEditorData({
+          time: new Date().getTime(),
+          blocks: [
+            {
+              type: 'paragraph',
+              data: {
+                text: notebook.content
+              }
+            }
+          ],
+          version: "2.28.2"
+        });
       }
     }
   };
@@ -180,31 +236,31 @@ export default function NotebookPage({ params }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <Button 
-          variant="ghost" 
-          className="gap-1" 
+        <Button
+          variant="ghost"
+          className="gap-1"
           onClick={() => router.push('/notebooks')}
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Notebooks
         </Button>
-        
+
         {!isLoading && notebook && !isEditing && (
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditing(true)}
               className="gap-1"
             >
               <Edit className="h-4 w-4" />
               Edit
             </Button>
-            
+
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="gap-1 text-destructive"
                 >
@@ -221,7 +277,7 @@ export default function NotebookPage({ params }) {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
+                  <AlertDialogAction
                     onClick={handleDelete}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     disabled={isDeleting}
@@ -233,11 +289,11 @@ export default function NotebookPage({ params }) {
             </AlertDialog>
           </div>
         )}
-        
+
         {isEditing && (
           <div className="flex items-center gap-2">
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               size="sm"
               onClick={() => {
                 if (editorRef.current) {
@@ -250,9 +306,9 @@ export default function NotebookPage({ params }) {
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save'}
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               size="sm"
               onClick={handleCancel}
               className="gap-1"
@@ -263,7 +319,7 @@ export default function NotebookPage({ params }) {
           </div>
         )}
       </div>
-      
+
       {isLoading ? (
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
@@ -293,10 +349,10 @@ export default function NotebookPage({ params }) {
                 ) : (
                   <CardTitle className="text-2xl">{notebook.title}</CardTitle>
                 )}
-                
+
                 <div className="flex items-center text-sm text-muted-foreground gap-2 mt-1">
                   <span>Updated {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}</span>
-                  
+
                   {notebook.tags && notebook.tags.length > 0 && (
                     <div className="flex items-center gap-1 ml-4">
                       <TagIcon className="h-3 w-3" />
@@ -311,7 +367,7 @@ export default function NotebookPage({ params }) {
                   )}
                 </div>
               </div>
-              
+
               {!isEditing && (
                 <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
                   <TabsList>
@@ -328,7 +384,7 @@ export default function NotebookPage({ params }) {
               )}
             </div>
           </CardHeader>
-          
+
           <CardContent>
             {isEditing ? (
               editorData && (
@@ -362,8 +418,8 @@ export default function NotebookPage({ params }) {
       ) : (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Notebook not found</p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="mt-4"
             onClick={() => router.push('/notebooks')}
           >

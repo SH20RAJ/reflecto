@@ -26,6 +26,10 @@ export default function NotebooksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [newNotebook, setNewNotebook] = useState({ title: '', content: '', tags: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sortBy, setSortBy] = useState('recent');
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const isSessionLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
@@ -119,14 +123,90 @@ export default function NotebooksPage() {
     router.push(`/notebooks/${id}`);
   };
 
+  // Sort notebooks
+  const handleSort = (type) => {
+    setSortBy(type);
+    let sortedNotebooks = [...notebooks];
+
+    if (type === 'recent') {
+      sortedNotebooks.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    } else if (type === 'oldest') {
+      sortedNotebooks.sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+    } else if (type === 'alphabetical') {
+      sortedNotebooks.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    setNotebooks(sortedNotebooks);
+  };
+
+  // Filter notebooks by month and year
+  const filterByDate = (month, year) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+    setShowDateFilter(true);
+
+    if (month === null) {
+      fetchNotebooks();
+      return;
+    }
+
+    const filtered = notebooks.filter(notebook => {
+      const date = new Date(notebook.updatedAt);
+      return date.getMonth() === month && date.getFullYear() === year;
+    });
+
+    setNotebooks(filtered);
+  };
+
+  // Get available months with notebooks
+  const getAvailableMonths = () => {
+    const months = {};
+    notebooks.forEach(notebook => {
+      const date = new Date(notebook.updatedAt);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+
+      if (!months[year]) {
+        months[year] = new Set();
+      }
+      months[year].add(month);
+    });
+
+    return months;
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setSelectedMonth(null);
+    setShowDateFilter(false);
+    fetchNotebooks();
+  };
+
   return (
-    <div>
+    <div className="max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Notebooks</h1>
           <p className="text-muted-foreground mt-1">
             Capture your thoughts and track your personal growth
           </p>
+          {showDateFilter && selectedMonth !== null && (
+            <div className="mt-2 flex items-center gap-2">
+              <Badge variant="outline" className="flex items-center gap-1">
+                <CalendarDays className="h-3 w-3" />
+                Filtered by: {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth]} {selectedYear}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 ml-1"
+                  onClick={resetFilters}
+                >
+                  <span className="sr-only">Clear filter</span>
+                  ×
+                </Button>
+              </Badge>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -147,9 +227,76 @@ export default function NotebooksPage() {
                 <span className="sr-only">Filter</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => console.log('Filter by date')}>Most recent</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Filter by name')}>Alphabetical</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => handleSort('recent')}>
+                <Clock className="mr-2 h-4 w-4" />
+                Most recent
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('oldest')}>
+                <Clock className="mr-2 h-4 w-4" />
+                Oldest first
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSort('alphabetical')}>
+                <span className="mr-2 font-mono">A→Z</span>
+                Alphabetical
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowDateFilter(!showDateFilter)}>
+                <CalendarDays className="mr-2 h-4 w-4" />
+                {showDateFilter ? 'Hide calendar filter' : 'Filter by date'}
+              </DropdownMenuItem>
+              {showDateFilter && (
+                <div className="p-2">
+                  <div className="text-sm font-medium mb-2">Filter by month</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => {
+                      const hasNotebooks = Object.values(getAvailableMonths()).some(months =>
+                        months.has(index) && selectedYear in getAvailableMonths()
+                      );
+                      return (
+                        <Button
+                          key={month}
+                          variant={selectedMonth === index ? "default" : "outline"}
+                          size="sm"
+                          className={`text-xs ${!hasNotebooks ? 'opacity-50' : ''}`}
+                          disabled={!hasNotebooks}
+                          onClick={() => filterByDate(index, selectedYear)}
+                        >
+                          {month}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex justify-between">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => setSelectedYear(selectedYear - 1)}
+                    >
+                      {selectedYear - 1}
+                    </Button>
+                    <span className="text-sm font-medium">{selectedYear}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => setSelectedYear(selectedYear + 1)}
+                    >
+                      {selectedYear + 1}
+                    </Button>
+                  </div>
+                  {selectedMonth !== null && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2 text-xs"
+                      onClick={resetFilters}
+                    >
+                      Clear filter
+                    </Button>
+                  )}
+                </div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
