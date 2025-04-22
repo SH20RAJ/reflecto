@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
-import { ArrowLeft, Edit, Trash, FileText, Code, Save, X, Tag as TagIcon } from 'lucide-react';
+import { ArrowLeft, Edit, Trash, FileText, Code, Save, X, Tag as TagIcon, Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -22,49 +22,45 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 import MarkdownEditor from "@/components/MarkdownEditor";
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-// Function to convert legacy content to markdown
-const convertToMarkdown = (content) => {
+// Helper function to ensure content is in markdown format
+const ensureMarkdownFormat = (content) => {
+  if (!content) return '';
+
   try {
-    // If content is a string, check if it's JSON
-    if (typeof content === 'string') {
-      // Check if it looks like JSON
-      if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
-        try {
-          const parsed = JSON.parse(content);
-          // If it's Editor.js format, convert to markdown
-          if (parsed.blocks) {
-            return parsed.blocks
-              .map(block => {
-                if (block.type === 'paragraph') return block.data.text;
-                if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
-                if (block.type === 'list') {
-                  return block.data.items.map(item => `- ${item}`).join('\n');
-                }
-                if (block.type === 'quote') return `> ${block.data.text}`;
-                if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
-                return '';
-              })
-              .filter(text => text)
-              .join('\n\n');
-          }
-          return content;
-        } catch (e) {
-          // If it's not valid JSON, return as is
-          return content;
+    // Check if content might be in JSON format (legacy)
+    if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.blocks) {
+          // Convert Editor.js format to markdown
+          return parsed.blocks
+            .map(block => {
+              if (block.type === 'paragraph') return block.data.text;
+              if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
+              if (block.type === 'list') {
+                return block.data.items.map(item => `- ${item}`).join('\n');
+              }
+              if (block.type === 'quote') return `> ${block.data.text}`;
+              if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
+              return '';
+            })
+            .filter(text => text)
+            .join('\n\n');
         }
+      } catch (e) {
+        // Not valid JSON, return as is
       }
     }
-
-    return content || '';
-  } catch (error) {
-    console.error('Error converting to markdown:', error);
-    return '';
+    return content;
+  } catch (e) {
+    console.error('Error processing content:', e);
+    return content;
   }
 };
 
@@ -74,7 +70,7 @@ export default function NotebookPage({ params }) {
   const notebookId = unwrappedParams.id;
 
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const isAuthenticated = status === "authenticated";
 
   const [notebook, setNotebook] = useState(null);
@@ -115,38 +111,9 @@ export default function NotebookPage({ params }) {
       // Set editor data from content
       if (typeof data.content === 'string' && data.content) {
         try {
-          // Check if the content looks like JSON (starts with { or [)
-          if (data.content.trim().startsWith('{') || data.content.trim().startsWith('[')) {
-            try {
-              const parsedContent = JSON.parse(data.content);
-              // If it's Editor.js format, convert to markdown
-              if (parsedContent.blocks) {
-                const markdown = parsedContent.blocks
-                  .map(block => {
-                    if (block.type === 'paragraph') return block.data.text;
-                    if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
-                    if (block.type === 'list') {
-                      return block.data.items.map(item => `- ${item}`).join('\n');
-                    }
-                    if (block.type === 'quote') return `> ${block.data.text}`;
-                    if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
-                    return '';
-                  })
-                  .filter(text => text)
-                  .join('\n\n');
-                setEditorData(markdown);
-              } else {
-                // It's already in our format
-                setEditorData(data.content);
-              }
-            } catch (e) {
-              // If parsing fails, use content as is
-              setEditorData(data.content);
-            }
-          } else {
-            // Content is plain text or markdown, use as is
-            setEditorData(data.content);
-          }
+          // Process content to ensure it's in markdown format
+          const markdownContent = ensureMarkdownFormat(data.content);
+          setEditorData(markdownContent);
         } catch (error) {
           console.error('Error handling notebook content:', error);
           setEditorData(data.content || '');
@@ -224,38 +191,9 @@ export default function NotebookPage({ params }) {
     // Reset editor data to original
     if (typeof notebook.content === 'string' && notebook.content) {
       try {
-        // Check if the content looks like JSON (starts with { or [)
-        if (notebook.content.trim().startsWith('{') || notebook.content.trim().startsWith('[')) {
-          try {
-            const parsedContent = JSON.parse(notebook.content);
-            // If it's Editor.js format, convert to markdown
-            if (parsedContent.blocks) {
-              const markdown = parsedContent.blocks
-                .map(block => {
-                  if (block.type === 'paragraph') return block.data.text;
-                  if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
-                  if (block.type === 'list') {
-                    return block.data.items.map(item => `- ${item}`).join('\n');
-                  }
-                  if (block.type === 'quote') return `> ${block.data.text}`;
-                  if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
-                  return '';
-                })
-                .filter(text => text)
-                .join('\n\n');
-              setEditorData(markdown);
-            } else {
-              // It's already in our format
-              setEditorData(notebook.content);
-            }
-          } catch (e) {
-            // If parsing fails, use content as is
-            setEditorData(notebook.content);
-          }
-        } else {
-          // Content is plain text or markdown, use as is
-          setEditorData(notebook.content);
-        }
+        // Process content to ensure it's in markdown format
+        const markdownContent = ensureMarkdownFormat(notebook.content);
+        setEditorData(markdownContent);
       } catch (error) {
         console.error('Error handling notebook content:', error);
         setEditorData(notebook.content || '');
@@ -368,57 +306,69 @@ export default function NotebookPage({ params }) {
           </CardContent>
         </Card>
       ) : notebook ? (
-        <Card className="max-w-4xl mx-auto">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center">
-              <div className="flex-1">
-                {isEditing ? (
-                  <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-xl font-semibold mb-2"
-                    placeholder="Notebook Title"
-                  />
-                ) : (
-                  <CardTitle className="text-2xl">{notebook.title}</CardTitle>
-                )}
-
-                <div className="flex items-center text-sm text-muted-foreground gap-2 mt-1">
-                  <span>Updated {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}</span>
-
-                  {notebook.tags && notebook.tags.length > 0 && (
-                    <div className="flex items-center gap-1 ml-4">
-                      <TagIcon className="h-3 w-3" />
-                      <div className="flex flex-wrap gap-1">
-                        {notebook.tags.map(tag => (
-                          <Badge key={tag.id} variant="secondary" className="text-xs">
-                            {tag.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <div className="flex flex-col space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  {isEditing ? (
+                    <Input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="text-4xl font-bold mb-2 border-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      placeholder="Untitled"
+                    />
+                  ) : (
+                    <h1 className="text-4xl font-bold">{notebook.title}</h1>
                   )}
                 </div>
               </div>
 
+              <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-4">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Created {format(new Date(notebook.createdAt), 'MMMM d, yyyy')}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Updated {format(new Date(notebook.updatedAt), 'MMMM d, yyyy h:mm a')}</span>
+                </div>
+
+                {notebook.tags && notebook.tags.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <TagIcon className="h-3.5 w-3.5" />
+                    <div className="flex flex-wrap gap-1.5">
+                      {notebook.tags.map(tag => (
+                        <Badge key={tag.id} variant="outline" className="text-xs rounded-full px-2 py-0 h-5">
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-4">
               {!isEditing && (
                 <Tabs value={viewMode} onValueChange={setViewMode} className="w-auto">
-                  <TabsList>
-                    <TabsTrigger value="editor" className="flex items-center gap-1">
-                      <Code className="h-4 w-4" />
-                      Editor
+                  <TabsList className="bg-muted/50">
+                    <TabsTrigger value="editor" className="flex items-center gap-1.5 text-xs">
+                      <Code className="h-3.5 w-3.5" />
+                      Preview
                     </TabsTrigger>
-                    <TabsTrigger value="markdown" className="flex items-center gap-1">
-                      <FileText className="h-4 w-4" />
-                      Markdown
+                    <TabsTrigger value="markdown" className="flex items-center gap-1.5 text-xs">
+                      <FileText className="h-3.5 w-3.5" />
+                      Raw Markdown
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
               )}
             </div>
-          </CardHeader>
+          </div>
 
-          <CardContent>
+          <div className="pt-4 border-t">
             {isEditing ? (
               editorData && (
                 <MarkdownEditor
@@ -447,8 +397,8 @@ export default function NotebookPage({ params }) {
                 </TabsContent>
               </Tabs>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Notebook not found</p>

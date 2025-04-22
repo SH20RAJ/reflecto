@@ -17,19 +17,27 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get the search query from the URL
+    // Get parameters from the URL
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
+    const tagId = searchParams.get('tagId');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
 
-    // Get notebooks for the user
-    let notebooks;
+    // Limit to 40 items per page maximum
+    const safeLimit = Math.min(limit, 40);
+
+    // Get notebooks for the user based on parameters
+    let result;
     if (query) {
-      notebooks = await NotebookService.searchNotebooks(query, session.user.id);
+      result = await NotebookService.searchNotebooks(query, session.user.id, page, safeLimit);
+    } else if (tagId) {
+      result = await NotebookService.getNotebooksByTag(tagId, session.user.id, page, safeLimit);
     } else {
-      notebooks = await NotebookService.getUserNotebooks(session.user.id);
+      result = await NotebookService.getUserNotebooks(session.user.id, page, safeLimit);
     }
 
-    return NextResponse.json(notebooks);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error in GET /api/notebooks:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

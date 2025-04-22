@@ -1,24 +1,25 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
-import { Search, Plus, Tag, CalendarDays, Clock, Filter } from 'lucide-react';
+import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export default function NotebooksPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [notebooks, setNotebooks] = useState([]);
@@ -31,6 +32,7 @@ export default function NotebooksPage() {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  const searchParams = useSearchParams();
   const isSessionLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
 
@@ -38,10 +40,15 @@ export default function NotebooksPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotebooks();
+
+      // Check if we should open the new notebook dialog
+      if (searchParams.get('new') === 'true') {
+        setIsDialogOpen(true);
+      }
     } else if (status === 'unauthenticated') {
       setIsLoading(false);
     }
-  }, [isAuthenticated, status]);
+  }, [isAuthenticated, status, searchParams]);
 
   // Fetch notebooks from the API
   const fetchNotebooks = async () => {
@@ -183,13 +190,12 @@ export default function NotebooksPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div>
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Notebooks</h1>
-          <p className="text-muted-foreground mt-1">
-            Capture your thoughts and track your personal growth
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            All Notebooks
+          </h1>
           {showDateFilter && selectedMonth !== null && (
             <div className="mt-2 flex items-center gap-2">
               <Badge variant="outline" className="flex items-center gap-1">
@@ -209,22 +215,12 @@ export default function NotebooksPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative w-full md:w-60 lg:w-80">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search notebooks..."
-              className="pl-8 w-full"
-              value={searchQuery}
-              onChange={handleSearch}
-            />
-          </div>
-
+        <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-                <span className="sr-only">Filter</span>
+              <Button variant="outline" size="sm" className="gap-1 h-9">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                Sort
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -302,8 +298,8 @@ export default function NotebooksPage() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> New Notebook
+              <Button className="gap-1.5">
+                <Sparkles className="h-4 w-4" /> New Notebook
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -387,21 +383,22 @@ export default function NotebooksPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {notebooks.map((notebook) => (
               <Card
                 key={notebook.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group"
                 onClick={() => handleViewNotebook(notebook.id)}
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-1">
+                <CardHeader className="pb-2 pt-5">
+                  <div className="flex items-center text-xs text-muted-foreground mb-1.5">
+                    <Clock className="h-3 w-3 mr-1.5" />
                     {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}
                   </div>
-                  <CardTitle>{notebook.title}</CardTitle>
+                  <CardTitle className="text-lg group-hover:text-primary transition-colors">{notebook.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 dark:text-gray-300 line-clamp-3">
+                  <p className="text-muted-foreground text-sm line-clamp-3">
                     {notebook.content ? (
                       // Display markdown content
                       (() => {
@@ -436,10 +433,10 @@ export default function NotebooksPage() {
                   </p>
 
                   {notebook.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-4">
+                    <div className="flex flex-wrap gap-1.5 mt-3">
                       {notebook.tags.map(tag => (
-                        <div key={tag.id} className="flex items-center text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                          <Tag className="mr-1 h-3 w-3" />
+                        <div key={tag.id} className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                          <Tag className="mr-1 h-2.5 w-2.5" />
                           {tag.name}
                         </div>
                       ))}

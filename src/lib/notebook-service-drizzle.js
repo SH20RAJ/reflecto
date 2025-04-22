@@ -10,18 +10,32 @@ import { nanoid } from 'nanoid';
  */
 export const NotebookService = {
   /**
-   * Get all notebooks for a user
+   * Get all notebooks for a user with pagination
    * @param {string} userId - The user ID
-   * @returns {Promise<Array>} - A promise that resolves to an array of notebooks
+   * @param {number} page - The page number (1-based)
+   * @param {number} limit - The number of items per page
+   * @returns {Promise<Object>} - A promise that resolves to an object with notebooks and pagination info
    */
-  async getUserNotebooks(userId) {
+  async getUserNotebooks(userId, page = 1, limit = 20) {
     try {
-      // Get all notebooks for the user
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await db
+        .select({ count: sql`count(*)` })
+        .from(notebooks)
+        .where(eq(notebooks.userId, userId))
+        .then(result => Number(result[0].count));
+
+      // Get notebooks for the user with pagination
       const userNotebooks = await db
         .select()
         .from(notebooks)
         .where(eq(notebooks.userId, userId))
-        .orderBy(sql`${notebooks.updatedAt} DESC`);
+        .orderBy(sql`${notebooks.updatedAt} DESC`)
+        .limit(limit)
+        .offset(offset);
 
       // Get all tags for each notebook
       const notebooksWithTags = await Promise.all(
@@ -42,7 +56,22 @@ export const NotebookService = {
         })
       );
 
-      return notebooksWithTags;
+      // Calculate pagination info
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasMore = page < totalPages;
+      const hasPrevious = page > 1;
+
+      return {
+        notebooks: notebooksWithTags,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasMore,
+          hasPrevious
+        }
+      };
     } catch (error) {
       console.error('Error fetching notebooks:', error);
       throw error;
@@ -288,9 +317,28 @@ export const NotebookService = {
    * @param {string} userId - The user ID
    * @returns {Promise<Array>} - A promise that resolves to an array of notebooks
    */
-  async searchNotebooks(query, userId) {
+  async searchNotebooks(query, userId, page = 1, limit = 20) {
     try {
-      // Get all notebooks for the user that match the query
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await db
+        .select({ count: sql`count(*)` })
+        .from(notebooks)
+        .where(
+          and(
+            eq(notebooks.userId, userId),
+            or(
+              like(notebooks.title, `%${query}%`),
+              like(notebooks.content, `%${query}%`)
+              // We no longer need to search in markdown and plainText fields
+            )
+          )
+        )
+        .then(result => Number(result[0].count));
+
+      // Get notebooks for the user that match the query with pagination
       const userNotebooks = await db
         .select()
         .from(notebooks)
@@ -304,7 +352,9 @@ export const NotebookService = {
             )
           )
         )
-        .orderBy(sql`${notebooks.updatedAt} DESC`);
+        .orderBy(sql`${notebooks.updatedAt} DESC`)
+        .limit(limit)
+        .offset(offset);
 
       // Get all tags for each notebook
       const notebooksWithTags = await Promise.all(
@@ -325,9 +375,121 @@ export const NotebookService = {
         })
       );
 
-      return notebooksWithTags;
+      // Calculate pagination info
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasMore = page < totalPages;
+      const hasPrevious = page > 1;
+
+      return {
+        notebooks: notebooksWithTags,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasMore,
+          hasPrevious
+        }
+      };
     } catch (error) {
       console.error('Error searching notebooks:', error);
+      throw error;
+    }
+  },
+  /**
+   * Get all tags for a user
+   * @param {string} userId - The user ID
+   * @returns {Promise<Array>} - A promise that resolves to an array of tags with counts
+   */
+  async getUserTags(userId) {
+    try {
+      // Get all tags used by the user's notebooks with counts
+      const userTags = await db
+        .select({
+          id: tags.id,
+          name: tags.name,
+          count: sql`count(${notebooksTags.notebookId})`
+        })
+        .from(tags)
+        .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+        .innerJoin(notebooks, eq(notebooksTags.notebookId, notebooks.id))
+        .where(eq(notebooks.userId, userId))
+        .groupBy(tags.id, tags.name)
+        .orderBy(sql`count(${notebooksTags.notebookId}) DESC`);
+
+      return userTags;
+    } catch (error) {
+      console.error('Error fetching user tags:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get notebooks by tag
+   * @param {string} tagId - The tag ID
+   * @param {string} userId - The user ID
+   * @param {number} page - The page number (1-based)
+   * @param {number} limit - The number of items per page
+   * @returns {Promise<Object>} - A promise that resolves to an object with notebooks and pagination info
+   */
+  async getNotebooksByTag(tagId, userId, page = 1, limit = 20) {
+    try {
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await db
+        .select({ count: sql`count(DISTINCT ${notebooks.id})` })
+        .from(notebooks)
+        .innerJoin(notebooksTags, eq(notebooks.id, notebooksTags.notebookId))
+        .where(
+          and(
+            eq(notebooks.userId, userId),
+            eq(notebooksTags.tagId, tagId)
+          )
+        )
+        .then(result => Number(result[0].count));
+
+      // Get notebooks for the user with the specified tag
+      const notebookIds = await db
+        .select({ id: notebooks.id })
+        .from(notebooks)
+        .innerJoin(notebooksTags, eq(notebooks.id, notebooksTags.notebookId))
+        .where(
+          and(
+            eq(notebooks.userId, userId),
+            eq(notebooksTags.tagId, tagId)
+          )
+        )
+        .orderBy(sql`${notebooks.updatedAt} DESC`)
+        .limit(limit)
+        .offset(offset);
+
+      // Get full notebook data for each ID
+      const notebooksWithTags = await Promise.all(
+        notebookIds.map(async ({ id }) => {
+          return this.getNotebookById(id, userId);
+        })
+      );
+
+      // Calculate pagination info
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasMore = page < totalPages;
+      const hasPrevious = page > 1;
+
+      return {
+        notebooks: notebooksWithTags,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasMore,
+          hasPrevious
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching notebooks by tag:', error);
       throw error;
     }
   },
