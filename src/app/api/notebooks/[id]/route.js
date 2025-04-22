@@ -1,0 +1,114 @@
+import { NextResponse } from 'next/server';
+import { auth } from "@/auth";
+import { NotebookService } from '@/lib/notebook-service';
+
+/**
+ * GET /api/notebooks/[id]
+ * Get a notebook by ID
+ */
+export async function GET(request, { params }) {
+  try {
+    // Get the user session
+    const session = await auth()
+
+    
+    // Check if the user is authenticated
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Get the notebook ID from the URL
+    const id = params.id;
+    
+    // Get the notebook
+    const notebook = await NotebookService.getNotebookById(id, session.user.id);
+    
+    // Check if the notebook exists
+    if (!notebook) {
+      return NextResponse.json({ error: 'Notebook not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json(notebook);
+  } catch (error) {
+    console.error(`Error in GET /api/notebooks/${params.id}:`, error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+/**
+ * PUT /api/notebooks/[id]
+ * Update a notebook
+ */
+export async function PUT(request, { params }) {
+  try {
+    // Get the user session
+    const session = await auth()
+
+    
+    // Check if the user is authenticated
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Get the notebook ID from the URL
+    const id = params.id;
+    
+    // Get the request body
+    const data = await request.json();
+    
+    // Validate the request body
+    if (!data.title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+    
+    // Update the notebook
+    const notebook = await NotebookService.updateNotebook(id, {
+      title: data.title,
+      content: data.content || '',
+      tags: data.tags || [],
+    }, session.user.id);
+    
+    // Check if the notebook exists
+    if (!notebook) {
+      return NextResponse.json({ error: 'Notebook not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json(notebook);
+  } catch (error) {
+    console.error(`Error in PUT /api/notebooks/${params.id}:`, error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/notebooks/[id]
+ * Delete a notebook
+ */
+export async function DELETE(request, { params }) {
+  try {
+    // Get the user session
+    const session = await auth()
+
+    
+    // Check if the user is authenticated
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Get the notebook ID from the URL
+    const id = params.id;
+    
+    // Delete the notebook
+    const success = await NotebookService.deleteNotebook(id, session.user.id);
+    
+    // Check if the notebook exists
+    if (!success) {
+      return NextResponse.json({ error: 'Notebook not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(`Error in DELETE /api/notebooks/${params.id}:`, error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

@@ -1,4 +1,4 @@
-/* Editor.js Custom Styles */
+/* Editor.js Custom Styles - Enhanced for Reflecto */
 
 /* Main editor container */
 .codex-editor {
@@ -204,4 +204,44 @@
 
 .dark .ce-block::before {
   color: var(--muted-foreground);
+}
+
+/* Marker */
+.cdx-marker {
+  background-color: rgba(39, 110, 241, 0.2);
+  padding: 0 2px;
+}
+
+.dark .cdx-marker {
+  background-color: rgba(91, 145, 245, 0.3);
+}
+
+/* Inline code */
+.inline-code {
+  font-family: monospace;
+  font-size: 0.875em;
+  background-color: var(--muted);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  color: var(--foreground);
+}
+
+/* Read-only mode */
+.codex-editor--readonly .ce-toolbar,
+.codex-editor--readonly .ce-block::before {
+  display: none;
+}
+
+/* Loading state */
+.editor-loading {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Editor content max width */
+.ce-block__content {
+  max-width: 100% !important;
+  margin: 0;
 }

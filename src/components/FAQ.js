@@ -43,10 +43,10 @@ export default function FAQ() {
   ];
 
   return (
-    <section id="faq" className="py-24 bg-gray-50 dark:bg-gray-950 text-black dark:text-white">
+    <section id="faq" className="py-24 bg-gray-50 dark:bg-gray-950 text-background dark:text-foreground">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-background dark:text-foreground">
             Frequently Asked Questions
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -61,7 +61,7 @@ export default function FAQ() {
                 onClick={() => toggleFaq(index)}
                 className="flex justify-between items-center w-full text-left focus:outline-none"
               >
-                <h3 className="text-lg font-medium text-black dark:text-white">
+                <h3 className="text-lg font-medium text-background dark:text-foreground">
                   {faq.question}
                 </h3>
                 <span className="ml-6 flex-shrink-0">

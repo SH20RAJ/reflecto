@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 text-black dark:text-white">
+    <footer className="bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 text-background dark:text-foreground">
       <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="text-xl font-bold text-black dark:text-white">
+            <Link href="/" className="text-xl font-bold text-background dark:text-foreground">
               Reflecto
             </Link>
             <p className="mt-4 text-sm text-gray-600 dark:text-gray-300 max-w-xs">

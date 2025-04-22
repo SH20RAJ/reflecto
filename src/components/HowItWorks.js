@@ -23,10 +23,10 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-gray-950 text-black dark:text-white">
+    <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-gray-950 text-background dark:text-foreground">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-background dark:text-foreground">
             Simple journaling, powerful reflection
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -47,11 +47,11 @@ export default function HowItWorks() {
 
                   {/* Content */}
                   <div className={`md:pr-16 ${index % 2 !== 0 ? 'md:col-start-2' : ''}`}>
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-black dark:text-white">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-background dark:text-foreground">
                       <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white font-bold text-sm mb-4">
                         {step.number.split('0')[1]}
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-black dark:text-white">{step.title}</h3>
+                      <h3 className="text-xl font-bold mb-2 text-background dark:text-foreground">{step.title}</h3>
                       <p className="text-gray-700 dark:text-gray-300">{step.description}</p>
                     </div>
                   </div>

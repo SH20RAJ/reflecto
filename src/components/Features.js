@@ -57,10 +57,10 @@ export default function Features() {
   ];
 
   return (
-    <section id="features" className="py-24 bg-white dark:bg-black text-black dark:text-white">
+    <section id="features" className="py-24 bg-white dark:bg-black text-background dark:text-foreground">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-black dark:text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-background dark:text-foreground">
             Everything you need for your reflection journey
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
@@ -75,7 +75,7 @@ export default function Features() {
                 <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md mr-4 text-primary">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-black dark:text-white">{feature.title}</h3>
+                <h3 className="text-xl font-semibold text-background dark:text-foreground">{feature.title}</h3>
               </div>
               <p className="text-gray-700 dark:text-gray-300">
                 {feature.description}
