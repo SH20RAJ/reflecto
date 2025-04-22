@@ -1,6 +1,83 @@
 import { sql } from "drizzle-orm";
-import { text, sqliteTable } from "drizzle-orm/sqlite-core";
+import { text, integer, sqliteTable, primaryKey } from "drizzle-orm/sqlite-core";
 
+// Users table
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  email: text("email").notNull().unique(),
+  emailVerified: integer("email_verified", { mode: "timestamp" }),
+  image: text("image"),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Accounts table (for OAuth providers)
+export const accounts = sqliteTable("accounts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
+  refresh_token: text("refresh_token"),
+  access_token: text("access_token"),
+  expires_at: integer("expires_at"),
+  token_type: text("token_type"),
+  scope: text("scope"),
+  id_token: text("id_token"),
+  session_state: text("session_state"),
+}, (table) => {
+  return {
+    providerProviderAccountIdKey: primaryKey({ columns: [table.provider, table.providerAccountId] }),
+  };
+});
+
+// Sessions table
+export const sessions = sqliteTable("sessions", {
+  id: text("id").primaryKey(),
+  sessionToken: text("session_token").notNull().unique(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expires: integer("expires", { mode: "timestamp" }).notNull(),
+});
+
+// Verification tokens table (for email verification)
+export const verificationTokens = sqliteTable("verification_tokens", {
+  identifier: text("identifier").notNull(),
+  token: text("token").notNull(),
+  expires: integer("expires", { mode: "timestamp" }).notNull(),
+}, (table) => {
+  return {
+    compoundKey: primaryKey({ columns: [table.identifier, table.token] }),
+  };
+});
+
+// Notebooks table
+export const notebooks = sqliteTable("notebooks", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  title: text("title").notNull(),
+  content: text("content").default(""),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Tags table
+export const tags = sqliteTable("tags", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  name: text("name").notNull().unique(),
+});
+
+// Notebook-Tag relation (many-to-many)
+export const notebooksTags = sqliteTable("notebooks_tags", {
+  notebookId: text("notebook_id").notNull().references(() => notebooks.id, { onDelete: "cascade" }),
+  tagId: text("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+}, (table) => {
+  return {
+    pk: primaryKey({ columns: [table.notebookId, table.tagId] }),
+  };
+});
+
+// Keep the foo table for testing
 export const fooTable = sqliteTable("foo", {
   bar: text("bar").notNull().default("Hey!"),
 });

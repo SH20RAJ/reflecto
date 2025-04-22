@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from "@/auth";
-import { NotebookService } from '@/lib/notebook-service';
+import { NotebookService } from '@/lib/notebook-service-drizzle';
 
 /**
  * GET /api/notebooks
@@ -11,16 +11,16 @@ export async function GET(request) {
     // Get the user session
     const session = await auth()
 
-    
+
     // Check if the user is authenticated
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Get the search query from the URL
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
-    
+
     // Get notebooks for the user
     let notebooks;
     if (query) {
@@ -28,7 +28,7 @@ export async function GET(request) {
     } else {
       notebooks = await NotebookService.getUserNotebooks(session.user.id);
     }
-    
+
     return NextResponse.json(notebooks);
   } catch (error) {
     console.error('Error in GET /api/notebooks:', error);
@@ -45,27 +45,27 @@ export async function POST(request) {
     // Get the user session
     const session = await auth()
 
-    
+
     // Check if the user is authenticated
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     // Get the request body
     const data = await request.json();
-    
+
     // Validate the request body
     if (!data.title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
-    
+
     // Create the notebook
     const notebook = await NotebookService.createNotebook({
       title: data.title,
       content: data.content || '',
       tags: data.tags || [],
     }, session.user.id);
-    
+
     return NextResponse.json(notebook, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/notebooks:', error);
