@@ -47,23 +47,20 @@ export default function ProfilePage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-        <Navbar />
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 w-full">
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <div className="h-8 w-64 bg-gray-200 dark:bg-gray-800 rounded-md animate-pulse mb-4"></div>
             <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded-md animate-pulse"></div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-        <Navbar />
+      <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950 w-full">
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg max-w-md mx-auto p-8">
             <h1 className="text-2xl font-bold mb-4 text-black dark:text-white">Profile</h1>
@@ -73,14 +70,12 @@ export default function ProfilePage() {
             <Button onClick={() => router.push('/auth/signin')}>Sign In</Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
-      <Navbar />
 
       <main className="flex-grow pt-24 pb-16">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -209,7 +204,6 @@ export default function ProfilePage() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

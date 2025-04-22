@@ -127,7 +127,8 @@ export const NotebookService = {
       const markdown = editorJsToMarkdown(contentObj);
       const plainText = extractPlainText(contentObj);
 
-      // Create the notebook
+      // Create the notebook with explicit timestamps
+      const now = new Date();
       await db.insert(notebooks).values({
         id: notebookId,
         title: notebookData.title,
@@ -135,6 +136,8 @@ export const NotebookService = {
         markdown,
         plainText,
         userId,
+        createdAt: now,
+        updatedAt: now,
       });
 
       // Create or get tags and link them to the notebook

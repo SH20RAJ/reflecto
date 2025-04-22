@@ -6,7 +6,7 @@ export default function Hero() {
     <section className="pt-32 pb-16 md:pt-40 md:pb-24 bg-white dark:bg-black text-background dark:text-foreground">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-forground dark:text-foreground">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-forground dark:text-background">
             Your thoughts, <span className="text-primary">organized</span>.
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
@@ -15,7 +15,7 @@ export default function Hero() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/notebook"
+              href="/notebooks"
               className="bg-primary text-yellow-50 px-8 py-3 rounded-lg text-lg font-medium hover:bg-primary-hover transition-colors"
             >
               Start your journal
