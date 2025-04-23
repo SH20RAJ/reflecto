@@ -4,14 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --no-lint",
+    "build": "node scripts/check-env.js && next build --no-lint",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "postinstall": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\"",
-    "netlify-build": "npm install tailwindcss@3.3.5 autoprefixer@10.4.16 postcss@8.4.31 tailwindcss-animate@1.0.7 --save && next build --no-lint"
+    "netlify-build": "npm install tailwindcss@3.3.5 autoprefixer@10.4.16 postcss@8.4.31 tailwindcss-animate@1.0.7 --save && next build --no-lint",
+    "preview": "node -r dotenv/config scripts/check-env.js && opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "node scripts/deploy.js",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "cf-env": "node scripts/set-cloudflare-env-vars.js",
+    "db-test": "node -e \"const { createClient } = require('@libsql/client'); const client = createClient({ url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }); client.execute('SELECT 1 as test').then(console.log).catch(console.error)\""
   },
   "dependencies": {
     "@clerk/nextjs": "^6.17.0",
@@ -26,6 +31,7 @@
     "@editorjs/underline": "^1.2.1",
     "@hookform/resolvers": "^5.0.1",
     "@libsql/client": "^0.15.4",
+    "@opennextjs/cloudflare": "^1.0.0-beta.3",
     "@radix-ui/react-accordion": "^1.2.7",
     "@radix-ui/react-alert-dialog": "^1.1.10",
     "@radix-ui/react-aspect-ratio": "^1.1.4",
@@ -58,6 +64,7 @@
     "@yoopta/code": "^4.9.7",
     "@yoopta/editor": "^4.9.7",
     "@yoopta/headings": "^4.9.7",
+    "autoprefixer": "^10.4.16",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -74,6 +81,7 @@
     "next-themes": "^0.4.6",
     "novel": "^1.0.2",
     "novel-lightweight": "^0.2.1",
+    "postcss": "^8.4.31",
     "react": "^19.0.0",
     "react-day-picker": "8.10.1",
     "react-dom": "^19.0.0",
@@ -92,10 +100,9 @@
     "tailwind-merge": "^3.2.0",
     "tailwindcss": "^3.3.5",
     "tailwindcss-animate": "^1.0.7",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.31",
     "use-debounce": "^10.0.4",
     "vaul": "^1.1.2",
+    "wrangler": "^4.12.1",
     "zod": "^3.24.3"
   },
   "devDependencies": {
