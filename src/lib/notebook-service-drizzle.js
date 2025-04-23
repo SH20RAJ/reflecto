@@ -165,30 +165,54 @@ export const NotebookService = {
       });
 
       // Create or get tags and link them to the notebook
-      for (const tagName of tagNames) {
-        if (!tagName.trim()) continue;
+      for (const tagItem of tagNames) {
+        // Handle both tag IDs and tag names
+        let tagId, tagName;
 
-        // Check if the tag exists
-        let tag = await db
-          .select()
-          .from(tags)
-          .where(eq(tags.name, tagName.trim()))
-          .then((res) => res[0] || null);
+        if (typeof tagItem === 'string') {
+          // Check if it's a tag ID (existing tag) or a tag name (new tag)
+          const existingTag = await db
+            .select()
+            .from(tags)
+            .where(eq(tags.id, tagItem))
+            .then((res) => res[0] || null);
 
-        // If the tag doesn't exist, create it
-        if (!tag) {
-          const tagId = nanoid();
-          await db.insert(tags).values({
-            id: tagId,
-            name: tagName.trim(),
-          });
-          tag = { id: tagId, name: tagName.trim() };
+          if (existingTag) {
+            // It's an existing tag ID
+            tagId = tagItem;
+            tagName = existingTag.name;
+          } else {
+            // It's a new tag name
+            tagName = tagItem.trim();
+            if (!tagName) continue;
+
+            // Check if a tag with this name already exists
+            const existingTagByName = await db
+              .select()
+              .from(tags)
+              .where(eq(tags.name, tagName))
+              .then((res) => res[0] || null);
+
+            if (existingTagByName) {
+              tagId = existingTagByName.id;
+            } else {
+              // Create a new tag
+              tagId = nanoid();
+              await db.insert(tags).values({
+                id: tagId,
+                name: tagName,
+              });
+            }
+          }
+        } else {
+          console.error('Invalid tag format:', tagItem);
+          continue;
         }
 
         // Link the tag to the notebook
         await db.insert(notebooksTags).values({
           notebookId,
-          tagId: tag.id,
+          tagId: tagId,
         });
       }
 
@@ -247,30 +271,54 @@ export const NotebookService = {
       await db.delete(notebooksTags).where(eq(notebooksTags.notebookId, id));
 
       // Create or get tags and link them to the notebook
-      for (const tagName of tagNames) {
-        if (!tagName.trim()) continue;
+      for (const tagItem of tagNames) {
+        // Handle both tag IDs and tag names
+        let tagId, tagName;
 
-        // Check if the tag exists
-        let tag = await db
-          .select()
-          .from(tags)
-          .where(eq(tags.name, tagName.trim()))
-          .then((res) => res[0] || null);
+        if (typeof tagItem === 'string') {
+          // Check if it's a tag ID (existing tag) or a tag name (new tag)
+          const existingTag = await db
+            .select()
+            .from(tags)
+            .where(eq(tags.id, tagItem))
+            .then((res) => res[0] || null);
 
-        // If the tag doesn't exist, create it
-        if (!tag) {
-          const tagId = nanoid();
-          await db.insert(tags).values({
-            id: tagId,
-            name: tagName.trim(),
-          });
-          tag = { id: tagId, name: tagName.trim() };
+          if (existingTag) {
+            // It's an existing tag ID
+            tagId = tagItem;
+            tagName = existingTag.name;
+          } else {
+            // It's a new tag name
+            tagName = tagItem.trim();
+            if (!tagName) continue;
+
+            // Check if a tag with this name already exists
+            const existingTagByName = await db
+              .select()
+              .from(tags)
+              .where(eq(tags.name, tagName))
+              .then((res) => res[0] || null);
+
+            if (existingTagByName) {
+              tagId = existingTagByName.id;
+            } else {
+              // Create a new tag
+              tagId = nanoid();
+              await db.insert(tags).values({
+                id: tagId,
+                name: tagName,
+              });
+            }
+          }
+        } else {
+          console.error('Invalid tag format:', tagItem);
+          continue;
         }
 
         // Link the tag to the notebook
         await db.insert(notebooksTags).values({
           notebookId: id,
-          tagId: tag.id,
+          tagId: tagId,
         });
       }
 

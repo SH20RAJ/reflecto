@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { useNotebooks, useNotebooksByTag, useSearchNotebooks, useTags } from '@/lib/hooks';
@@ -11,6 +11,14 @@ import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRi
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import NovelEditor from "@/components/NovelEditor";
@@ -28,7 +36,21 @@ export default function NotebooksPage() {
   const [selectedTag, setSelectedTag] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingState, setIsLoadingState] = useState(true);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  // Initialize view mode from localStorage or default to 'table'
+  const [viewMode, setViewMode] = useState('table'); // 'grid', 'list', or 'table'
+
+  // Load saved view mode preference from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedViewMode = localStorage.getItem('reflecto-view-mode');
+      if (savedViewMode && ['grid', 'list', 'table'].includes(savedViewMode)) {
+        setViewMode(savedViewMode);
+      }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+      // Default to table view if localStorage is not available
+    }
+  }, []);
 
   // Use SWR hooks for data fetching
   const {
@@ -48,7 +70,8 @@ export default function NotebooksPage() {
   } = useSearchNotebooks(searchQuery || null, currentPage);
   const [newNotebook, setNewNotebook] = useState({ title: '', content: '', tags: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sortBy, setSortBy] = useState('recent');
+  const [sortBy, setSortBy] = useState('recent'); // 'recent', 'oldest', 'alphabetical'
+  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' or 'desc'
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -65,9 +88,26 @@ export default function NotebooksPage() {
   } = useNotebooksByTag(selectedTag, currentPage);
 
   // Determine which notebooks and pagination to display
-  const displayedNotebooks = searchQuery ? searchResults :
-                            selectedTag ? tagNotebooks :
-                            notebooks;
+  const displayedNotebooks = useMemo(() => {
+    // First, determine the base set of notebooks based on filters
+    let baseNotebooks = searchQuery ? searchResults :
+                       selectedTag ? tagNotebooks :
+                       notebooks;
+
+    // Then, sort the notebooks based on sortBy and sortDirection
+    return [...baseNotebooks].sort((a, b) => {
+      if (sortBy === 'alphabetical') {
+        // Sort alphabetically by title
+        const comparison = a.title.localeCompare(b.title);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      } else {
+        // Sort by date (recent or oldest)
+        const dateA = new Date(a.updatedAt).getTime();
+        const dateB = new Date(b.updatedAt).getTime();
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+    });
+  }, [searchQuery, searchResults, selectedTag, tagNotebooks, notebooks, sortBy, sortDirection]);
 
   const displayedPagination = searchQuery ? searchPagination :
                              selectedTag ? tagPagination :
@@ -103,14 +143,15 @@ export default function NotebooksPage() {
         setSelectedTag(tagId);
       }
 
-      // Set loading state to false once we have data
-      if (notebooks.length > 0 || tags.length > 0) {
+      // Set loading state to false once we have checked for data
+      // We don't need to wait for notebooks to be loaded to show the create option
+      if (!isLoadingNotebooks) {
         setIsLoadingState(false);
       }
     } else if (status === 'unauthenticated') {
       setIsLoadingState(false);
     }
-  }, [isAuthenticated, status, searchParams, notebooks.length, tags.length]);
+  }, [isAuthenticated, status, searchParams, isLoadingNotebooks]);
 
 
 
@@ -325,7 +366,15 @@ export default function NotebooksPage() {
                 variant={viewMode === 'grid' ? "subtle" : "ghost"}
                 size="sm"
                 className={`px-3 rounded-none ${viewMode === 'grid' ? 'bg-muted' : ''}`}
-                onClick={() => setViewMode('grid')}
+                onClick={() => {
+                  setViewMode('grid');
+                  try {
+                    localStorage.setItem('reflecto-view-mode', 'grid');
+                  } catch (error) {
+                    console.error('Error saving view mode preference:', error);
+                  }
+                }}
+                title="Grid view"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -333,9 +382,39 @@ export default function NotebooksPage() {
                 variant={viewMode === 'list' ? "subtle" : "ghost"}
                 size="sm"
                 className={`px-3 rounded-none ${viewMode === 'list' ? 'bg-muted' : ''}`}
-                onClick={() => setViewMode('list')}
+                onClick={() => {
+                  setViewMode('list');
+                  try {
+                    localStorage.setItem('reflecto-view-mode', 'list');
+                  } catch (error) {
+                    console.error('Error saving view mode preference:', error);
+                  }
+                }}
+                title="List view"
               >
                 <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? "subtle" : "ghost"}
+                size="sm"
+                className={`px-3 rounded-none ${viewMode === 'table' ? 'bg-muted' : ''}`}
+                onClick={() => {
+                  setViewMode('table');
+                  try {
+                    localStorage.setItem('reflecto-view-mode', 'table');
+                  } catch (error) {
+                    console.error('Error saving view mode preference:', error);
+                  }
+                }}
+                title="Table view"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="3" y1="15" x2="21" y2="15"></line>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                  <line x1="15" y1="3" x2="15" y2="21"></line>
+                </svg>
               </Button>
             </div>
 
@@ -424,7 +503,7 @@ export default function NotebooksPage() {
                 <Button
                   className="gap-1.5"
                   onClick={() => {
-                    setNewNotebook({ title: 'Untitled Notebook', content: '', tags: '' });
+                    setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
                     setIsDialogOpen(true);
                   }}
                 >
@@ -498,7 +577,7 @@ export default function NotebooksPage() {
         />
       </div>
 
-      {isSessionLoading || isLoading ? (
+      {isSessionLoading ? (
         <div className="space-y-6">
           <div className="h-8 w-64 bg-gray-200 dark:bg-gray-800 rounded-md animate-pulse mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -517,23 +596,196 @@ export default function NotebooksPage() {
           </div>
         </div>
       ) : isAuthenticated ? (
-        notebooks.length === 0 ? (
+        isLoading && notebooks.length === 0 ? (
+          // Show a welcome message with create button instead of a loader for new users
+          <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+            <h3 className="text-xl font-medium mb-2">Welcome to Reflecto!</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              Get started by creating your first notebook to capture your thoughts and reflections.
+            </p>
+            <Button
+              size="lg"
+              className="gap-2"
+              onClick={() => {
+                setNewNotebook({
+                  title: 'My First Notebook',
+                  content: `# Welcome to your first notebook!
+
+This is a place to capture your thoughts, ideas, and reflections. You can use markdown formatting to organize your content.
+
+## Getting Started
+- Write anything that comes to mind
+- Use tags to organize your notebooks
+- Come back regularly to build your reflection practice
+
+Enjoy your journaling journey with Reflecto!`,
+                  tags: 'welcome,first-notebook'
+                });
+                setIsDialogOpen(true);
+              }}
+            >
+              <Sparkles className="h-4 w-4" />
+              Create Your First Notebook
+            </Button>
+          </div>
+        ) : notebooks.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
             <p className="text-gray-500 dark:text-gray-400 mb-4">
               {searchQuery ? 'No notebooks found matching your search.' : 'You don\'t have any notebooks yet.'}
             </p>
             {!searchQuery && (
               <Button onClick={() => {
-                setNewNotebook({ title: 'Untitled Notebook', content: '', tags: '' });
+                setNewNotebook({
+                  title: 'My First Notebook',
+                  content: `# Welcome to your first notebook!
+
+This is a place to capture your thoughts, ideas, and reflections. You can use markdown formatting to organize your content.
+
+## Getting Started
+- Write anything that comes to mind
+- Use tags to organize your notebooks
+- Come back regularly to build your reflection practice
+
+Enjoy your journaling journey with Reflecto!`,
+                  tags: 'welcome,first-notebook'
+                });
                 setIsDialogOpen(true);
-              }}>Create Your First Notebook</Button>
+              }}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Create Your First Notebook
+              </Button>
             )}
           </div>
         ) : (
           <div>
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8' : 'space-y-4 mb-8'}>
-              {displayedNotebooks.map((notebook) => {
-                return viewMode === 'grid' ? (
+            {viewMode === 'table' ? (
+              <div className="rounded-md border mb-8 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50%]">
+                        <div className="flex items-center cursor-pointer"
+                          onClick={() => {
+                            if (sortBy === 'alphabetical') {
+                              setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSortBy('alphabetical');
+                              setSortDirection('asc');
+                            }
+                          }}
+                        >
+                          Title
+                          {sortBy === 'alphabetical' && (
+                            <span className="ml-2">
+                              {sortDirection === 'asc' ?
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="18 15 12 9 6 15"></polyline>
+                                </svg> :
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                              }
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div className="flex items-center cursor-pointer"
+                          onClick={() => {
+                            if (sortBy === 'recent' || sortBy === 'oldest') {
+                              setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                              setSortBy(sortDirection === 'asc' ? 'oldest' : 'recent');
+                            } else {
+                              setSortBy('recent');
+                              setSortDirection('desc');
+                            }
+                          }}
+                        >
+                          Updated
+                          {(sortBy === 'recent' || sortBy === 'oldest') && (
+                            <span className="ml-2">
+                              {sortDirection === 'asc' ?
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="18 15 12 9 6 15"></polyline>
+                                </svg> :
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                              }
+                            </span>
+                          )}
+                        </div>
+                      </TableHead>
+                      <TableHead>Tags</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {displayedNotebooks.map((notebook) => (
+                      <TableRow
+                        key={notebook.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={(e) => handleViewNotebook(notebook.id, e)}
+                      >
+                        <TableCell className="font-medium">{notebook.title}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {format(new Date(notebook.updatedAt), 'MMM d, yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {notebook.tags.map(tag => (
+                              <div
+                                key={tag.id}
+                                className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  router.push(`/notebooks?tag=${tag.id}`);
+                                }}
+                              >
+                                <Tag className="mr-1 h-2.5 w-2.5" />
+                                {tag.name}
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => handleViewNotebook(notebook.id, e)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => handleEditNotebook(notebook.id, e)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              onClick={(e) => handleDeleteNotebook(notebook.id, e)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8' : viewMode === 'list' ? 'space-y-4 mb-8' : ''}>
+                {displayedNotebooks.map((notebook) => {
+                  return viewMode === 'grid' ? (
                   <Card
                     key={notebook.id}
                     className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group relative"
@@ -611,7 +863,15 @@ export default function NotebooksPage() {
                       {notebook.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-3">
                           {notebook.tags.map(tag => (
-                            <div key={tag.id} className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            <div
+                              key={tag.id}
+                              className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                router.push(`/notebooks?tag=${tag.id}`);
+                              }}
+                            >
                               <Tag className="mr-1 h-2.5 w-2.5" />
                               {tag.name}
                             </div>
@@ -690,7 +950,15 @@ export default function NotebooksPage() {
                     {notebook.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2 md:mt-0 md:w-1/4 md:justify-end">
                         {notebook.tags.map(tag => (
-                          <div key={tag.id} className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                          <div
+                            key={tag.id}
+                            className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              router.push(`/notebooks?tag=${tag.id}`);
+                            }}
+                          >
                             <Tag className="mr-1 h-2.5 w-2.5" />
                             {tag.name}
                           </div>
@@ -701,6 +969,7 @@ export default function NotebooksPage() {
                 );
               })}
             </div>
+            )}
 
             {/* Pagination */}
             {displayedPagination.totalPages > 1 && (

@@ -154,6 +154,16 @@ export default function NotebookPage({ params }) {
     try {
       setIsSaving(true);
 
+      // Process tags correctly - extract tag names for new tags and IDs for existing tags
+      const processedTags = selectedTags.map(tag => {
+        // If it's a new tag (has a temporary ID starting with 'new-'), send the name
+        if (tag.id.startsWith('new-')) {
+          return tag.name;
+        }
+        // Otherwise, send the ID for existing tags
+        return tag.id;
+      });
+
       const response = await fetch(`/api/notebooks/${notebookId}`, {
         method: 'PUT',
         headers: {
@@ -162,7 +172,7 @@ export default function NotebookPage({ params }) {
         body: JSON.stringify({
           title,
           content: editorData,
-          tags: selectedTags.map(tag => tag.id),
+          tags: processedTags,
         }),
       });
 
@@ -361,7 +371,16 @@ export default function NotebookPage({ params }) {
                       <TagIcon className="h-3.5 w-3.5" />
                       <div className="flex flex-wrap gap-1.5">
                         {notebook.tags.map(tag => (
-                          <Badge key={tag.id} variant="outline" className="text-xs rounded-full px-2 py-0 h-5">
+                          <Badge
+                            key={tag.id}
+                            variant="outline"
+                            className="text-xs rounded-full px-2 py-0 h-5 cursor-pointer hover:bg-muted"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              router.push(`/notebooks?tag=${tag.id}`);
+                            }}
+                          >
                             {tag.name}
                           </Badge>
                         ))}
