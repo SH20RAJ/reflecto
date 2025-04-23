@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "chmod +x netlify-build.sh && ./netlify-build.sh"
   publish = ".next"
 
 [build.environment]

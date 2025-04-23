@@ -5,9 +5,8 @@ const nextConfig = {
     domains: ['lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
     formats: ['image/avif', 'image/webp'],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@libsql/client'],
-  },
+  experimental: {},
+  serverExternalPackages: ['@libsql/client'],
 };
 
 export default nextConfig;
