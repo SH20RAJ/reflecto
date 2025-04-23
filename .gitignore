@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+.open-next
+.wrangler
 
 # next.js
 /.next/
