@@ -14,8 +14,12 @@ import "./styles.css";
 export default function SignIn() {
   const router = useRouter();
 
-  const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/notebooks" });
+  const handleGoogleSignIn = async () => {
+    try {
+      await signIn("google", { callbackUrl: "/notebooks" });
+    } catch (error) {
+      console.error("Sign-in error:", error);
+    }
   };
 
   return (

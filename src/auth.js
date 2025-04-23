@@ -20,9 +20,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  // debug: process.env.NODE_ENV === "development",
+  debug: process.env.NODE_ENV === "development",
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
+  },
+  // Explicitly enable CSRF protection
+  useSecureCookies: process.env.NODE_ENV === "production",
+  cookies: {
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
 })
