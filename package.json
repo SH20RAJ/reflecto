@@ -11,7 +11,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "postinstall": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\"",
-    "netlify-build": "npm install tailwindcss@3.3.5 autoprefixer@10.4.16 postcss@8.4.31 tailwindcss-animate@1.0.7 --save && next build --no-lint"
+    "netlify-build": "npm install tailwindcss@3.3.5 autoprefixer@10.4.16 postcss@8.4.31 tailwindcss-animate@1.0.7 --save && next build --no-lint",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.17.0",
@@ -58,6 +61,7 @@
     "@yoopta/code": "^4.9.7",
     "@yoopta/editor": "^4.9.7",
     "@yoopta/headings": "^4.9.7",
+    "autoprefixer": "^10.4.16",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -74,6 +78,7 @@
     "next-themes": "^0.4.6",
     "novel": "^1.0.2",
     "novel-lightweight": "^0.2.1",
+    "postcss": "^8.4.31",
     "react": "^19.0.0",
     "react-day-picker": "8.10.1",
     "react-dom": "^19.0.0",
@@ -92,10 +97,9 @@
     "tailwind-merge": "^3.2.0",
     "tailwindcss": "^3.3.5",
     "tailwindcss-animate": "^1.0.7",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.31",
     "use-debounce": "^10.0.4",
     "vaul": "^1.1.2",
+    "wrangler": "^4.12.1",
     "zod": "^3.24.3"
   },
   "devDependencies": {
