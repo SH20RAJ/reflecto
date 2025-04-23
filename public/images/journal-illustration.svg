@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400px" height="300px" viewBox="0 0 400 300" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Journal Illustration</title>
+    <defs>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#F0F4FF" offset="0%"></stop>
+            <stop stop-color="#E1E8FF" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-2">
+            <stop stop-color="#D4DDFF" offset="0%"></stop>
+            <stop stop-color="#B1C1FF" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-3">
+            <stop stop-color="#F9FAFF" offset="0%"></stop>
+            <stop stop-color="#F0F4FF" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Journal-Illustration" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Background" fill="url(#linearGradient-1)" x="0" y="0" width="400" height="300" rx="8"></rect>
+        
+        <!-- Journal -->
+        <g id="Journal" transform="translate(100, 50)">
+            <rect id="Cover" fill="url(#linearGradient-2)" x="0" y="0" width="200" height="180" rx="4"></rect>
+            <rect id="Pages" fill="url(#linearGradient-3)" x="10" y="10" width="180" height="160" rx="2"></rect>
+            
+            <!-- Lines on the page -->
+            <line x1="30" y1="40" x2="170" y2="40" stroke="#D1DBFF" stroke-width="2"></line>
+            <line x1="30" y1="60" x2="170" y2="60" stroke="#D1DBFF" stroke-width="2"></line>
+            <line x1="30" y1="80" x2="170" y2="80" stroke="#D1DBFF" stroke-width="2"></line>
+            <line x1="30" y1="100" x2="170" y2="100" stroke="#D1DBFF" stroke-width="2"></line>
+            <line x1="30" y1="120" x2="170" y2="120" stroke="#D1DBFF" stroke-width="2"></line>
+            <line x1="30" y1="140" x2="170" y2="140" stroke="#D1DBFF" stroke-width="2"></line>
+            
+            <!-- Text elements -->
+            <rect x="40" y="30" width="80" height="5" rx="2" fill="#6B8AFF"></rect>
+            <rect x="40" y="50" width="120" height="5" rx="2" fill="#D1DBFF"></rect>
+            <rect x="40" y="70" width="100" height="5" rx="2" fill="#D1DBFF"></rect>
+            <rect x="40" y="90" width="110" height="5" rx="2" fill="#D1DBFF"></rect>
+            <rect x="40" y="110" width="90" height="5" rx="2" fill="#D1DBFF"></rect>
+            <rect x="40" y="130" width="70" height="5" rx="2" fill="#D1DBFF"></rect>
+            
+            <!-- Bookmark -->
+            <rect x="190" y="30" width="10" height="40" rx="2" fill="#FF7979"></rect>
+        </g>
+        
+        <!-- Decorative elements -->
+        <circle cx="50" cy="50" r="20" fill="#6B8AFF" opacity="0.1"></circle>
+        <circle cx="350" cy="250" r="30" fill="#6B8AFF" opacity="0.1"></circle>
+        <circle cx="300" cy="70" r="15" fill="#FF7979" opacity="0.1"></circle>
+        <circle cx="80" cy="230" r="25" fill="#FF7979" opacity="0.1"></circle>
+    </g>
+</svg>
