@@ -113,8 +113,8 @@ export default function NotebooksPage() {
                              selectedTag ? tagPagination :
                              pagination;
 
-  // Determine loading state
-  const isLoading = isLoadingNotebooks || isLoadingTags || isSearching || isLoadingTagNotebooks || isLoadingState;
+  // Determine overall loading state - but we'll use isLoadingNotebooks specifically for the notebooks loading UI
+  const isLoading = isLoadingTags || isSearching || isLoadingTagNotebooks || isLoadingState;
 
   // Debug loading state
   console.log('Loading states:', {
@@ -144,14 +144,12 @@ export default function NotebooksPage() {
       }
 
       // Set loading state to false once we have checked for data
-      // We don't need to wait for notebooks to be loaded to show the create option
-      if (!isLoadingNotebooks) {
-        setIsLoadingState(false);
-      }
+      // We'll let the isLoadingNotebooks state handle the loading UI
+      setIsLoadingState(false);
     } else if (status === 'unauthenticated') {
       setIsLoadingState(false);
     }
-  }, [isAuthenticated, status, searchParams, isLoadingNotebooks]);
+  }, [isAuthenticated, status, searchParams]);
 
 
 
@@ -596,7 +594,25 @@ export default function NotebooksPage() {
           </div>
         </div>
       ) : isAuthenticated ? (
-        isLoading && notebooks.length === 0 ? (
+        isLoadingNotebooks ? (
+          // Show loading skeleton while notebooks are being fetched
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse">
+                  <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+                  <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+                  <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+                  <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+                  <div className="flex gap-2">
+                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : notebooks.length === 0 ? (
           // Show a welcome message with create button instead of a loader for new users
           <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
             <h3 className="text-xl font-medium mb-2">Welcome to Reflecto!</h3>
@@ -788,7 +804,7 @@ Enjoy your journaling journey with Reflecto!`,
                   return viewMode === 'grid' ? (
                   <Card
                     key={notebook.id}
-                    className="cursor-pointer hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group relative"
+                    className="cursor-pointer rounded-none hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group relative"
                     onClick={(e) => handleViewNotebook(notebook.id, e)}
                   >
                     <div className="absolute top-2 right-2 z-10">
@@ -883,7 +899,7 @@ Enjoy your journaling journey with Reflecto!`,
                 ) : (
                   <div
                     key={notebook.id}
-                    className="border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group flex flex-col md:flex-row gap-4 relative"
+                    className="border   p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group flex flex-col md:flex-row gap-4 relative"
                     onClick={(e) => handleViewNotebook(notebook.id, e)}
                   >
                     <div className="absolute top-2 right-2 z-10">
