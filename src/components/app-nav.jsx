@@ -126,13 +126,13 @@ export function AppNav() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-full"
+                  className="rounded-full p-0 overflow-hidden"
                 >
                   {session?.user?.image ? (
                     <img
                       src={session.user.image}
                       alt={session.user.name || "User"}
-                      className="h-8 w-8 rounded-full"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     <User className="h-5 w-5" />

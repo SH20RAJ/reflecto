@@ -77,6 +77,39 @@ export const notebooksTags = sqliteTable("notebooks_tags", {
   };
 });
 
+// Newsletter subscriptions table
+export const newsletterSubscriptions = sqliteTable("newsletter_subscriptions", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  active: integer("active", { mode: "boolean" }).notNull().default(1),
+});
+
+// Feedback table
+export const feedback = sqliteTable("feedback", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  name: text("name"),
+  email: text("email").notNull(),
+  subject: text("subject"),
+  message: text("message").notNull(),
+  rating: integer("rating"),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  userId: text("user_id").references(() => users.id),
+});
+
+// Contact messages table
+export const contactMessages = sqliteTable("contact_messages", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject"),
+  message: text("message").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  status: text("status").notNull().default("new"), // new, read, replied, archived
+  userId: text("user_id").references(() => users.id),
+});
+
 // Keep the foo table for testing
 export const fooTable = sqliteTable("foo", {
   bar: text("bar").notNull().default("Hey!"),

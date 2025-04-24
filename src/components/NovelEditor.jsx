@@ -1,59 +1,48 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { EditorContent, EditorRoot, StarterKit, Placeholder, Command, handleCommandNavigation } from 'novel';
-import { useDebouncedCallback } from 'use-debounce';
+import React, { useState, useEffect } from "react";
 
-const NovelEditor = ({ initialValue = '', onChange, readOnly = false }) => {
-  const [content, setContent] = useState(initialValue || '');
+export default function NovelEditor({
+  onChange,
+  initialValue = "",
+  readOnly = false,
+}) {
+  const [data, setData] = useState(initialValue);
 
-  // Update the editor when initialValue changes
+  // Update data when initialValue changes
   useEffect(() => {
-    setContent(initialValue || '');
+    setData(initialValue);
   }, [initialValue]);
 
-  // Debounce the updates to prevent too many state changes
-  const debouncedUpdates = useDebouncedCallback(({ editor }) => {
-    const json = editor.getJSON();
-    // For simplicity, we'll just use the text content for now
-    const markdownContent = json?.content?.[0]?.content?.[0]?.text || '';
-
+  // Handle textarea changes
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setData(newValue);
     if (onChange) {
-      onChange(markdownContent);
+      onChange(newValue);
     }
-  }, 500);
+  };
 
   return (
-    <div className="novel-editor-wrapper">
-      <EditorRoot>
-        <EditorContent
-          initialContent={content ? { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: content }] }] } : undefined}
-          onUpdate={debouncedUpdates}
-          className="min-h-[300px] border rounded-md"
-          editable={!readOnly}
-          extensions={[
-            StarterKit,
-            Placeholder.configure({
-              placeholder: 'Write something...',
-            }),
-            Command.configure({
-              suggestion: {
-                char: '/',
-              },
-            }),
-          ]}
-          editorProps={{
-            handleDOMEvents: {
-              keydown: (_view, event) => handleCommandNavigation(event),
-            },
-            attributes: {
-              class: "prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full p-4"
-            }
-          }}
+    <div className={`novel-editor-wrapper ${readOnly ? 'view-mode' : 'edit-mode'}`}>
+      {readOnly ? (
+        <div className="prose prose-lg dark:prose-invert max-w-full p-4 whitespace-pre-wrap">
+          {data.split('\n').map((line, i) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < data.split('\n').length - 1 && <br />}
+            </React.Fragment>
+          ))}
+        </div>
+      ) : (
+        <textarea
+          value={data}
+          onChange={handleChange}
+          className={`w-full min-h-[300px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-y font-mono`}
+          disabled={readOnly}
+          placeholder="Write something..."
         />
-      </EditorRoot>
+      )}
     </div>
   );
-};
-
-export default NovelEditor;
+}

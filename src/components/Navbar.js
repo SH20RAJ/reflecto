@@ -38,6 +38,9 @@ export default function Navbar() {
             <Link href="#faq" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">
               FAQ
             </Link>
+            <Link href="/contact" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">
+              Contact
+            </Link>
           </nav>
 
           <div className="flex items-center space-x-6">
@@ -50,11 +53,11 @@ export default function Navbar() {
             ) : isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button variant="ghost" className="flex h-9 w-9 p-0 rounded-full overflow-hidden">
                     <img
                       src={session.user.image || `https://ui-avatars.com/api/?name=${session.user.name || 'User'}`}
                       alt={session.user.name || "User"}
-                      className="h-9 w-9 rounded-full object-cover"
+                      className="h-full w-full rounded-full object-cover"
                     />
                   </Button>
                 </DropdownMenuTrigger>
@@ -133,6 +136,20 @@ export default function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               FAQ
+            </Link>
+            <Link
+              href="/contact"
+              className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
+            </Link>
+            <Link
+              href="/feedback"
+              className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Feedback
             </Link>
             <Link
               href="/notebooks"

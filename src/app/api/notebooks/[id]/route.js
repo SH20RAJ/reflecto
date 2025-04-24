@@ -8,11 +8,12 @@ import { NotebookService } from '@/lib/notebook-service-drizzle';
  * Get a notebook by ID
  */
 export async function GET(request, context) {
-  const params = context.params;
   try {
+    // Get the params and unwrap them
+    const params = await context.params;
+
     // Get the user session
     const session = await auth()
-
 
     // Check if the user is authenticated
     if (!session || !session.user) {
@@ -32,7 +33,7 @@ export async function GET(request, context) {
 
     return NextResponse.json(notebook);
   } catch (error) {
-    console.error(`Error in GET /api/notebooks/${params.id}:`, error);
+    console.error(`Error in GET /api/notebooks/[id]:`, error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -42,11 +43,12 @@ export async function GET(request, context) {
  * Update a notebook
  */
 export async function PUT(request, context) {
-  const params = context.params;
   try {
+    // Get the params and unwrap them
+    const params = await context.params;
+
     // Get the user session
     const session = await auth()
-
 
     // Check if the user is authenticated
     if (!session || !session.user) {
@@ -78,7 +80,7 @@ export async function PUT(request, context) {
 
     return NextResponse.json(notebook);
   } catch (error) {
-    console.error(`Error in PUT /api/notebooks/${params.id}:`, error);
+    console.error(`Error in PUT /api/notebooks/[id]:`, error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -88,11 +90,12 @@ export async function PUT(request, context) {
  * Delete a notebook
  */
 export async function DELETE(request, context) {
-  const params = context.params;
   try {
+    // Get the params and unwrap them
+    const params = await context.params;
+
     // Get the user session
     const session = await auth()
-
 
     // Check if the user is authenticated
     if (!session || !session.user) {
@@ -112,7 +115,7 @@ export async function DELETE(request, context) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`Error in DELETE /api/notebooks/${params.id}:`, error);
+    console.error(`Error in DELETE /api/notebooks/[id]:`, error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

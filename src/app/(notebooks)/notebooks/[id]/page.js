@@ -31,41 +31,7 @@ import { toast } from "sonner";
 import NovelEditor from "@/components/NovelEditor";
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-// Helper function to ensure content is in markdown format
-const ensureMarkdownFormat = (content) => {
-  if (!content) return '';
 
-  try {
-    // Check if content might be in JSON format (legacy)
-    if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
-      try {
-        const parsed = JSON.parse(content);
-        if (parsed.blocks) {
-          // Convert Editor.js format to markdown
-          return parsed.blocks
-            .map(block => {
-              if (block.type === 'paragraph') return block.data.text;
-              if (block.type === 'header') return '#'.repeat(block.data.level) + ' ' + block.data.text;
-              if (block.type === 'list') {
-                return block.data.items.map(item => `- ${item}`).join('\n');
-              }
-              if (block.type === 'quote') return `> ${block.data.text}`;
-              if (block.type === 'code') return `\`\`\`${block.data.language || ''}\n${block.data.code}\n\`\`\``;
-              return '';
-            })
-            .filter(text => text)
-            .join('\n\n');
-        }
-      } catch (e) {
-        // Not valid JSON, return as is
-      }
-    }
-    return content;
-  } catch (e) {
-    console.error('Error processing content:', e);
-    return content;
-  }
-};
 
 export default function NotebookPage({ params }) {
   // Unwrap params using React.use()
@@ -76,8 +42,12 @@ export default function NotebookPage({ params }) {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
 
+  // Check if edit mode is requested via URL parameter
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const editRequested = urlParams.get('edit') === 'true';
+
   const [notebook, setNotebook] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(editRequested);
   const [editorData, setEditorData] = useState(null);
   const [title, setTitle] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -112,14 +82,8 @@ export default function NotebookPage({ params }) {
 
       // Set editor data from content
       if (typeof data.content === 'string' && data.content) {
-        try {
-          // Process content to ensure it's in markdown format
-          const markdownContent = ensureMarkdownFormat(data.content);
-          setEditorData(markdownContent);
-        } catch (error) {
-          console.error('Error handling notebook content:', error);
-          setEditorData(data.content || '');
-        }
+        // Simply set the content as is - the editor will handle markdown formatting
+        setEditorData(data.content);
       } else {
         // Set empty editor data
         setEditorData('');
@@ -135,12 +99,6 @@ export default function NotebookPage({ params }) {
   useEffect(() => {
     if (isAuthenticated && notebookId) {
       fetchNotebook();
-
-      // Check if edit mode is requested via URL parameter
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('edit') === 'true') {
-        setIsEditing(true);
-      }
     } else if (status === "unauthenticated") {
       router.push('/auth/signin');
     }
@@ -220,14 +178,7 @@ export default function NotebookPage({ params }) {
 
     // Reset editor data to original
     if (typeof notebook.content === 'string' && notebook.content) {
-      try {
-        // Process content to ensure it's in markdown format
-        const markdownContent = ensureMarkdownFormat(notebook.content);
-        setEditorData(markdownContent);
-      } catch (error) {
-        console.error('Error handling notebook content:', error);
-        setEditorData(notebook.content || '');
-      }
+      setEditorData(notebook.content);
     } else {
       // Set empty editor data
       setEditorData('');

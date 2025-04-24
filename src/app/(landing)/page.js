@@ -6,15 +6,18 @@ import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
+import NewsletterSection from "@/components/NewsletterSection";
+
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col  ">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       <Hero />
       <Features />
       <HowItWorks />
       <Testimonials />
+      <NewsletterSection />
       <FAQ />
       <CTA />
       <Footer />

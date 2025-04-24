@@ -57,6 +57,16 @@ export default function Footer() {
                   Help Center
                 </Link>
               </li>
+              <li>
+                <Link href="/feedback" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors">
+                  Feedback
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors">
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </div>
 
