@@ -186,6 +186,13 @@ export const NotebookService = {
             tagName = tagItem.trim();
             if (!tagName) continue;
 
+            // Validate tag name - don't allow tag names that look like IDs
+            // This prevents the issue where IDs are accidentally stored as names
+            if (tagName.length > 20 && /^[a-zA-Z0-9_-]+$/.test(tagName)) {
+              console.warn('Tag name looks like an ID, skipping:', tagName);
+              continue;
+            }
+
             // Check if a tag with this name already exists
             const existingTagByName = await db
               .select()
@@ -291,6 +298,13 @@ export const NotebookService = {
             // It's a new tag name
             tagName = tagItem.trim();
             if (!tagName) continue;
+
+            // Validate tag name - don't allow tag names that look like IDs
+            // This prevents the issue where IDs are accidentally stored as names
+            if (tagName.length > 20 && /^[a-zA-Z0-9_-]+$/.test(tagName)) {
+              console.warn('Tag name looks like an ID, skipping:', tagName);
+              continue;
+            }
 
             // Check if a tag with this name already exists
             const existingTagByName = await db

@@ -19,6 +19,9 @@ export async function GET(request) {
     // Get tags for the user
     const tags = await NotebookService.getUserTags(session.user.id);
 
+    // Debug log the tags
+    console.log('Tags returned from API:', JSON.stringify(tags, null, 2));
+
     return NextResponse.json(tags);
   } catch (error) {
     console.error('Error in GET /api/tags:', error);

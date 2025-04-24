@@ -45,6 +45,11 @@ export async function GET(request) {
       pagination: result?.pagination
     });
 
+    // Debug log the first notebook's tags if available
+    if (result?.notebooks?.length > 0 && result.notebooks[0].tags) {
+      console.log('First notebook tags:', JSON.stringify(result.notebooks[0].tags, null, 2));
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error in GET /api/notebooks:', error);
