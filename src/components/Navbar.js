@@ -35,6 +35,9 @@ export default function Navbar() {
             <Link href="#how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">
               How It Works
             </Link>
+            <Link href="/pitch" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">
+              Why Reflecto
+            </Link>
             <Link href="#faq" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium">
               FAQ
             </Link>
@@ -136,6 +139,13 @@ export default function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               FAQ
+            </Link>
+            <Link
+              href="/pitch"
+              className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors font-medium py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Why Reflecto
             </Link>
             <Link
               href="/contact"

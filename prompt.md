@@ -1,0 +1,2 @@
+add feature that we can chat with the data of the provided we have added the text images this is our main mvp like people can search when the date when i met first with my girl when what is the photo I took on saturday first month of jan 2025 etc like add some more sample questions 
+add this data to /pitch

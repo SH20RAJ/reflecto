@@ -30,6 +30,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/pitch" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors">
+                  Why Reflecto
+                </Link>
+              </li>
+              <li>
                 <Link href="#faq" className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors">
                   FAQ
                 </Link>
