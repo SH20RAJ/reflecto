@@ -15,6 +15,13 @@
       "when": 1745329560066,
       "tag": "0001_blue_cargill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1745614892531,
+      "tag": "0002_warm_roughhouse",
+      "breakpoints": true
     }
   ]
 }
