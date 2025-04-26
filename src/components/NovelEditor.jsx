@@ -1,48 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import TextEditor from "./TextEditor";
 
 export default function NovelEditor({
   onChange,
   initialValue = "",
   readOnly = false,
 }) {
-  const [data, setData] = useState(initialValue);
-
-  // Update data when initialValue changes
-  useEffect(() => {
-    setData(initialValue);
-  }, [initialValue]);
-
-  // Handle textarea changes
-  const handleChange = (e) => {
-    const newValue = e.target.value;
-    setData(newValue);
-    if (onChange) {
-      onChange(newValue);
-    }
-  };
-
+  // This is now just a wrapper around our TextEditor component
+  // for backward compatibility
   return (
-    <div className={`novel-editor-wrapper ${readOnly ? 'view-mode' : 'edit-mode'}`}>
-      {readOnly ? (
-        <div className="prose prose-lg dark:prose-invert max-w-full p-4 whitespace-pre-wrap">
-          {data.split('\n').map((line, i) => (
-            <React.Fragment key={i}>
-              {line}
-              {i < data.split('\n').length - 1 && <br />}
-            </React.Fragment>
-          ))}
-        </div>
-      ) : (
-        <textarea
-          value={data}
-          onChange={handleChange}
-          className={`w-full min-h-[300px] p-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-y font-mono`}
-          disabled={readOnly}
-          placeholder="Write something..."
-        />
-      )}
-    </div>
+    <TextEditor
+      initialValue={initialValue}
+      onChange={onChange}
+      readOnly={readOnly}
+      placeholder="Write your thoughts here..."
+      className="w-full"
+      disableLocalStorage={true}
+      storageKey={`reflecto-notebook-${Date.now()}`}
+    />
   );
 }
