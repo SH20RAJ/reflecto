@@ -693,7 +693,7 @@ Enjoy your journaling journey with Reflecto!`,
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[50%]">
+                      <TableHead className="w-[40%]">
                         <div className="flex items-center cursor-pointer"
                           onClick={() => {
                             if (sortBy === 'alphabetical') {
@@ -717,6 +717,11 @@ Enjoy your journaling journey with Reflecto!`,
                               }
                             </span>
                           )}
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div className="flex items-center">
+                          Created
                         </div>
                       </TableHead>
                       <TableHead>
@@ -746,6 +751,7 @@ Enjoy your journaling journey with Reflecto!`,
                           )}
                         </div>
                       </TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Tags</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -759,11 +765,21 @@ Enjoy your journaling journey with Reflecto!`,
                       >
                         <TableCell className="font-medium">{notebook.title}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">
+                          {format(new Date(notebook.createdAt), 'MMM d, yyyy')}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
                           {format(new Date(notebook.updatedAt), 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell>
+                          {notebook.isPublic ? (
+                            <Badge variant="outline" className="text-xs py-0 h-5">Public</Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Private</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {notebook.tags.map(tag => (
+                            {notebook.tags.slice(0, 3).map(tag => (
                               <div
                                 key={tag.id}
                                 className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
@@ -777,6 +793,11 @@ Enjoy your journaling journey with Reflecto!`,
                                 {tag.name}
                               </div>
                             ))}
+                            {notebook.tags.length > 3 && (
+                              <div className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                +{notebook.tags.length - 3}
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -839,10 +860,10 @@ Enjoy your journaling journey with Reflecto!`,
                   return viewMode === 'grid' ? (
                   <Card
                     key={notebook.id}
-                    className="cursor-pointer rounded-none hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group relative"
+                    className="cursor-pointer rounded-lg hover:shadow-md transition-all hover:border-primary/20 overflow-hidden group relative"
                     onClick={(e) => handleViewNotebook(notebook.id, e)}
                   >
-                    <div className="absolute top-2 right-2 z-10">
+                    <div className="absolute top-3 right-3 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -892,15 +913,28 @@ Enjoy your journaling journey with Reflecto!`,
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                    <CardHeader className="pb-2 pt-5">
-                      <div className="flex items-center text-xs text-muted-foreground mb-1.5">
-                        <Clock className="h-3 w-3 mr-1.5" />
-                        {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}
+
+                    {notebook.isPublic && (
+                      <div className="absolute top-3 left-3">
+                        <Badge variant="secondary" className="text-xs">Public</Badge>
                       </div>
-                      <CardTitle className="text-lg group-hover:text-primary transition-colors">{notebook.title}</CardTitle>
+                    )}
+
+                    <CardHeader className="pb-2 pt-5">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+                        <div className="flex items-center">
+                          <Calendar className="h-3 w-3 mr-1.5" />
+                          <span>{format(new Date(notebook.createdAt), 'MMM d, yyyy')}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1.5" />
+                          <span>{format(new Date(notebook.updatedAt), 'MMM d, yyyy')}</span>
+                        </div>
+                      </div>
+                      <CardTitle className="text-xl group-hover:text-primary transition-colors">{notebook.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground text-sm line-clamp-3">
+                      <p className="text-muted-foreground text-sm line-clamp-3 mb-4">
                         {notebook.content ? (
                           // Display markdown content
                           (() => {
@@ -934,33 +968,56 @@ Enjoy your journaling journey with Reflecto!`,
                         ) : 'No content'}
                       </p>
 
-                      {notebook.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {notebook.tags.map(tag => (
-                            <div
-                              key={tag.id}
-                              className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                router.push(`/notebooks?tag=${tag.id}`);
-                              }}
-                            >
-                              <Tag className="mr-1 h-2.5 w-2.5" />
-                              {tag.name}
-                            </div>
-                          ))}
+                      <div className="flex justify-between items-center">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleViewNotebook(notebook.id, e);
+                            }}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </Button>
                         </div>
-                      )}
+
+                        {notebook.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 justify-end">
+                            {notebook.tags.slice(0, 2).map(tag => (
+                              <div
+                                key={tag.id}
+                                className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  router.push(`/notebooks?tag=${tag.id}`);
+                                }}
+                              >
+                                <Tag className="mr-1 h-2.5 w-2.5" />
+                                {tag.name}
+                              </div>
+                            ))}
+                            {notebook.tags.length > 2 && (
+                              <div className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                +{notebook.tags.length - 2}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ) : (
                   <div
                     key={notebook.id}
-                    className="border   p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group flex flex-col md:flex-row gap-4 relative"
+                    className="border rounded-lg p-5 cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group flex flex-col md:flex-row gap-4 relative"
                     onClick={(e) => handleViewNotebook(notebook.id, e)}
                   >
-                    <div className="absolute top-2 right-2 z-10">
+                    <div className="absolute top-3 right-3 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1011,12 +1068,23 @@ Enjoy your journaling journey with Reflecto!`,
                       </DropdownMenu>
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center text-xs text-muted-foreground mb-1.5">
-                        <Clock className="h-3 w-3 mr-1.5" />
-                        {format(new Date(notebook.updatedAt), 'MMMM d, yyyy')}
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
+                        <div className="flex items-center">
+                          <Calendar className="h-3 w-3 mr-1.5" />
+                          <span>Created {format(new Date(notebook.createdAt), 'MMM d, yyyy')}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1.5" />
+                          <span>Updated {format(new Date(notebook.updatedAt), 'MMM d, yyyy')}</span>
+                        </div>
+                        {notebook.isPublic && (
+                          <Badge variant="outline" className="text-xs py-0 h-5">
+                            Public
+                          </Badge>
+                        )}
                       </div>
-                      <h3 className="text-lg font-medium group-hover:text-primary transition-colors mb-2">{notebook.title}</h3>
-                      <p className="text-muted-foreground text-sm line-clamp-2">
+                      <h3 className="text-xl font-medium group-hover:text-primary transition-colors mb-3">{notebook.title}</h3>
+                      <p className="text-muted-foreground text-sm line-clamp-2 mb-3">
                         {notebook.content ? (
                           (() => {
                             try {
@@ -1043,25 +1111,57 @@ Enjoy your journaling journey with Reflecto!`,
                           })()
                         ) : 'No content'}
                       </p>
-                    </div>
-                    {notebook.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2 md:mt-0 md:w-1/4 md:justify-end">
-                        {notebook.tags.map(tag => (
-                          <div
-                            key={tag.id}
-                            className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
+
+                      <div className="flex justify-between items-center">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              router.push(`/notebooks?tag=${tag.id}`);
+                              handleViewNotebook(notebook.id, e);
                             }}
                           >
-                            <Tag className="mr-1 h-2.5 w-2.5" />
-                            {tag.name}
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEditNotebook(notebook.id, e);
+                            }}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                            Edit
+                          </Button>
+                        </div>
+
+                        {notebook.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 justify-end">
+                            {notebook.tags.map(tag => (
+                              <div
+                                key={tag.id}
+                                className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  router.push(`/notebooks?tag=${tag.id}`);
+                                }}
+                              >
+                                <Tag className="mr-1 h-2.5 w-2.5" />
+                                {tag.name}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}

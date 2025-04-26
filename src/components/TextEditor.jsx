@@ -36,39 +36,7 @@ export default function TextEditor({
     }
   };
 
-  const handleImageUpload = async (file) => {
-    try {
-      // Show a loading toast
-      const loadingToast = toast.loading('Uploading image...');
-
-      // Create a FormData object to send the file
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // In a real implementation, you would upload the file to your server or a storage service
-      // For now, we'll simulate a delay and return a data URL
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Create a data URL for the image (this is just for demo purposes)
-      // In a real app, you would return the URL from your server
-      const reader = new FileReader();
-
-      const url = await new Promise((resolve) => {
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
-
-      // Dismiss the loading toast and show a success toast
-      toast.dismiss(loadingToast);
-      toast.success('Image uploaded successfully');
-
-      return url;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error('Failed to upload image. Please try again.');
-      return null;
-    }
-  };
+  
 
   return (
     <div className={`editor-container ${className}`}>
@@ -89,8 +57,28 @@ export default function TextEditor({
             placeholder: placeholder,
           },
         }}
-        handleImageUpload={handleImageUpload}
-        // Additional extensions can be added here if needed
+        handleImageUpload={async (file) => {
+          try {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const response = await fetch('/api/upload-image', {
+              method: 'POST',
+              body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              throw new Error(data.error || 'Failed to upload image');
+            }
+
+            return data.url;
+          } catch (error) {
+            console.error('Image upload error:', error);
+            return null;
+          }
+        }}        // Additional extensions can be added here if needed
         extensions={[]}
       />
     </div>
