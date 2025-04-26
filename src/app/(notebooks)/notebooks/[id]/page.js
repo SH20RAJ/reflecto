@@ -43,12 +43,7 @@ export default function NotebookPage({ params }) {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
 
-  // Check if edit mode is requested via URL parameter
-  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const editRequested = urlParams.get('edit') === 'true';
-
   const [notebook, setNotebook] = useState(null);
-  const [isEditing, setIsEditing] = useState(editRequested);
   const [editorData, setEditorData] = useState(null);
   const [title, setTitle] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -108,8 +103,6 @@ export default function NotebookPage({ params }) {
 
 
   const handleEditorSave = async () => {
-    if (!isEditing) return;
-
     try {
       setIsSaving(true);
 
@@ -141,7 +134,6 @@ export default function NotebookPage({ params }) {
 
       const updatedNotebook = await response.json();
       setNotebook(updatedNotebook);
-      setIsEditing(false);
       toast.success("Notebook saved successfully");
     } catch (error) {
       console.error('Error updating notebook:', error);
@@ -172,19 +164,7 @@ export default function NotebookPage({ params }) {
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setTitle(notebook.title);
-    setSelectedTags(notebook.tags || []);
 
-    // Reset editor data to original
-    if (typeof notebook.content === 'string' && notebook.content) {
-      setEditorData(notebook.content);
-    } else {
-      // Set empty editor data
-      setEditorData('');
-    }
-  };
 
   if (!isAuthenticated && status !== "loading") {
     return null; // Will redirect in useEffect
@@ -202,16 +182,17 @@ export default function NotebookPage({ params }) {
           Back to Notebooks
         </Button>
 
-        {!isLoading && notebook && !isEditing && (
+        {!isLoading && notebook && (
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              onClick={() => setIsEditing(true)}
+              onClick={handleEditorSave}
+              disabled={isSaving}
               className="gap-1"
             >
-              <Edit className="h-4 w-4" />
-              Edit
+              <Save className="h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
 
             <AlertDialog>
@@ -246,31 +227,6 @@ export default function NotebookPage({ params }) {
             </AlertDialog>
           </div>
         )}
-
-        {isEditing && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleEditorSave}
-              disabled={isSaving}
-              className="gap-1"
-            >
-              <Save className="h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              className="gap-1"
-            >
-              <X className="h-4 w-4" />
-              Cancel
-            </Button>
-          </div>
-        )}
       </div>
 
       {isLoading ? (
@@ -293,16 +249,12 @@ export default function NotebookPage({ params }) {
             <div className="flex flex-col space-y-4">
               <div className="flex justify-between items-center">
                 <div className="flex-1">
-                  {isEditing ? (
-                    <Input
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="text-4xl font-bold mb-2 border-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      placeholder="Untitled"
-                    />
-                  ) : (
-                    <h1 className="text-4xl font-bold">{notebook.title}</h1>
-                  )}
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-4xl font-bold mb-2 border-none px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    placeholder="Untitled"
+                  />
                 </div>
               </div>
 
@@ -326,114 +278,90 @@ export default function NotebookPage({ params }) {
                   }}
                 />
 
-                {!isEditing ? (
-                  notebook.tags && notebook.tags.length > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <TagIcon className="h-3.5 w-3.5" />
-                      <div className="flex flex-wrap gap-1.5">
-                        {notebook.tags.map(tag => (
-                          <Badge
-                            key={tag.id}
-                            variant="outline"
-                            className="text-xs rounded-full px-2 py-0 h-5 cursor-pointer hover:bg-muted"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              router.push(`/notebooks?tag=${tag.id}`);
-                            }}
-                          >
-                            {tag.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <TagIcon className="h-3.5 w-3.5" />
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      {selectedTags.map(tag => (
-                        <Badge
-                          key={tag.id}
-                          variant="outline"
-                          className="text-xs rounded-full px-2 py-0 h-5 flex items-center gap-1"
+                <div className="flex items-center gap-1.5">
+                  <TagIcon className="h-3.5 w-3.5" />
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    {selectedTags.map(tag => (
+                      <Badge
+                        key={tag.id}
+                        variant="outline"
+                        className="text-xs rounded-full px-2 py-0 h-5 flex items-center gap-1"
+                      >
+                        {tag.name}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+                          }}
+                          className="text-muted-foreground hover:text-foreground"
                         >
-                          {tag.name}
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
-                            }}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
 
-                      <Popover open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-5 px-2 text-xs rounded-full">
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add Tag
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0" side="right" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search tags..." />
-                            <CommandList>
-                              <CommandEmpty>
-                                <div className="p-2 text-sm">
-                                  <div className="mb-2">No tags found</div>
-                                  <div className="flex items-center gap-1">
-                                    <Input
-                                      value={newTag}
-                                      onChange={(e) => setNewTag(e.target.value)}
-                                      placeholder="Create new tag"
-                                      className="h-7 text-xs"
-                                    />
-                                    <Button
-                                      size="sm"
-                                      className="h-7 px-2"
-                                      onClick={() => {
-                                        if (newTag.trim()) {
-                                          const newTagObj = { id: `new-${Date.now()}`, name: newTag.trim() };
-                                          setSelectedTags([...selectedTags, newTagObj]);
-                                          setNewTag('');
-                                          setIsTagPopoverOpen(false);
-                                        }
-                                      }}
-                                    >
-                                      <Check className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {allTags
-                                  .filter(tag => !selectedTags.some(selectedTag => selectedTag.id === tag.id))
-                                  .map(tag => (
-                                    <CommandItem
-                                      key={tag.id}
-                                      onSelect={() => {
-                                        setSelectedTags([...selectedTags, tag]);
+                    <Popover open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-5 px-2 text-xs rounded-full">
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add Tag
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0" side="right" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search tags..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              <div className="p-2 text-sm">
+                                <div className="mb-2">No tags found</div>
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={newTag}
+                                    onChange={(e) => setNewTag(e.target.value)}
+                                    placeholder="Create new tag"
+                                    className="h-7 text-xs"
+                                  />
+                                  <Button
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => {
+                                      if (newTag.trim()) {
+                                        const newTagObj = { id: `new-${Date.now()}`, name: newTag.trim() };
+                                        setSelectedTags([...selectedTags, newTagObj]);
+                                        setNewTag('');
                                         setIsTagPopoverOpen(false);
-                                      }}
-                                    >
-                                      <TagIcon className="h-3 w-3 mr-2" />
-                                      {tag.name}
-                                    </CommandItem>
-                                  ))
-                                }
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
+                                      }
+                                    }}
+                                  >
+                                    <Check className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {allTags
+                                .filter(tag => !selectedTags.some(selectedTag => selectedTag.id === tag.id))
+                                .map(tag => (
+                                  <CommandItem
+                                    key={tag.id}
+                                    onSelect={() => {
+                                      setSelectedTags([...selectedTags, tag]);
+                                      setIsTagPopoverOpen(false);
+                                    }}
+                                  >
+                                    <TagIcon className="h-3 w-3 mr-2" />
+                                    {tag.name}
+                                  </CommandItem>
+                                ))
+                              }
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
@@ -444,7 +372,7 @@ export default function NotebookPage({ params }) {
             <NovelEditor
               initialValue={editorData}
               onChange={(data) => setEditorData(data)}
-              readOnly={!isEditing}
+              readOnly={false}
             />
           </div>
         </div>
