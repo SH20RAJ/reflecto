@@ -160,6 +160,7 @@ export const NotebookService = {
         title: notebookData.title,
         content: typeof notebookData.content === 'string' ? notebookData.content : JSON.stringify(contentObj),
         userId,
+        isPublic: notebookData.isPublic || 0, // Use the provided isPublic value or default to private
         createdAt: now,
         updatedAt: now,
       });
@@ -552,6 +553,264 @@ export const NotebookService = {
       };
     } catch (error) {
       console.error('Error fetching notebooks by tag:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get public notebooks
+   * @param {number} page - The page number (1-based)
+   * @param {number} limit - The number of items per page
+   * @returns {Promise<Object>} - A promise that resolves to an object with notebooks and pagination info
+   */
+  async getPublicNotebooks(page = 1, limit = 20) {
+    try {
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await db
+        .select({ count: sql`count(*)` })
+        .from(notebooks)
+        .where(eq(notebooks.isPublic, 1))
+        .then(result => Number(result[0].count));
+
+      // Get public notebooks with pagination
+      const publicNotebooks = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          content: notebooks.content,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+          userName: users.name,
+          userUsername: users.username,
+          userImage: users.image,
+        })
+        .from(notebooks)
+        .innerJoin(users, eq(notebooks.userId, users.id))
+        .where(eq(notebooks.isPublic, 1))
+        .orderBy(sql`${notebooks.updatedAt} DESC`)
+        .limit(limit)
+        .offset(offset);
+
+      // Get all tags for each notebook
+      const notebooksWithTags = await Promise.all(
+        publicNotebooks.map(async (notebook) => {
+          const notebookTags = await db
+            .select({
+              id: tags.id,
+              name: tags.name,
+            })
+            .from(tags)
+            .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+            .where(eq(notebooksTags.notebookId, notebook.id));
+
+          return {
+            id: notebook.id,
+            title: notebook.title,
+            content: notebook.content,
+            userId: notebook.userId,
+            isPublic: notebook.isPublic,
+            createdAt: notebook.createdAt,
+            updatedAt: notebook.updatedAt,
+            user: {
+              name: notebook.userName,
+              username: notebook.userUsername,
+              image: notebook.userImage,
+            },
+            tags: notebookTags,
+          };
+        })
+      );
+
+      // Calculate pagination info
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasMore = page < totalPages;
+      const hasPrevious = page > 1;
+
+      return {
+        notebooks: notebooksWithTags,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasMore,
+          hasPrevious
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching public notebooks:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get a public notebook by ID
+   * @param {string} id - The notebook ID
+   * @returns {Promise<Object>} - A promise that resolves to the notebook
+   */
+  async getPublicNotebookById(id) {
+    try {
+      // Get the notebook
+      const notebook = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          content: notebooks.content,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+          userName: users.name,
+          userUsername: users.username,
+          userImage: users.image,
+        })
+        .from(notebooks)
+        .innerJoin(users, eq(notebooks.userId, users.id))
+        .where(and(
+          eq(notebooks.id, id),
+          eq(notebooks.isPublic, 1)
+        ))
+        .then((res) => res[0] || null);
+
+      // Check if the notebook exists and is public
+      if (!notebook) {
+        return null;
+      }
+
+      // Get the tags for the notebook
+      const notebookTags = await db
+        .select({
+          id: tags.id,
+          name: tags.name,
+        })
+        .from(tags)
+        .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+        .where(eq(notebooksTags.notebookId, id));
+
+      return {
+        id: notebook.id,
+        title: notebook.title,
+        content: notebook.content,
+        userId: notebook.userId,
+        isPublic: notebook.isPublic,
+        createdAt: notebook.createdAt,
+        updatedAt: notebook.updatedAt,
+        user: {
+          name: notebook.userName,
+          username: notebook.userUsername,
+          image: notebook.userImage,
+        },
+        tags: notebookTags,
+      };
+    } catch (error) {
+      console.error('Error fetching public notebook:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get public notebooks by username
+   * @param {string} username - The username
+   * @param {number} page - The page number (1-based)
+   * @param {number} limit - The number of items per page
+   * @returns {Promise<Object>} - A promise that resolves to an object with notebooks and pagination info
+   */
+  async getPublicNotebooksByUsername(username, page = 1, limit = 20) {
+    try {
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Get the user ID from username
+      const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username))
+        .then((res) => res[0] || null);
+
+      if (!user) {
+        return {
+          notebooks: [],
+          pagination: {
+            page,
+            limit,
+            totalCount: 0,
+            totalPages: 0,
+            hasMore: false,
+            hasPrevious: false
+          }
+        };
+      }
+
+      // Get total count for pagination
+      const totalCount = await db
+        .select({ count: sql`count(*)` })
+        .from(notebooks)
+        .where(and(
+          eq(notebooks.userId, user.id),
+          eq(notebooks.isPublic, 1)
+        ))
+        .then(result => Number(result[0].count));
+
+      // Get public notebooks for the user with pagination
+      const userNotebooks = await db
+        .select()
+        .from(notebooks)
+        .where(and(
+          eq(notebooks.userId, user.id),
+          eq(notebooks.isPublic, 1)
+        ))
+        .orderBy(sql`${notebooks.updatedAt} DESC`)
+        .limit(limit)
+        .offset(offset);
+
+      // Get all tags for each notebook
+      const notebooksWithTags = await Promise.all(
+        userNotebooks.map(async (notebook) => {
+          const notebookTags = await db
+            .select({
+              id: tags.id,
+              name: tags.name,
+            })
+            .from(tags)
+            .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+            .where(eq(notebooksTags.notebookId, notebook.id));
+
+          return {
+            ...notebook,
+            user: {
+              id: user.id,
+              name: user.name,
+              username: user.username,
+              image: user.image,
+            },
+            tags: notebookTags,
+          };
+        })
+      );
+
+      // Calculate pagination info
+      const totalPages = Math.ceil(totalCount / limit);
+      const hasMore = page < totalPages;
+      const hasPrevious = page > 1;
+
+      return {
+        notebooks: notebooksWithTags,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages,
+          hasMore,
+          hasPrevious
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching public notebooks by username:', error);
       throw error;
     }
   },

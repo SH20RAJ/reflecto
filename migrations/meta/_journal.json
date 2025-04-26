@@ -22,6 +22,13 @@
       "when": 1745614892531,
       "tag": "0002_warm_roughhouse",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1745618862615,
+      "tag": "0003_goofy_gabe_jones",
+      "breakpoints": true
     }
   ]
 }

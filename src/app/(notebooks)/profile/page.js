@@ -14,8 +14,10 @@ import {
   Book,
   Tag as TagIcon,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  AtSign
 } from 'lucide-react';
+import UsernameForm from "@/components/UsernameForm";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +45,7 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [notebooks, setNotebooks] = useState([]);
@@ -59,6 +62,9 @@ export default function ProfilePage() {
   useEffect(() => {
     if (session?.user?.name) {
       setName(session.user.name);
+    }
+    if (session?.user?.username) {
+      setUsername(session.user.username);
     }
   }, [session]);
 
@@ -196,6 +202,12 @@ export default function ProfilePage() {
           {/* Profile Info */}
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-2xl font-bold">{session.user.name || "User"}</h1>
+            {session.user.username && (
+              <p className="text-muted-foreground flex items-center gap-1 justify-center md:justify-start">
+                <AtSign className="h-3.5 w-3.5" />
+                {session.user.username}
+              </p>
+            )}
             <p className="text-muted-foreground">{session.user.email}</p>
 
             {/* Stats */}
@@ -413,6 +425,23 @@ export default function ProfilePage() {
                     <p className="text-sm text-muted-foreground">
                       Your email cannot be changed.
                     </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5">
+                      <AtSign className="h-3.5 w-3.5" />
+                      Username
+                    </Label>
+                    <UsernameForm
+                      initialUsername={username}
+                      onUpdate={(newUsername) => {
+                        setUsername(newUsername);
+                        // Update the session user object
+                        if (session.user) {
+                          session.user.username = newUsername;
+                        }
+                      }}
+                    />
                   </div>
 
                   <Button type="submit" className="w-full" disabled={isLoading}>

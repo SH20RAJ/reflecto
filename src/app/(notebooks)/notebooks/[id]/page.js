@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useTags } from '@/lib/hooks';
+import PublicToggle from '@/components/PublicToggle';
 
 import {
   AlertDialog,
@@ -315,6 +316,15 @@ export default function NotebookPage({ params }) {
                   <Clock className="h-3.5 w-3.5" />
                   <span>Updated {format(new Date(notebook.updatedAt), 'MMMM d, yyyy h:mm a')}</span>
                 </div>
+
+                <PublicToggle
+                  notebookId={notebookId}
+                  initialIsPublic={notebook.isPublic}
+                  onToggle={(isPublic) => {
+                    // Update the local notebook state when the toggle changes
+                    setNotebook({...notebook, isPublic});
+                  }}
+                />
 
                 {!isEditing ? (
                   notebook.tags && notebook.tags.length > 0 && (

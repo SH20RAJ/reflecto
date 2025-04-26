@@ -5,6 +5,7 @@ import { text, integer, sqliteTable, primaryKey } from "drizzle-orm/sqlite-core"
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   name: text("name"),
+  username: text("username").unique(), // Added username field
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "timestamp" }),
   image: text("image"),
@@ -57,6 +58,7 @@ export const notebooks = sqliteTable("notebooks", {
   title: text("title").notNull(),
   content: text("content").default(""), // Now stores markdown content directly
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isPublic: integer("is_public", { mode: "boolean" }).notNull().default(0), // Added isPublic field
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
 });

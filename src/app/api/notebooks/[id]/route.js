@@ -71,6 +71,7 @@ export async function PUT(request, context) {
       title: data.title,
       content: data.content || '',
       tags: data.tags || [],
+      isPublic: data.isPublic !== undefined ? data.isPublic : undefined, // Only update if provided
     }, session.user.id);
 
     // Check if the notebook exists
