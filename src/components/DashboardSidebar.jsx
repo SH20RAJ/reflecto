@@ -78,8 +78,8 @@ const SidebarContent = ({ onClose }) => {
       <div className="px-3 mb-4">
         <Link href="/notebooks?new=true" onClick={onClose}>
           <Button
-            className="w-full justify-start gap-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full h-12"
-            variant="ghost"
+            className="w-full justify-start gap-2 rounded-full h-12"
+            variant="default"
           >
             <Plus className="h-4 w-4" />
             New Notebook
@@ -224,7 +224,12 @@ const DashboardSidebar = () => {
         <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">Reflecto</h2>
 
         <Link href="/notebooks?new=true">
-          <Button variant="ghost" size="icon" className="bg-primary/10 text-primary rounded-full">
+          <Button
+            variant="default"
+            size="icon"
+            className="rounded-full"
+            style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
+          >
             <Plus className="h-5 w-5" />
           </Button>
         </Link>

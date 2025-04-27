@@ -6,6 +6,26 @@ import { nanoid } from 'nanoid';
 // import { editorJsToMarkdown, extractPlainText } from './editorjs-to-markdown';
 
 /**
+ * Sanitize string content to remove invalid characters that could cause issues
+ * @param {string} content - The content to sanitize
+ * @returns {string} - The sanitized content
+ */
+const sanitizeContent = (content) => {
+  if (!content || typeof content !== 'string') return '';
+
+  try {
+    // Replace any characters that might cause issues with Unicode
+    // This will remove any invalid surrogate pairs or non-characters
+    return content.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, '?')
+                 .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); // Remove control characters
+  } catch (error) {
+    console.error('Error sanitizing content:', error);
+    // If all else fails, return a safe string
+    return 'Content unavailable due to encoding issues';
+  }
+};
+
+/**
  * Service for handling notebook operations using Drizzle ORM
  */
 export const NotebookService = {
@@ -28,31 +48,73 @@ export const NotebookService = {
         .where(eq(notebooks.userId, userId))
         .then(result => Number(result[0].count));
 
-      // Get notebooks for the user with pagination
-      const userNotebooks = await db
-        .select()
+      // Get notebooks for the user with pagination, but only select specific fields
+      // This avoids the issue with invalid code points in the content field
+      const userNotebooksBasic = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
         .from(notebooks)
         .where(eq(notebooks.userId, userId))
         .orderBy(sql`${notebooks.updatedAt} DESC`)
         .limit(limit)
         .offset(offset);
 
+      // Now fetch content separately for each notebook with error handling
+      const userNotebooks = await Promise.all(
+        userNotebooksBasic.map(async (notebook) => {
+          try {
+            // Fetch content separately with error handling
+            const contentResult = await db
+              .select({ content: sql`COALESCE(${notebooks.content}, '')` })
+              .from(notebooks)
+              .where(eq(notebooks.id, notebook.id))
+              .then(res => res[0]?.content || '');
+
+            return {
+              ...notebook,
+              content: sanitizeContent(contentResult)
+            };
+          } catch (error) {
+            console.error(`Error fetching content for notebook ${notebook.id}:`, error);
+            // Return the notebook with empty content if there's an error
+            return {
+              ...notebook,
+              content: 'Content unavailable due to encoding issues'
+            };
+          }
+        })
+      );
+
       // Get all tags for each notebook
       const notebooksWithTags = await Promise.all(
         userNotebooks.map(async (notebook) => {
-          const notebookTags = await db
-            .select({
-              id: tags.id,
-              name: tags.name,
-            })
-            .from(tags)
-            .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
-            .where(eq(notebooksTags.notebookId, notebook.id));
+          try {
+            const notebookTags = await db
+              .select({
+                id: tags.id,
+                name: tags.name,
+              })
+              .from(tags)
+              .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+              .where(eq(notebooksTags.notebookId, notebook.id));
 
-          return {
-            ...notebook,
-            tags: notebookTags,
-          };
+            return {
+              ...notebook,
+              tags: notebookTags,
+            };
+          } catch (error) {
+            console.error(`Error fetching tags for notebook ${notebook.id}:`, error);
+            return {
+              ...notebook,
+              tags: [],
+            };
+          }
         })
       );
 
@@ -86,30 +148,58 @@ export const NotebookService = {
    */
   async getNotebookById(id, userId) {
     try {
-      // Get the notebook
-      const notebook = await db
-        .select()
+      // Get the notebook basic info without content
+      const notebookBasic = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
         .from(notebooks)
         .where(eq(notebooks.id, id))
         .then((res) => res[0] || null);
 
       // Check if the notebook exists and belongs to the user
-      if (!notebook || notebook.userId !== userId) {
+      if (!notebookBasic || notebookBasic.userId !== userId) {
         return null;
       }
 
+      // Fetch content separately with error handling
+      let content = '';
+      try {
+        const contentResult = await db
+          .select({ content: sql`COALESCE(${notebooks.content}, '')` })
+          .from(notebooks)
+          .where(eq(notebooks.id, id))
+          .then(res => res[0]?.content || '');
+
+        content = sanitizeContent(contentResult);
+      } catch (error) {
+        console.error(`Error fetching content for notebook ${id}:`, error);
+        content = 'Content unavailable due to encoding issues';
+      }
+
       // Get the tags for the notebook
-      const notebookTags = await db
-        .select({
-          id: tags.id,
-          name: tags.name,
-        })
-        .from(tags)
-        .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
-        .where(eq(notebooksTags.notebookId, id));
+      let notebookTags = [];
+      try {
+        notebookTags = await db
+          .select({
+            id: tags.id,
+            name: tags.name,
+          })
+          .from(tags)
+          .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+          .where(eq(notebooksTags.notebookId, id));
+      } catch (error) {
+        console.error(`Error fetching tags for notebook ${id}:`, error);
+      }
 
       return {
-        ...notebook,
+        ...notebookBasic,
+        content,
         tags: notebookTags,
       };
     } catch (error) {
@@ -143,14 +233,19 @@ export const NotebookService = {
       }
 
       // Parse content if it's a JSON string
-      let contentObj = notebookData.content;
+      let contentToStore = '';
       if (typeof notebookData.content === 'string' && notebookData.content.trim() !== '') {
         try {
-          contentObj = JSON.parse(notebookData.content);
+          // Try to parse as JSON in case it's JSON format
+          const contentObj = JSON.parse(notebookData.content);
+          contentToStore = JSON.stringify(contentObj);
         } catch (e) {
-          console.error('Error parsing content JSON:', e);
-          contentObj = { blocks: [] };
+          // Not JSON, use as is but sanitize
+          contentToStore = sanitizeContent(notebookData.content);
         }
+      } else if (notebookData.content) {
+        // If it's an object, stringify it
+        contentToStore = JSON.stringify(notebookData.content);
       }
 
       // Create the notebook with explicit timestamps
@@ -158,7 +253,7 @@ export const NotebookService = {
       await db.insert(notebooks).values({
         id: notebookId,
         title: notebookData.title,
-        content: typeof notebookData.content === 'string' ? notebookData.content : JSON.stringify(contentObj),
+        content: contentToStore,
         userId,
         isPublic: notebookData.isPublic || 0, // Use the provided isPublic value or default to private
         createdAt: now,
@@ -241,36 +336,49 @@ export const NotebookService = {
    */
   async updateNotebook(id, data, userId) {
     try {
-      // Check if the notebook exists and belongs to the user
-      const notebook = await db
-        .select()
+      // Check if the notebook exists and belongs to the user, but only select basic fields
+      const notebookBasic = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
         .from(notebooks)
         .where(eq(notebooks.id, id))
         .then((res) => res[0] || null);
 
-      if (!notebook || notebook.userId !== userId) {
+      if (!notebookBasic || notebookBasic.userId !== userId) {
         return null;
       }
 
       const { tags: tagNames = [], ...notebookData } = data;
 
       // Parse content if it's a JSON string
-      let contentObj = notebookData.content;
+      let contentToStore = '';
       if (typeof notebookData.content === 'string' && notebookData.content.trim() !== '') {
         try {
-          contentObj = JSON.parse(notebookData.content);
+          // Try to parse as JSON in case it's JSON format
+          const contentObj = JSON.parse(notebookData.content);
+          contentToStore = JSON.stringify(contentObj);
         } catch (e) {
-          console.error('Error parsing content JSON:', e);
-          contentObj = { blocks: [] };
+          // Not JSON, use as is but sanitize
+          contentToStore = sanitizeContent(notebookData.content);
         }
+      } else if (notebookData.content) {
+        // If it's an object, stringify it
+        contentToStore = JSON.stringify(notebookData.content);
       }
 
-      // Update the notebook
+      // Update the notebook with sanitized content
       await db
         .update(notebooks)
         .set({
-          ...notebookData,
-          content: typeof notebookData.content === 'string' ? notebookData.content : JSON.stringify(contentObj),
+          title: notebookData.title,
+          content: contentToStore,
+          isPublic: notebookData.isPublic,
           updatedAt: new Date(),
         })
         .where(eq(notebooks.id, id));
@@ -401,9 +509,17 @@ export const NotebookService = {
         )
         .then(result => Number(result[0].count));
 
-      // Get notebooks for the user that match the query with pagination
-      const userNotebooks = await db
-        .select()
+      // Get notebooks for the user that match the query with pagination, but only select specific fields
+      // This avoids the issue with invalid code points in the content field
+      const userNotebooksBasic = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
         .from(notebooks)
         .where(
           and(
@@ -419,22 +535,56 @@ export const NotebookService = {
         .limit(limit)
         .offset(offset);
 
+      // Now fetch content separately for each notebook with error handling
+      const userNotebooks = await Promise.all(
+        userNotebooksBasic.map(async (notebook) => {
+          try {
+            // Fetch content separately with error handling
+            const contentResult = await db
+              .select({ content: sql`COALESCE(${notebooks.content}, '')` })
+              .from(notebooks)
+              .where(eq(notebooks.id, notebook.id))
+              .then(res => res[0]?.content || '');
+
+            return {
+              ...notebook,
+              content: sanitizeContent(contentResult)
+            };
+          } catch (error) {
+            console.error(`Error fetching content for notebook ${notebook.id}:`, error);
+            // Return the notebook with empty content if there's an error
+            return {
+              ...notebook,
+              content: 'Content unavailable due to encoding issues'
+            };
+          }
+        })
+      );
+
       // Get all tags for each notebook
       const notebooksWithTags = await Promise.all(
         userNotebooks.map(async (notebook) => {
-          const notebookTags = await db
-            .select({
-              id: tags.id,
-              name: tags.name,
-            })
-            .from(tags)
-            .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
-            .where(eq(notebooksTags.notebookId, notebook.id));
+          try {
+            const notebookTags = await db
+              .select({
+                id: tags.id,
+                name: tags.name,
+              })
+              .from(tags)
+              .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+              .where(eq(notebooksTags.notebookId, notebook.id));
 
-          return {
-            ...notebook,
-            tags: notebookTags,
-          };
+            return {
+              ...notebook,
+              tags: notebookTags,
+            };
+          } catch (error) {
+            console.error(`Error fetching tags for notebook ${notebook.id}:`, error);
+            return {
+              ...notebook,
+              tags: [],
+            };
+          }
         })
       );
 
@@ -528,10 +678,25 @@ export const NotebookService = {
         .limit(limit)
         .offset(offset);
 
-      // Get full notebook data for each ID
+      // Get full notebook data for each ID using our safer method
       const notebooksWithTags = await Promise.all(
         notebookIds.map(async ({ id }) => {
-          return this.getNotebookById(id, userId);
+          try {
+            return await this.getNotebookById(id, userId);
+          } catch (error) {
+            console.error(`Error fetching notebook ${id}:`, error);
+            // Return a minimal notebook object if there's an error
+            return {
+              id,
+              title: 'Error loading notebook',
+              content: 'Content unavailable due to encoding issues',
+              userId,
+              isPublic: false,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              tags: []
+            };
+          }
         })
       );
 
@@ -575,12 +740,11 @@ export const NotebookService = {
         .where(eq(notebooks.isPublic, 1))
         .then(result => Number(result[0].count));
 
-      // Get public notebooks with pagination
-      const publicNotebooks = await db
+      // Get public notebooks with pagination but without content
+      const publicNotebooksBasic = await db
         .select({
           id: notebooks.id,
           title: notebooks.title,
-          content: notebooks.content,
           userId: notebooks.userId,
           isPublic: notebooks.isPublic,
           createdAt: notebooks.createdAt,
@@ -595,6 +759,32 @@ export const NotebookService = {
         .orderBy(sql`${notebooks.updatedAt} DESC`)
         .limit(limit)
         .offset(offset);
+
+      // Now fetch content separately for each notebook with error handling
+      const publicNotebooks = await Promise.all(
+        publicNotebooksBasic.map(async (notebook) => {
+          try {
+            // Fetch content separately with error handling
+            const contentResult = await db
+              .select({ content: sql`COALESCE(${notebooks.content}, '')` })
+              .from(notebooks)
+              .where(eq(notebooks.id, notebook.id))
+              .then(res => res[0]?.content || '');
+
+            return {
+              ...notebook,
+              content: sanitizeContent(contentResult)
+            };
+          } catch (error) {
+            console.error(`Error fetching content for notebook ${notebook.id}:`, error);
+            // Return the notebook with empty content if there's an error
+            return {
+              ...notebook,
+              content: 'Content unavailable due to encoding issues'
+            };
+          }
+        })
+      );
 
       // Get all tags for each notebook
       const notebooksWithTags = await Promise.all(
@@ -655,12 +845,11 @@ export const NotebookService = {
    */
   async getPublicNotebookById(id) {
     try {
-      // Get the notebook
-      const notebook = await db
+      // Get the notebook without content
+      const notebookBasic = await db
         .select({
           id: notebooks.id,
           title: notebooks.title,
-          content: notebooks.content,
           userId: notebooks.userId,
           isPublic: notebooks.isPublic,
           createdAt: notebooks.createdAt,
@@ -678,32 +867,52 @@ export const NotebookService = {
         .then((res) => res[0] || null);
 
       // Check if the notebook exists and is public
-      if (!notebook) {
+      if (!notebookBasic) {
         return null;
       }
 
+      // Fetch content separately with error handling
+      let content = '';
+      try {
+        const contentResult = await db
+          .select({ content: sql`COALESCE(${notebooks.content}, '')` })
+          .from(notebooks)
+          .where(eq(notebooks.id, id))
+          .then(res => res[0]?.content || '');
+
+        content = sanitizeContent(contentResult);
+      } catch (error) {
+        console.error(`Error fetching content for public notebook ${id}:`, error);
+        content = 'Content unavailable due to encoding issues';
+      }
+
       // Get the tags for the notebook
-      const notebookTags = await db
-        .select({
-          id: tags.id,
-          name: tags.name,
-        })
-        .from(tags)
-        .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
-        .where(eq(notebooksTags.notebookId, id));
+      let notebookTags = [];
+      try {
+        notebookTags = await db
+          .select({
+            id: tags.id,
+            name: tags.name,
+          })
+          .from(tags)
+          .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+          .where(eq(notebooksTags.notebookId, id));
+      } catch (error) {
+        console.error(`Error fetching tags for public notebook ${id}:`, error);
+      }
 
       return {
-        id: notebook.id,
-        title: notebook.title,
-        content: notebook.content,
-        userId: notebook.userId,
-        isPublic: notebook.isPublic,
-        createdAt: notebook.createdAt,
-        updatedAt: notebook.updatedAt,
+        id: notebookBasic.id,
+        title: notebookBasic.title,
+        content: content,
+        userId: notebookBasic.userId,
+        isPublic: notebookBasic.isPublic,
+        createdAt: notebookBasic.createdAt,
+        updatedAt: notebookBasic.updatedAt,
         user: {
-          name: notebook.userName,
-          username: notebook.userUsername,
-          image: notebook.userImage,
+          name: notebookBasic.userName,
+          username: notebookBasic.userUsername,
+          image: notebookBasic.userImage,
         },
         tags: notebookTags,
       };
@@ -756,9 +965,16 @@ export const NotebookService = {
         ))
         .then(result => Number(result[0].count));
 
-      // Get public notebooks for the user with pagination
-      const userNotebooks = await db
-        .select()
+      // Get public notebooks for the user with pagination but without content
+      const userNotebooksBasic = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
         .from(notebooks)
         .where(and(
           eq(notebooks.userId, user.id),
@@ -768,28 +984,68 @@ export const NotebookService = {
         .limit(limit)
         .offset(offset);
 
+      // Now fetch content separately for each notebook with error handling
+      const userNotebooks = await Promise.all(
+        userNotebooksBasic.map(async (notebook) => {
+          try {
+            // Fetch content separately with error handling
+            const contentResult = await db
+              .select({ content: sql`COALESCE(${notebooks.content}, '')` })
+              .from(notebooks)
+              .where(eq(notebooks.id, notebook.id))
+              .then(res => res[0]?.content || '');
+
+            return {
+              ...notebook,
+              content: sanitizeContent(contentResult)
+            };
+          } catch (error) {
+            console.error(`Error fetching content for notebook ${notebook.id}:`, error);
+            // Return the notebook with empty content if there's an error
+            return {
+              ...notebook,
+              content: 'Content unavailable due to encoding issues'
+            };
+          }
+        })
+      );
+
       // Get all tags for each notebook
       const notebooksWithTags = await Promise.all(
         userNotebooks.map(async (notebook) => {
-          const notebookTags = await db
-            .select({
-              id: tags.id,
-              name: tags.name,
-            })
-            .from(tags)
-            .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
-            .where(eq(notebooksTags.notebookId, notebook.id));
+          try {
+            const notebookTags = await db
+              .select({
+                id: tags.id,
+                name: tags.name,
+              })
+              .from(tags)
+              .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+              .where(eq(notebooksTags.notebookId, notebook.id));
 
-          return {
-            ...notebook,
-            user: {
-              id: user.id,
-              name: user.name,
-              username: user.username,
-              image: user.image,
-            },
-            tags: notebookTags,
-          };
+            return {
+              ...notebook,
+              user: {
+                id: user.id,
+                name: user.name,
+                username: user.username,
+                image: user.image,
+              },
+              tags: notebookTags,
+            };
+          } catch (error) {
+            console.error(`Error fetching tags for notebook ${notebook.id}:`, error);
+            return {
+              ...notebook,
+              user: {
+                id: user.id,
+                name: user.name,
+                username: user.username,
+                image: user.image,
+              },
+              tags: [],
+            };
+          }
         })
       );
 

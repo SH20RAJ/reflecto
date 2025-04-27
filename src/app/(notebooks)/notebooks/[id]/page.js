@@ -171,11 +171,11 @@ export default function NotebookPage({ params }) {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="relative">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 relative z-[51] md:mt-0 mt-20">
         <Button
           variant="ghost"
-          className="gap-1"
+          className="gap-1 self-start"
           onClick={() => router.push('/notebooks')}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -183,7 +183,7 @@ export default function NotebookPage({ params }) {
         </Button>
 
         {!isLoading && notebook && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <Button
               variant="default"
               size="sm"
@@ -267,7 +267,7 @@ export default function NotebookPage({ params }) {
           </div>
         </div>
       ) : notebook ? (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto pt-2 md:pt-0">
           <div className="mb-8">
             <div className="flex flex-col space-y-4">
               <div className="flex justify-between items-center">

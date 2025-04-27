@@ -23,8 +23,24 @@ export async function GET(request, context) {
     // Get the notebook ID from the URL
     const id = params.id;
 
-    // Get the notebook
-    const notebook = await NotebookService.getNotebookById(id, session.user.id);
+    // Get the notebook with error handling
+    let notebook;
+    try {
+      notebook = await NotebookService.getNotebookById(id, session.user.id);
+    } catch (error) {
+      console.error(`Error fetching notebook ${id}:`, error);
+
+      // If it's a ReferenceError for sanitizeContent, we need to return a helpful error
+      if (error instanceof ReferenceError && error.message.includes('sanitizeContent')) {
+        return NextResponse.json({
+          error: 'Application configuration error. Please try again later.',
+          details: 'Function reference error'
+        }, { status: 500 });
+      }
+
+      // For other errors, return a generic error
+      return NextResponse.json({ error: 'Error fetching notebook' }, { status: 500 });
+    }
 
     // Check if the notebook exists
     if (!notebook) {
@@ -82,6 +98,15 @@ export async function PUT(request, context) {
     return NextResponse.json(notebook);
   } catch (error) {
     console.error(`Error in PUT /api/notebooks/[id]:`, error);
+
+    // Provide more specific error message for invalid code point errors
+    if (error instanceof RangeError && error.message.includes('Invalid code point')) {
+      return NextResponse.json({
+        error: 'Data encoding error detected. The system is attempting to fix this issue. Please try again.',
+        details: 'Invalid character in notebook content'
+      }, { status: 500 });
+    }
+
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

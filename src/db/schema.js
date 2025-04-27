@@ -1,11 +1,11 @@
 import { sql } from "drizzle-orm";
-import { text, integer, sqliteTable, primaryKey } from "drizzle-orm/sqlite-core";
+import { text, integer, blob, sqliteTable, primaryKey } from "drizzle-orm/sqlite-core";
 
 // Users table
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   name: text("name"),
-  username: text("username").unique(), // Added username field
+  username: text("username").unique(), // Added username field - .default(sql`(lower(hex(randomblob(16))))`)
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "timestamp" }),
   image: text("image"),
@@ -61,6 +61,7 @@ export const notebooks = sqliteTable("notebooks", {
   isPublic: integer("is_public", { mode: "boolean" }).notNull().default(0), // Added isPublic field
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  embedding: blob("embedding", { mode: "json" }), // Store vector embeddings as F32_BLOB
 });
 
 // Tags table

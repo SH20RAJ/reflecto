@@ -20,9 +20,17 @@ export async function PUT(request, { params }) {
 
     const { id } = params;
 
-    // Check if the notebook exists and belongs to the user
+    // Check if the notebook exists and belongs to the user, but only select specific fields
+    // to avoid issues with invalid code points in the content field
     const notebook = await db
-      .select()
+      .select({
+        id: notebooks.id,
+        userId: notebooks.userId,
+        isPublic: notebooks.isPublic,
+        title: notebooks.title,
+        createdAt: notebooks.createdAt,
+        updatedAt: notebooks.updatedAt
+      })
       .from(notebooks)
       .where(and(
         eq(notebooks.id, id),
@@ -42,7 +50,7 @@ export async function PUT(request, { params }) {
     // Update the notebook
     await db
       .update(notebooks)
-      .set({ 
+      .set({
         isPublic: newIsPublic,
         updatedAt: new Date()
       })
@@ -54,6 +62,15 @@ export async function PUT(request, { params }) {
     });
   } catch (error) {
     console.error("Error toggling notebook public status:", error);
+
+    // Provide more specific error message for invalid code point errors
+    if (error instanceof RangeError && error.message.includes('Invalid code point')) {
+      return NextResponse.json({
+        error: 'Data encoding error detected. The system is attempting to fix this issue. Please try again.',
+        details: 'Invalid character in notebook content'
+      }, { status: 500 });
+    }
+
     return NextResponse.json({
       error: "Failed to update notebook",
       details: error.message

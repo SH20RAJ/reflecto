@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Book, Calendar, User, PenLine, Settings, Plus, Tag, ChevronRight, ChevronDown, Grid, Menu, LogOut, MessageSquare } from 'lucide-react';
+import { Book, Calendar, User, Plus, Tag, ChevronRight, ChevronDown, Grid, Menu, LogOut, MessageSquare } from 'lucide-react';
 import { useTags } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { ModeToggle } from '@/components/mode-toggle';
 import {
   Sheet,
   SheetContent,
@@ -20,7 +21,7 @@ const SidebarContent = ({ onClose }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const [showTags, setShowTags] = useState(true);
+  const [showTags, setShowTags] = useState(false);
 
   // Get the current tag from the URL
   const currentTagId = searchParams.get('tag');
@@ -72,14 +73,15 @@ const SidebarContent = ({ onClose }) => {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">Reflecto</h2>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60   text-fuchsia-400 bg-clip-text">Reflecto</h2>
       </div>
 
       <div className="px-3 mb-4">
         <Link href="/notebooks?new=true" onClick={onClose}>
           <Button
-            className="w-full justify-start gap-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-full h-12"
-            variant="ghost"
+            className="w-full justify-start gap-2   h-12"
+            variant="default"
+            style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
           >
             <Plus className="h-4 w-4" />
             New Notebook
@@ -168,7 +170,7 @@ const SidebarContent = ({ onClose }) => {
         <div className="border-t border-border/40 pt-4 pb-2">
           {session?.user ? (
             <div className="space-y-3">
-              <div className="flex items-center gap-3 px-2 py-1 rounded-lg hover:bg-muted cursor-pointer">
+              <div className="flex items-center gap-3 px-2 py-1 rounded-lg">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={session.user.image} alt={session.user.name} />
                   <AvatarFallback>{session.user.name?.charAt(0) || 'U'}</AvatarFallback>
@@ -177,22 +179,27 @@ const SidebarContent = ({ onClose }) => {
                   <p className="text-sm font-medium truncate">{session.user.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{session.user.email}</p>
                 </div>
-                <Settings className="h-4 w-4 text-muted-foreground" />
+                <ModeToggle />
               </div>
 
-              <Button
-                variant="outline"
-                className="w-full justify-start text-sm gap-2"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 justify-start text-sm gap-2"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
           ) : (
-            <Button variant="outline" className="w-full">
-              Sign In
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" className="flex-1">
+                Sign In
+              </Button>
+              <ModeToggle />
+            </div>
           )}
         </div>
       </div>
@@ -210,7 +217,7 @@ const NotebookSidebar = () => {
       </div>
 
       {/* Mobile sidebar with Sheet */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -224,11 +231,19 @@ const NotebookSidebar = () => {
 
         <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">Reflecto</h2>
 
-        <Link href="/notebooks?new=true">
-          <Button variant="ghost" size="icon" className="bg-primary/10 text-primary rounded-full">
-            <Plus className="h-5 w-5" />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          <Link href="/notebooks?new=true">
+            <Button
+              variant="default"
+              size="icon"
+              className="rounded-full"
+              style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Add padding to the top on mobile to account for the fixed header */}

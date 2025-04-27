@@ -29,15 +29,32 @@ export async function GET(request) {
 
     // Get notebooks for the user based on parameters
     let result;
-    if (query) {
-      console.log('Searching notebooks with query:', query);
-      result = await NotebookService.searchNotebooks(query, session.user.id, page, safeLimit);
-    } else if (tagId) {
-      console.log('Getting notebooks by tag:', tagId);
-      result = await NotebookService.getNotebooksByTag(tagId, session.user.id, page, safeLimit);
-    } else {
-      console.log('Getting all notebooks for user:', session.user.id);
-      result = await NotebookService.getUserNotebooks(session.user.id, page, safeLimit);
+    try {
+      if (query) {
+        console.log('Searching notebooks with query:', query);
+        result = await NotebookService.searchNotebooks(query, session.user.id, page, safeLimit);
+      } else if (tagId) {
+        console.log('Getting notebooks by tag:', tagId);
+        result = await NotebookService.getNotebooksByTag(tagId, session.user.id, page, safeLimit);
+      } else {
+        console.log('Getting all notebooks for user:', session.user.id);
+        result = await NotebookService.getUserNotebooks(session.user.id, page, safeLimit);
+      }
+    } catch (error) {
+      console.error('Error fetching notebooks:', error);
+
+      // Return a fallback result with empty notebooks
+      result = {
+        notebooks: [],
+        pagination: {
+          page,
+          limit: safeLimit,
+          totalCount: 0,
+          totalPages: 0,
+          hasMore: false,
+          hasPrevious: page > 1
+        }
+      };
     }
 
     console.log('API result:', {

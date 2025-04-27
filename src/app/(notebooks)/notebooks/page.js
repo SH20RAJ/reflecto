@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useNotebooks, useNotebooksByTag, useSearchNotebooks, useTags } from '@/lib/hooks';
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
-import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash, Search, LayoutGrid, List, MoreVertical, Edit, Trash, Eye } from 'lucide-react';
+import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash, Search, LayoutGrid, List, MoreVertical, Edit, Trash, Eye, Calendar, Loader2 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -117,6 +117,11 @@ export default function NotebooksPage() {
   // Determine overall loading state - but we'll use isLoadingNotebooks specifically for the notebooks loading UI
   const isLoading = isLoadingTags || isSearching || isLoadingTagNotebooks || isLoadingState;
 
+  // Create specific loading states for UI elements
+  const isSearchLoading = isSearching && searchQuery;
+  const isTagFilterLoading = isLoadingTagNotebooks && selectedTag;
+  const [isSortingLoading, setIsSortingLoading] = useState(false); // We'll use this for client-side sorting animations
+
   // Debug loading state
   console.log('Loading states:', {
     isLoadingNotebooks,
@@ -126,6 +131,9 @@ export default function NotebooksPage() {
     isLoadingState,
     isSessionLoading,
     isAuthenticated,
+    isSearchLoading,
+    isTagFilterLoading,
+    isSortingLoading,
     notebooksCount: notebooks.length,
     tagsCount: tags.length
   });
@@ -248,7 +256,15 @@ export default function NotebooksPage() {
 
   // Sort notebooks
   const handleSort = (type) => {
+    // Set a temporary loading state
+    setIsSortingLoading(true);
     setSortBy(type);
+
+    // Simulate a short delay to show the loading state
+    setTimeout(() => {
+      setIsSortingLoading(false);
+    }, 300);
+
     // Note: With SWR, we don't need to manually sort the notebooks
     // The sorting will be handled on the server side in a future update
   };
@@ -298,7 +314,7 @@ export default function NotebooksPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 md:mt-0 mt-20">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             {selectedTag ? (
@@ -345,14 +361,23 @@ export default function NotebooksPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1 h-9">
-                <Tag className="h-3.5 w-3.5" />
-                Tags
+                {isTagFilterLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Tag className="h-3.5 w-3.5" />
+                )}
+                Tags {isTagFilterLoading && '(Loading...)'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Filter by tag</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {tags.length > 0 ? (
+              {isLoadingTags ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <span className="text-sm text-muted-foreground">Loading tags...</span>
+                </div>
+              ) : tags.length > 0 ? (
                 tags.map(tag => (
                   <DropdownMenuItem
                     key={tag.id}
@@ -433,20 +458,36 @@ export default function NotebooksPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1 h-9">
-                  <ArrowUpDown className="h-3.5 w-3.5" />
-                  Sort
+                  {isSortingLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                  )}
+                  Sort {sortBy === 'recent' ? '(Recent)' : sortBy === 'oldest' ? '(Oldest)' : sortBy === 'alphabetical' ? '(A→Z)' : ''}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => handleSort('recent')}>
+                <DropdownMenuItem
+                  onClick={() => handleSort('recent')}
+                  className={sortBy === 'recent' ? 'bg-muted' : ''}
+                  disabled={isSortingLoading}
+                >
                   <Clock className="mr-2 h-4 w-4" />
                   Most recent
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSort('oldest')}>
+                <DropdownMenuItem
+                  onClick={() => handleSort('oldest')}
+                  className={sortBy === 'oldest' ? 'bg-muted' : ''}
+                  disabled={isSortingLoading}
+                >
                   <Clock className="mr-2 h-4 w-4" />
                   Oldest first
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSort('alphabetical')}>
+                <DropdownMenuItem
+                  onClick={() => handleSort('alphabetical')}
+                  className={sortBy === 'alphabetical' ? 'bg-muted' : ''}
+                  disabled={isSortingLoading}
+                >
                   <span className="mr-2 font-mono">A→Z</span>
                   Alphabetical
                 </DropdownMenuItem>
@@ -514,6 +555,8 @@ export default function NotebooksPage() {
               <DialogTrigger asChild>
                 <Button
                   className="gap-1.5"
+                  variant="default"
+                  style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
                   onClick={() => {
                     setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
                     setIsDialogOpen(true);
@@ -576,7 +619,11 @@ export default function NotebooksPage() {
       </div>
 
       <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        {isSearchLoading ? (
+          <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 animate-spin" />
+        ) : (
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        )}
         <Input
           placeholder="Search notebooks..."
           className="pl-8 w-full"
@@ -587,6 +634,11 @@ export default function NotebooksPage() {
             setCurrentPage(1); // Reset to first page
           }}
         />
+        {isSearchLoading && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <span className="text-xs text-muted-foreground">Searching...</span>
+          </div>
+        )}
       </div>
 
       {isSessionLoading ? (
@@ -636,6 +688,8 @@ export default function NotebooksPage() {
             <Button
               size="lg"
               className="gap-2"
+              variant="default"
+              style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
               onClick={() => {
                 setNewNotebook({
                   title: 'My First Notebook',
@@ -664,7 +718,10 @@ Enjoy your journaling journey with Reflecto!`,
               {searchQuery ? 'No notebooks found matching your search.' : 'You don\'t have any notebooks yet.'}
             </p>
             {!searchQuery && (
-              <Button onClick={() => {
+              <Button
+                variant="default"
+                style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
+                onClick={() => {
                 setNewNotebook({
                   title: 'My First Notebook',
                   content: `# Welcome to your first notebook!
