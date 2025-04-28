@@ -1,4 +1,4 @@
-import { db } from '@/db';
+import { db, executeRawSQL, tursoClient, dateToSQLiteTimestamp, sqliteTimestampToDate } from '@/db';
 import { notebooks, tags, notebooksTags, users } from '@/db/schema';
 import { eq, and, or, like, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
@@ -250,15 +250,78 @@ export const NotebookService = {
 
       // Create the notebook with explicit timestamps
       const now = new Date();
-      await db.insert(notebooks).values({
-        id: notebookId,
-        title: notebookData.title,
-        content: contentToStore,
-        userId,
-        isPublic: notebookData.isPublic || 0, // Use the provided isPublic value or default to private
-        createdAt: now,
-        updatedAt: now,
-      });
+      // Convert to Unix timestamp (seconds since epoch) for SQLite
+      const nowTimestamp = dateToSQLiteTimestamp(now);
+
+      console.log('Creating notebook with timestamp:', nowTimestamp, 'Date object:', now);
+
+      // First check if the embedding column exists in the database
+      let hasEmbeddingColumn = false;
+      try {
+        // Try a simple query to check if the column exists
+        const result = await executeRawSQL("PRAGMA table_info(notebooks)");
+        if (result && result.rows) {
+          hasEmbeddingColumn = result.rows.some(col => col.name === 'embedding');
+        }
+      } catch (error) {
+        console.warn('Error checking for embedding column:', error);
+        hasEmbeddingColumn = false;
+      }
+
+      try {
+        if (hasEmbeddingColumn) {
+          // If the embedding column exists, use the normal insert
+          // Note: Drizzle ORM should handle the date conversion automatically
+          await db.insert(notebooks).values({
+            id: notebookId,
+            title: notebookData.title,
+            content: contentToStore,
+            userId,
+            isPublic: notebookData.isPublic || 0,
+            createdAt: now,
+            updatedAt: now,
+            // embedding field is left undefined
+          });
+        } else {
+          // If the embedding column doesn't exist, use raw SQL to insert without it
+          // For raw SQL, we need to use the Unix timestamp format
+          await executeRawSQL(
+            `INSERT INTO notebooks (id, title, content, user_id, is_public, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+              notebookId,
+              notebookData.title,
+              contentToStore,
+              userId,
+              notebookData.isPublic || 0,
+              nowTimestamp,  // Use Unix timestamp for SQLite
+              nowTimestamp   // Use Unix timestamp for SQLite
+            ]
+          );
+        }
+      } catch (error) {
+        console.error('Error inserting notebook:', error);
+
+        // If we still get an error, try one more time with a simpler query
+        // Include timestamps in this query too
+        try {
+          await executeRawSQL(
+            `INSERT INTO notebooks (id, title, content, user_id, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+              notebookId,
+              notebookData.title || 'Untitled',
+              contentToStore || '',
+              userId,
+              nowTimestamp,  // Use Unix timestamp for SQLite
+              nowTimestamp   // Use Unix timestamp for SQLite
+            ]
+          );
+        } catch (fallbackError) {
+          console.error('Error with fallback insert method:', fallbackError);
+          throw new Error(`Failed to create notebook: ${error.message}. Fallback also failed: ${fallbackError.message}`);
+        }
+      }
 
       // Create or get tags and link them to the notebook
       for (const tagItem of tagNames) {
@@ -373,15 +436,39 @@ export const NotebookService = {
       }
 
       // Update the notebook with sanitized content
-      await db
-        .update(notebooks)
-        .set({
-          title: notebookData.title,
-          content: contentToStore,
-          isPublic: notebookData.isPublic,
-          updatedAt: new Date(),
-        })
-        .where(eq(notebooks.id, id));
+      const now = new Date();
+      const nowTimestamp = dateToSQLiteTimestamp(now);
+
+      console.log('Updating notebook with timestamp:', nowTimestamp, 'Date object:', now);
+
+      try {
+        // Try using Drizzle ORM first (should handle date conversion automatically)
+        await db
+          .update(notebooks)
+          .set({
+            title: notebookData.title,
+            content: contentToStore,
+            isPublic: notebookData.isPublic,
+            updatedAt: now,
+          })
+          .where(eq(notebooks.id, id));
+      } catch (error) {
+        console.error('Error updating notebook with ORM:', error);
+
+        // If ORM update fails, try raw SQL
+        await executeRawSQL(
+          `UPDATE notebooks
+           SET title = ?, content = ?, is_public = ?, updated_at = ?
+           WHERE id = ?`,
+          [
+            notebookData.title,
+            contentToStore,
+            notebookData.isPublic ? 1 : 0,
+            nowTimestamp,
+            id
+          ]
+        );
+      }
 
       // Delete all existing tag links
       await db.delete(notebooksTags).where(eq(notebooksTags.notebookId, id));

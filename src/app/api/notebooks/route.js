@@ -107,6 +107,32 @@ export async function POST(request) {
     return NextResponse.json(notebook, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/notebooks:', error);
+
+    // Provide more specific error messages based on the error type
+    if (error.message && error.message.includes('embedding')) {
+      return NextResponse.json({
+        error: 'Database schema issue detected. Please try again or contact support.',
+        details: 'Missing embedding column in database',
+        suggestion: 'Admin can fix this by visiting /api/setup-tables/add-embedding-column'
+      }, { status: 500 });
+    }
+
+    if (error.message && error.message.includes('execute is not a function')) {
+      return NextResponse.json({
+        error: 'Database method compatibility issue detected.',
+        details: 'The application is trying to use a method that is not available in the current database configuration.',
+        suggestion: 'Please try again. The system will attempt to use an alternative method.'
+      }, { status: 500 });
+    }
+
+    if (error.message && error.message.includes('run')) {
+      return NextResponse.json({
+        error: 'Database operation failed.',
+        details: 'The system encountered an issue while trying to create your notebook.',
+        suggestion: 'Please try again with a simpler title or content.'
+      }, { status: 500 });
+    }
+
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

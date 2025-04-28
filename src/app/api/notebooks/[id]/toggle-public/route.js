@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
+import { db, executeRawSQL, dateToSQLiteTimestamp } from "@/db";
 import { notebooks } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/auth";
@@ -48,13 +48,29 @@ export async function PUT(request, { params }) {
     const newIsPublic = notebook.isPublic ? 0 : 1;
 
     // Update the notebook
-    await db
-      .update(notebooks)
-      .set({
-        isPublic: newIsPublic,
-        updatedAt: new Date()
-      })
-      .where(eq(notebooks.id, id));
+    const now = new Date();
+    const nowTimestamp = dateToSQLiteTimestamp(now);
+
+    console.log('Toggling notebook public status with timestamp:', nowTimestamp, 'Date object:', now);
+
+    try {
+      // Try using Drizzle ORM first
+      await db
+        .update(notebooks)
+        .set({
+          isPublic: newIsPublic,
+          updatedAt: now
+        })
+        .where(eq(notebooks.id, id));
+    } catch (error) {
+      console.error('Error updating notebook with ORM:', error);
+
+      // If ORM update fails, try raw SQL
+      await executeRawSQL(
+        `UPDATE notebooks SET is_public = ?, updated_at = ? WHERE id = ?`,
+        [newIsPublic, nowTimestamp, id]
+      );
+    }
 
     return NextResponse.json({
       message: `Notebook is now ${newIsPublic ? 'public' : 'private'}`,

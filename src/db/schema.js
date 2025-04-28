@@ -61,6 +61,7 @@ export const notebooks = sqliteTable("notebooks", {
   isPublic: integer("is_public", { mode: "boolean" }).notNull().default(0), // Added isPublic field
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  // Make embedding field optional by not marking it as notNull()
   embedding: blob("embedding", { mode: "json" }), // Store vector embeddings as F32_BLOB
 });
 
