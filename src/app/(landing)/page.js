@@ -7,6 +7,7 @@ import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import NewsletterSection from "@/components/NewsletterSection";
+import { ChatFeatures, FeatureComparision } from "../pitch/page";
 
 
 export default function Home() {
@@ -15,8 +16,10 @@ export default function Home() {
       <Navbar />
       <Hero />
       <Features />
+      <ChatFeatures />
       <HowItWorks />
       <Testimonials />
+      <FeatureComparision />
       <NewsletterSection />
       <FAQ />
       <CTA />

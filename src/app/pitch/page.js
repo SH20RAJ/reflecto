@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
@@ -190,6 +191,9 @@ export default function PitchPage() {
           </div>
         </section>
 
+        {/* Chat Feature Section */}
+        <ChatFeatures />
+
         {/* Testimonials Section */}
         <section className="py-20 bg-primary/5">
           <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -267,7 +271,205 @@ export default function PitchPage() {
         </section>
 
         {/* Features Comparison */}
-        <section className="py-20 bg-white dark:bg-black">
+        <FeatureComparision/>
+
+       
+
+        {/* Simplicity Section */}
+        <section className="py-20 bg-primary/5">
+          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Simplicity is the Ultimate Sophistication</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                At Reflecto, we believe that the best tools get out of your way and let you focus on what matters.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <Card className="border border-border hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-4">From Complex to Simple</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Many startups succeed by taking complex workflows and making them simple. Reflecto does exactly this for personal reflection.
+                  </p>
+                  <p className="text-muted-foreground">
+                    While other apps add more features, we focus on creating the perfect environment for your thoughts to flow.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-4">Designed for Real Life</h3>
+                  <p className="text-muted-foreground mb-4">
+                    We know you're busy. That's why Reflecto is designed to fit into your life, not the other way around.
+                  </p>
+                  <p className="text-muted-foreground">
+                    No complicated systems to maintain or abandon when life gets hectic—just a simple, consistent place for your thoughts.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-border hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-4">Less is More</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Every feature in Reflecto has been carefully considered. If it doesn't enhance your reflection practice, we leave it out.
+                  </p>
+                  <p className="text-muted-foreground">
+                    This ruthless focus on simplicity is why our users stick with Reflecto when other journaling habits fade.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+
+export function ChatFeatures() {
+
+  return  (
+  <section className="py-20 bg-white dark:bg-black">{/* Chat Feature Section */}
+    <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-16">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">Chat with Your Memories</h2>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Our revolutionary chat feature lets you search through your entries using natural language.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16">
+        <div>
+          <h3 className="text-2xl font-bold mb-6">Ask Questions, Get Answers</h3>
+          <p className="text-muted-foreground mb-8">
+            Reflecto&apos;s chat interface transforms how you interact with your personal data. Simply ask questions in natural language and get instant, relevant answers from your notebooks.
+          </p>
+
+          <div className="space-y-6">
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <Search className="h-5 w-5 text-primary mr-2" />
+                <h4 className="font-medium">Find by Date</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                "What did I write on my birthday last year?"<br />
+                "Show me entries from January 2024"<br />
+                "Find notes I wrote last summer"
+              </p>
+            </div>
+
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <Search className="h-5 w-5 text-primary mr-2" />
+                <h4 className="font-medium">Find by Content & People</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                "When did I first mention meeting my girlfriend?"<br />
+                "Find entries where I talked about my job interview"<br />
+                "Show me notes about my vacation in Hawaii"
+              </p>
+            </div>
+
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <Search className="h-5 w-5 text-primary mr-2" />
+                <h4 className="font-medium">Find by Media & Emotions</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                "What photos did I take on Saturday in January 2025?"<br />
+                "Show me entries where I felt happy"<br />
+                "Find all pictures from my brother's wedding"
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4 border-b pb-4">
+            <div className="flex items-center">
+              <Bot className="h-5 w-5 text-primary mr-2" />
+              <h3 className="font-medium">Notebook Assistant</h3>
+            </div>
+          </div>
+
+          <div className="space-y-4 mb-4">
+            <div className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3 flex-shrink-0">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+              <div className="bg-muted p-3 rounded-lg rounded-tl-none max-w-[80%]">
+                <p className="text-sm">Hi there! I can help you search through your notebooks. What would you like to find?</p>
+              </div>
+            </div>
+
+            <div className="flex items-start justify-end">
+              <div className="bg-primary text-primary-foreground p-3 rounded-lg rounded-tr-none max-w-[80%]">
+                <p className="text-sm">When did I first meet Sarah?</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-3 flex-shrink-0">
+                <span className="text-xs text-primary-foreground font-medium">You</span>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3 flex-shrink-0">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+              <div className="space-y-3 max-w-[80%]">
+                <div className="bg-muted p-3 rounded-lg rounded-tl-none">
+                  <p className="text-sm">I found 3 entries related to meeting Sarah. Here are the most relevant results:</p>
+                </div>
+
+                <div className="bg-card border border-border p-3 rounded-lg text-sm">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-medium">First Coffee with Sarah</div>
+                    <div className="text-xs bg-muted px-2 py-1 rounded-full flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      March 15, 2024
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground text-xs line-clamp-2">
+                    Met Sarah for coffee today at that new place downtown. We talked for hours about our shared interest in...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-4 flex gap-2">
+            <div className="flex-1 bg-muted rounded-md px-3 py-2 text-sm text-muted-foreground">
+              Ask about your notebooks...
+            </div>
+            <Button size="icon" className="h-9 w-9">
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <Button asChild size="lg" className="text-lg px-8 py-6">
+          <Link href="/auth/signin">
+            Try the Chat Feature
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
+        </Button>
+      </div>
+    </div>
+  </section>
+  );
+}
+
+
+export function FeatureComparision() {
+  return (
+    <section className="py-20 bg-white dark:bg-black">
           <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">How Reflecto Compares</h2>
@@ -434,188 +636,6 @@ export default function PitchPage() {
           </div>
         </section>
 
-        {/* Chat Feature Section */}
-        <section className="py-20 bg-white dark:bg-black">
-          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Chat with Your Memories</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Our revolutionary chat feature lets you search through your entries using natural language.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16">
-              <div>
-                <h3 className="text-2xl font-bold mb-6">Ask Questions, Get Answers</h3>
-                <p className="text-muted-foreground mb-8">
-                  Reflecto's chat interface transforms how you interact with your personal data. Simply ask questions in natural language and get instant, relevant answers from your notebooks.
-                </p>
-
-                <div className="space-y-6">
-                  <div className="bg-primary/5 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Search className="h-5 w-5 text-primary mr-2" />
-                      <h4 className="font-medium">Find by Date</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      "What did I write on my birthday last year?"<br />
-                      "Show me entries from January 2024"<br />
-                      "Find notes I wrote last summer"
-                    </p>
-                  </div>
-
-                  <div className="bg-primary/5 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Search className="h-5 w-5 text-primary mr-2" />
-                      <h4 className="font-medium">Find by Content & People</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      "When did I first mention meeting my girlfriend?"<br />
-                      "Find entries where I talked about my job interview"<br />
-                      "Show me notes about my vacation in Hawaii"
-                    </p>
-                  </div>
-
-                  <div className="bg-primary/5 p-4 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Search className="h-5 w-5 text-primary mr-2" />
-                      <h4 className="font-medium">Find by Media & Emotions</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      "What photos did I take on Saturday in January 2025?"<br />
-                      "Show me entries where I felt happy"<br />
-                      "Find all pictures from my brother's wedding"
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4 border-b pb-4">
-                  <div className="flex items-center">
-                    <Bot className="h-5 w-5 text-primary mr-2" />
-                    <h3 className="font-medium">Notebook Assistant</h3>
-                  </div>
-                </div>
-
-                <div className="space-y-4 mb-4">
-                  <div className="flex items-start">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3 flex-shrink-0">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="bg-muted p-3 rounded-lg rounded-tl-none max-w-[80%]">
-                      <p className="text-sm">Hi there! I can help you search through your notebooks. What would you like to find?</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start justify-end">
-                    <div className="bg-primary text-primary-foreground p-3 rounded-lg rounded-tr-none max-w-[80%]">
-                      <p className="text-sm">When did I first meet Sarah?</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-3 flex-shrink-0">
-                      <span className="text-xs text-primary-foreground font-medium">You</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3 flex-shrink-0">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="space-y-3 max-w-[80%]">
-                      <div className="bg-muted p-3 rounded-lg rounded-tl-none">
-                        <p className="text-sm">I found 3 entries related to meeting Sarah. Here are the most relevant results:</p>
-                      </div>
-
-                      <div className="bg-card border border-border p-3 rounded-lg text-sm">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-medium">First Coffee with Sarah</div>
-                          <div className="text-xs bg-muted px-2 py-1 rounded-full flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            March 15, 2024
-                          </div>
-                        </div>
-                        <p className="text-muted-foreground text-xs line-clamp-2">
-                          Met Sarah for coffee today at that new place downtown. We talked for hours about our shared interest in...
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4 flex gap-2">
-                  <div className="flex-1 bg-muted rounded-md px-3 py-2 text-sm text-muted-foreground">
-                    Ask about your notebooks...
-                  </div>
-                  <Button size="icon" className="h-9 w-9">
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Button asChild size="lg" className="text-lg px-8 py-6">
-                <Link href="/auth/signin">
-                  Try the Chat Feature
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Simplicity Section */}
-        <section className="py-20 bg-primary/5">
-          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Simplicity is the Ultimate Sophistication</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                At Reflecto, we believe that the best tools get out of your way and let you focus on what matters.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="border border-border hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-4">From Complex to Simple</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Many startups succeed by taking complex workflows and making them simple. Reflecto does exactly this for personal reflection.
-                  </p>
-                  <p className="text-muted-foreground">
-                    While other apps add more features, we focus on creating the perfect environment for your thoughts to flow.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-4">Designed for Real Life</h3>
-                  <p className="text-muted-foreground mb-4">
-                    We know you're busy. That's why Reflecto is designed to fit into your life, not the other way around.
-                  </p>
-                  <p className="text-muted-foreground">
-                    No complicated systems to maintain or abandon when life gets hectic—just a simple, consistent place for your thoughts.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-border hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-4">Less is More</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Every feature in Reflecto has been carefully considered. If it doesn't enhance your reflection practice, we leave it out.
-                  </p>
-                  <p className="text-muted-foreground">
-                    This ruthless focus on simplicity is why our users stick with Reflecto when other journaling habits fade.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </div>
+      
   );
 }
