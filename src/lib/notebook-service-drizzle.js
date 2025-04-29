@@ -1,6 +1,6 @@
 import { db, executeRawSQL, tursoClient, dateToSQLiteTimestamp, sqliteTimestampToDate } from '@/db';
 import { notebooks, tags, notebooksTags, users } from '@/db/schema';
-import { eq, and, or, like, sql } from 'drizzle-orm';
+import { eq, and, or, like, sql, gte, lte } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 // We no longer need these imports as we're only storing the content field
 // import { editorJsToMarkdown, extractPlainText } from './editorjs-to-markdown';
@@ -28,7 +28,7 @@ const sanitizeContent = (content) => {
 /**
  * Service for handling notebook operations using Drizzle ORM
  */
-export const NotebookService = {
+const NotebookService = {
   /**
    * Get all notebooks for a user with pagination
    * @param {string} userId - The user ID
@@ -36,6 +36,121 @@ export const NotebookService = {
    * @param {number} limit - The number of items per page
    * @returns {Promise<Object>} - A promise that resolves to an object with notebooks and pagination info
    */
+  async getNotebooksByDateRange(userId, startDate = null, endDate = null, page = 1, limit = 100) {
+    try {
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Build the where clause based on date range
+      let whereClause;
+
+      if (startDate && endDate) {
+        // Both start and end dates provided
+        const startTimestamp = dateToSQLiteTimestamp(startDate);
+        const endTimestamp = dateToSQLiteTimestamp(endDate);
+
+        whereClause = and(
+          eq(notebooks.userId, userId),
+          gte(notebooks.createdAt, startTimestamp),
+          lte(notebooks.createdAt, endTimestamp)
+        );
+      } else if (startDate) {
+        // Only start date provided
+        const startTimestamp = dateToSQLiteTimestamp(startDate);
+
+        whereClause = and(
+          eq(notebooks.userId, userId),
+          gte(notebooks.createdAt, startTimestamp)
+        );
+      } else if (endDate) {
+        // Only end date provided
+        const endTimestamp = dateToSQLiteTimestamp(endDate);
+
+        whereClause = and(
+          eq(notebooks.userId, userId),
+          lte(notebooks.createdAt, endTimestamp)
+        );
+      } else {
+        // No date range provided, get all notebooks
+        whereClause = eq(notebooks.userId, userId);
+      }
+
+      // Get notebooks for the user with pagination, but only select specific fields
+      const userNotebooksBasic = await db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          userId: notebooks.userId,
+          isPublic: notebooks.isPublic,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
+        .from(notebooks)
+        .where(whereClause)
+        .orderBy(sql`${notebooks.createdAt} DESC`)
+        .limit(limit)
+        .offset(offset);
+
+      // Now fetch content separately for each notebook with error handling
+      const userNotebooks = await Promise.all(
+        userNotebooksBasic.map(async (notebook) => {
+          try {
+            // Fetch content separately with error handling
+            const contentResult = await db
+              .select({ content: sql`COALESCE(${notebooks.content}, '')` })
+              .from(notebooks)
+              .where(eq(notebooks.id, notebook.id))
+              .then(res => res[0]?.content || '');
+
+            return {
+              ...notebook,
+              content: sanitizeContent(contentResult)
+            };
+          } catch (error) {
+            console.error(`Error fetching content for notebook ${notebook.id}:`, error);
+            // Return the notebook with empty content if there's an error
+            return {
+              ...notebook,
+              content: 'Content unavailable due to encoding issues'
+            };
+          }
+        })
+      );
+
+      // Get all tags for each notebook
+      const notebooksWithTags = await Promise.all(
+        userNotebooks.map(async (notebook) => {
+          try {
+            const notebookTags = await db
+              .select({
+                id: tags.id,
+                name: tags.name,
+              })
+              .from(tags)
+              .innerJoin(notebooksTags, eq(tags.id, notebooksTags.tagId))
+              .where(eq(notebooksTags.notebookId, notebook.id));
+
+            return {
+              ...notebook,
+              tags: notebookTags,
+            };
+          } catch (error) {
+            console.error(`Error fetching tags for notebook ${notebook.id}:`, error);
+            return {
+              ...notebook,
+              tags: [],
+            };
+          }
+        })
+      );
+
+      return notebooksWithTags;
+    } catch (error) {
+      console.error('Error getting notebooks by date range:', error);
+      return [];
+    }
+  },
+
   async getUserNotebooks(userId, page = 1, limit = 20) {
     try {
       // Calculate offset
@@ -1158,3 +1273,6 @@ export const NotebookService = {
     }
   },
 };
+
+// Export the service as default
+export default NotebookService;

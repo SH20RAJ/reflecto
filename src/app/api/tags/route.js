@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from "@/auth";
-import { NotebookService } from '@/lib/notebook-service-drizzle';
+import NotebookService from '@/lib/notebook-service-drizzle';
 
 /**
  * GET /api/tags

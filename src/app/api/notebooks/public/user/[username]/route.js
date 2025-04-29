@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { NotebookService } from '@/lib/notebook-service-drizzle';
+import NotebookService from '@/lib/notebook-service-drizzle';
 
 /**
  * GET /api/notebooks/public/user/[username]
