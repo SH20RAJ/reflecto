@@ -858,23 +858,7 @@ Enjoy your journaling journey with Reflecto!`,
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => handleViewNotebook(notebook.id, e)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => handleEditNotebook(notebook.id, e)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                          <div className="flex justify-end">
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
@@ -928,15 +912,6 @@ Enjoy your journaling journey with Reflecto!`,
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handleViewNotebook(notebook.id, e)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => handleEditNotebook(notebook.id, e)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <DropdownMenuItem
@@ -1082,15 +1057,6 @@ Enjoy your journaling journey with Reflecto!`,
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handleViewNotebook(notebook.id, e)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => handleEditNotebook(notebook.id, e)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <DropdownMenuItem

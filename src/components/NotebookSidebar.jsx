@@ -71,7 +71,7 @@ const SidebarContent = ({ onClose }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       <div className="p-6">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60   text-fuchsia-400 bg-clip-text">Reflecto</h2>
       </div>
@@ -89,7 +89,7 @@ const SidebarContent = ({ onClose }) => {
         </Link>
       </div>
 
-      <nav className="flex-1 px-3 py-2 space-y-3">
+      <nav className="flex-1 px-3 py-2 space-y-3 overflow-y-auto">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href} passHref onClick={onClose}>
             <Button
@@ -212,9 +212,11 @@ const NotebookSidebar = () => {
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden md:flex h-screen w-64 border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-col">
+      <div className="hidden md:flex h-screen w-64 border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-col fixed left-0 top-0">
         <SidebarContent onClose={() => {}} />
       </div>
+      {/* Add a spacer to account for the fixed sidebar */}
+      <div className="hidden md:block w-64"></div>
 
       {/* Mobile sidebar with Sheet */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
