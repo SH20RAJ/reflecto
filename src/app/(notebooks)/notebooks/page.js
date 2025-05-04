@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { useNotebooks, useNotebooksByTag, useSearchNotebooks, useTags } from '@/lib/hooks';
@@ -29,7 +29,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 
 
-export default function NotebooksPage() {
+// Client component that uses searchParams
+function NotebooksContent() {
   const { status } = useSession();
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -219,38 +220,83 @@ export default function NotebooksPage() {
     router.push(`/notebooks/${id}?edit=true`);
   };
 
+  const [deletingNotebookId, setDeletingNotebookId] = useState(null);
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+
   const handleDeleteNotebook = async (id, e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+
+    // Set the deleting state for this notebook
+    setDeletingNotebookId(id);
 
     try {
-      // Optimistic UI update - immediately update the UI
-      mutateNotebooks(
-        currentData => {
-          // Filter out the deleted notebook from the current data
-          const updatedNotebooks = currentData.notebooks.filter(notebook => notebook.id !== id);
-          return { ...currentData, notebooks: updatedNotebooks };
-        },
-        false // Don't revalidate yet
-      );
+      console.log('Deleting notebook with ID:', id);
 
+      // Make the API call first before updating the UI
       const response = await fetch(`/api/notebooks/${id}`, {
         method: 'DELETE',
       });
 
+      console.log('Delete response status:', response.status);
+
       if (response.ok) {
+        // Log success
+        console.log('Successfully deleted notebook from API');
+
+        // Get the current data from SWR cache for debugging
+        const currentSWRData = await mutateNotebooks();
+        console.log('Current SWR data before update:', currentSWRData);
+
+        // Only update the UI after successful deletion
+        await mutateNotebooks(
+          currentData => {
+            if (!currentData) {
+              console.log('No current data in SWR cache');
+              return currentData;
+            }
+
+            console.log('Updating SWR cache with filtered notebooks');
+            // Filter out the deleted notebook from the current data
+            const updatedNotebooks = currentData.notebooks.filter(notebook => notebook.id !== id);
+
+            // Create the updated data structure
+            const updatedData = {
+              ...currentData,
+              notebooks: updatedNotebooks,
+              notebooksCount: (currentData.notebooksCount || updatedNotebooks.length) - 1
+            };
+
+            console.log('Updated SWR data:', updatedData);
+            return updatedData;
+          },
+          { revalidate: false } // Don't revalidate immediately to avoid race conditions
+        );
+
+        // Force a revalidation after a short delay to ensure consistency
+        setTimeout(() => {
+          mutateNotebooks(undefined, { revalidate: true });
+        }, 300);
+
         toast.success('Notebook deleted successfully');
-        // Revalidate after successful deletion
-        mutateNotebooks();
+        setIsAlertDialogOpen(false); // Close the dialog
       } else {
-        toast.error('Failed to delete notebook');
-        // Revert the optimistic update on error
-        mutateNotebooks();
+        // Handle error response
+        let errorMessage = 'Failed to delete notebook';
+        try {
+          const errorData = await response.json();
+          console.error('Error response:', errorData);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.error('Error parsing error response:', e);
+        }
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting notebook:', error);
       toast.error('An error occurred while deleting the notebook');
-      // Revert the optimistic update on error
-      mutateNotebooks();
+    } finally {
+      // Clear the deleting state
+      setDeletingNotebookId(null);
     }
   };
 
@@ -314,90 +360,90 @@ export default function NotebooksPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 md:mt-0 mt-20">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {selectedTag ? (
-              <div className="flex items-center gap-2">
-                <span>Tag:</span>
-                <Badge variant="outline" className="text-base font-normal py-1 px-3">
-                  {tags.find(t => t.id === selectedTag)?.name || 'Loading...'}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2 h-8 w-8 p-0"
-                  onClick={() => {
-                    setSelectedTag(null);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <span className="sr-only">Clear tag filter</span>
-                  ×
-                </Button>
-              </div>
-            ) : 'All Notebooks'}
-          </h1>
-          {showDateFilter && selectedMonth !== null && (
-            <div className="mt-2 flex items-center gap-2">
-              <Badge variant="outline" className="flex items-center gap-1">
-                <CalendarDays className="h-3 w-3" />
-                Filtered by: {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth]} {selectedYear}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 ml-1"
-                  onClick={resetFilters}
-                >
-                  <span className="sr-only">Clear filter</span>
-                  ×
-                </Button>
-              </Badge>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1 h-9">
-                {isTagFilterLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Tag className="h-3.5 w-3.5" />
-                )}
-                Tags {isTagFilterLoading && '(Loading...)'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Filter by tag</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {isLoadingTags ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  <span className="text-sm text-muted-foreground">Loading tags...</span>
-                </div>
-              ) : tags.length > 0 ? (
-                tags.map(tag => (
-                  <DropdownMenuItem
-                    key={tag.id}
-                    className="flex justify-between"
-                    onClick={() => handleTagSelect(tag.id)}
+      <div className="sticky top-0 z-50 bg-background pb-4 md:mt-0 mt-20">
+        <div className="flex border-b-1/2 flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 mt-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {selectedTag ? (
+                <div className="flex items-center gap-2">
+                  <span>Tag:</span>
+                  <Badge variant="outline" className="text-base font-normal py-1 px-3">
+                    {tags.find(t => t.id === selectedTag)?.name || 'Loading...'}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-2 h-8 w-8 p-0"
+                    onClick={() => {
+                      setSelectedTag(null);
+                      setCurrentPage(1);
+                    }}
                   >
-                    <div className="flex items-center">
-                      <Hash className="mr-2 h-3.5 w-3.5" />
-                      {tag.name}
-                    </div>
-                    <Badge variant="secondary" className="ml-auto">{tag.count}</Badge>
-                  </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>No tags found</DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    <span className="sr-only">Clear tag filter</span>
+                    ×
+                  </Button>
+                </div>
+              ) : 'All Notebooks'}
+            </h1>
+            {showDateFilter && selectedMonth !== null && (
+              <div className="mt-2 flex items-center gap-2">
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  Filtered by: {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth]} {selectedYear}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 ml-1"
+                    onClick={resetFilters}
+                  >
+                    <span className="sr-only">Clear filter</span>
+                    ×
+                  </Button>
+                </Badge>
+              </div>
+            )}
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 h-9">
+                  {isTagFilterLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Tag className="h-3.5 w-3.5" />
+                  )}
+                  Tags {isTagFilterLoading && '(Loading...)'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Filter by tag</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {isLoadingTags ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span className="text-sm text-muted-foreground">Loading tags...</span>
+                  </div>
+                ) : tags.length > 0 ? (
+                  tags.map(tag => (
+                    <DropdownMenuItem
+                      key={tag.id}
+                      className="flex justify-between"
+                      onClick={() => handleTagSelect(tag.id)}
+                    >
+                      <div className="flex items-center">
+                        <Hash className="mr-2 h-3.5 w-3.5" />
+                        {tag.name}
+                      </div>
+                      <Badge variant="secondary" className="ml-auto">{tag.count}</Badge>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>No tags found</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <div className="border rounded-md flex">
               <Button
                 variant={viewMode === 'grid' ? "subtle" : "ghost"}
@@ -616,36 +662,36 @@ export default function NotebooksPage() {
             </Dialog>
           </div>
         </div>
-      </div>
 
-      <div className="relative mb-6">
-        {isSearchLoading ? (
-          <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 animate-spin" />
-        ) : (
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        )}
-        <Input
-          placeholder="Search notebooks..."
-          className="pl-8 w-full"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setSelectedTag(null); // Clear tag filter when searching
-            setCurrentPage(1); // Reset to first page
-          }}
-        />
-        {isSearchLoading && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <span className="text-xs text-muted-foreground">Searching...</span>
-          </div>
-        )}
+        <div className="relative">
+          {isSearchLoading ? (
+            <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          )}
+          <Input
+            placeholder="Search notebooks..."
+            className="pl-8 w-full"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSelectedTag(null); // Clear tag filter when searching
+              setCurrentPage(1); // Reset to first page
+            }}
+          />
+          {isSearchLoading && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <span className="text-xs text-muted-foreground">Searching...</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {isSessionLoading ? (
         <div className="space-y-6">
           <div className="h-8 w-64 bg-gray-200 dark:bg-gray-800 rounded-md animate-pulse mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7 ,8, 9].map((i) => (
               <div key={i} className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse">
                 <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
                 <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
@@ -664,7 +710,7 @@ export default function NotebooksPage() {
           // Show loading skeleton while notebooks are being fetched
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
                 <div key={i} className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse">
                   <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
                   <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
@@ -746,10 +792,10 @@ Enjoy your journaling journey with Reflecto!`,
         ) : (
           <div>
             {viewMode === 'table' ? (
-              <div className="rounded-md border mb-8 overflow-hidden">
+              <div className="rounded-md border mb-8 overflow-hidden shadow-sm">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
                       <TableHead className="w-[40%]">
                         <div className="flex items-center cursor-pointer"
                           onClick={() => {
@@ -820,7 +866,15 @@ Enjoy your journaling journey with Reflecto!`,
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={(e) => handleViewNotebook(notebook.id, e)}
                       >
-                        <TableCell className="font-medium">{notebook.title}</TableCell>
+                        <TableCell className="font-medium">
+                          <Button
+                          variant={"link"}
+                          className="p-0 text-foreground"
+                          >
+
+                          {notebook.title}
+                          </Button>
+                          </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {format(new Date(notebook.createdAt), 'MMM d, yyyy')}
                         </TableCell>
@@ -864,26 +918,46 @@ Enjoy your journaling journey with Reflecto!`,
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                  onClick={(e) => e.preventDefault()}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors duration-200"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  disabled={deletingNotebookId === notebook.id}
                                 >
-                                  <Trash className="h-4 w-4" />
+                                  {deletingNotebookId === notebook.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash className="h-4 w-4" />
+                                  )}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogTitle>Delete Notebook</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete your notebook.
+                                    Are you sure you want to delete "{notebook.title}"? This action cannot be undone and will permanently delete your notebook.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={(e) => handleDeleteNotebook(notebook.id, e)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleDeleteNotebook(notebook.id);
+                                    }}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    disabled={deletingNotebookId === notebook.id}
                                   >
-                                    Delete
+                                    {deletingNotebookId === notebook.id ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Deleting...
+                                      </>
+                                    ) : (
+                                      'Delete'
+                                    )}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -919,25 +993,47 @@ Enjoy your journaling journey with Reflecto!`,
                                 onSelect={(e) => {
                                   e.preventDefault();
                                 }}
+                                disabled={deletingNotebookId === notebook.id}
                               >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete
+                                {deletingNotebookId === notebook.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </>
+                                )}
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogTitle>Delete Notebook</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete your notebook.
+                                  Are you sure you want to delete "{notebook.title}"? This action cannot be undone and will permanently delete your notebook.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={(e) => handleDeleteNotebook(notebook.id, e)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleDeleteNotebook(notebook.id);
+                                  }}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  disabled={deletingNotebookId === notebook.id}
                                 >
-                                  Delete
+                                  {deletingNotebookId === notebook.id ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    'Delete'
+                                  )}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -1064,25 +1160,47 @@ Enjoy your journaling journey with Reflecto!`,
                                 onSelect={(e) => {
                                   e.preventDefault();
                                 }}
+                                disabled={deletingNotebookId === notebook.id}
                               >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete
+                                {deletingNotebookId === notebook.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </>
+                                )}
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogTitle>Delete Notebook</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete your notebook.
+                                  Are you sure you want to delete "{notebook.title}"? This action cannot be undone and will permanently delete your notebook.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={(e) => handleDeleteNotebook(notebook.id, e)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleDeleteNotebook(notebook.id);
+                                  }}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  disabled={deletingNotebookId === notebook.id}
                                 >
-                                  Delete
+                                  {deletingNotebookId === notebook.id ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    'Delete'
+                                  )}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -1253,5 +1371,35 @@ Enjoy your journaling journey with Reflecto!`,
         </div>
       )}
     </div>
+  );
+}
+
+// Main page component that wraps the client component in Suspense
+export default function NotebooksPage() {
+  return (
+    <Suspense fallback={
+      <div>
+        <div className="sticky top-0 z-50 bg-background pb-4 md:mt-0 mt-20">
+          <div className="h-8 w-64 bg-gray-200 dark:bg-gray-800 rounded-md animate-pulse mb-4"></div>
+          <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-6 animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse">
+              <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+              <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+              <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+              <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
+              <div className="flex gap-2">
+                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    }>
+      <NotebooksContent />
+    </Suspense>
   );
 }

@@ -1,32 +1,106 @@
 import Link from "next/link";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function CTA() {
+  const benefits = [
+    "Free forever, no credit card required",
+    "Start journaling in less than 60 seconds",
+    "Private and secure by default",
+    "Works on all your devices"
+  ];
+
   return (
-    <section className="bg-black text-white dark:bg-white dark:text-black">
-      <div className="max-w-screen-xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Start your reflection journey today
-          </h2>
-          <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto">
-            Join thousands of users who have transformed their lives through mindful reflection with Reflecto.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="bg-white text-black dark:bg-black dark:text-white px-8 py-3 rounded-md text-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
-            >
-              Get started for free
-              <svg className="ml-2 h-4 w-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="border border-white dark:border-black px-8 py-3 rounded-md text-lg font-medium hover:bg-white/10 dark:hover:bg-black/10 transition-colors"
-            >
-              Learn more
-            </Link>
+    <section className="relative py-24 overflow-hidden">
+      {/* Background with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80 opacity-95"></div>
+
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+              Start your reflection journey today
+            </h2>
+            <p className="text-xl mb-8 text-white/90 leading-relaxed">
+              Join thousands of users who have transformed their lives through mindful reflection with Reflecto.
+            </p>
+
+            <div className="space-y-4 mb-10">
+              {benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center text-white">
+                  <CheckCircle2 className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <span>{benefit}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/auth/signin"
+                className="bg-white text-primary px-8 py-3 rounded-lg text-lg font-medium transition-all inline-flex items-center gap-2 group shadow-lg shadow-black/10 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-0.5"
+              >
+                Get started for free
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="border border-white/50 bg-white/10 backdrop-blur-sm text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-white/20 transition-all"
+              >
+                See how it works
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative hidden md:block">
+            {/* Decorative image or illustration */}
+            <div className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-white/0 via-white/50 to-white/0"></div>
+
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl">
+                    ✨
+                  </div>
+                  <div className="text-white">
+                    <h3 className="text-xl font-bold">Start Small</h3>
+                    <p className="text-white/80">Just 5 minutes a day can transform your life</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl">
+                    🧠
+                  </div>
+                  <div className="text-white">
+                    <h3 className="text-xl font-bold">Gain Clarity</h3>
+                    <p className="text-white/80">Organize your thoughts and reduce mental clutter</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl">
+                    📈
+                  </div>
+                  <div className="text-white">
+                    <h3 className="text-xl font-bold">Track Progress</h3>
+                    <p className="text-white/80">See your growth over time with insights</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl">
+                    🔒
+                  </div>
+                  <div className="text-white">
+                    <h3 className="text-xl font-bold">Stay Private</h3>
+                    <p className="text-white/80">Your thoughts remain secure and encrypted</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

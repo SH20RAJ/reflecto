@@ -1,4 +1,5 @@
-import { BookOpen, Calendar, Clock, Sparkles, Brain, Lightbulb } from "lucide-react";
+import { BookOpen, Calendar, Clock, Sparkles, Brain, Lightbulb, Mic, Search, BarChart2, Timer, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function Features() {
   const features = [
@@ -6,80 +7,112 @@ export default function Features() {
       title: "Daily Reflection Prompts",
       description: "Thoughtful prompts to guide your daily reflections and help you explore your thoughts more deeply.",
       icon: <Lightbulb className="h-6 w-6" />,
+      color: "from-amber-500 to-orange-500",
+      bgLight: "bg-amber-50",
+      bgDark: "dark:bg-amber-950/30",
     },
     {
       title: "Voice Journaling",
       description: "Talk instead of type with quick voice input for effortless journaling when you're on the go.",
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-        </svg>
-      ),
+      icon: <Mic className="h-6 w-6" />,
+      color: "from-blue-500 to-indigo-500",
+      bgLight: "bg-blue-50",
+      bgDark: "dark:bg-blue-950/30",
     },
     {
       title: "Time Capsule",
       description: "Auto-saves 'reflection memories' that resurface weekly/monthly to help you see your growth over time.",
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
+      icon: <Clock className="h-6 w-6" />,
+      color: "from-purple-500 to-violet-500",
+      bgLight: "bg-purple-50",
+      bgDark: "dark:bg-purple-950/30",
     },
     {
       title: "Search Your Journal",
       description: "Easily find past entries by searching for keywords, dates, or topics to revisit important moments.",
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      ),
+      icon: <Search className="h-6 w-6" />,
+      color: "from-green-500 to-emerald-500",
+      bgLight: "bg-green-50",
+      bgDark: "dark:bg-green-950/30",
     },
     {
       title: "Weekly Review",
       description: "Get insights into patterns: words you repeat, most common mood, goal success, and more.",
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
+      icon: <BarChart2 className="h-6 w-6" />,
+      color: "from-red-500 to-rose-500",
+      bgLight: "bg-red-50",
+      bgDark: "dark:bg-red-950/30",
     },
     {
       title: "30-Second Mode",
       description: "Quick emoji rating + short text for reflection in less than a minute when you're busy.",
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
+      icon: <Timer className="h-6 w-6" />,
+      color: "from-cyan-500 to-teal-500",
+      bgLight: "bg-cyan-50",
+      bgDark: "dark:bg-cyan-950/30",
     },
   ];
 
   return (
-    <section id="features" className="py-24 bg-white dark:bg-black text-background dark:text-foreground">
+    <section id="features" className="py-24 relative overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(40%_40%_at_50%_60%,var(--primary-color-5,rgba(var(--primary-rgb),0.05))_0%,rgba(var(--background-end-rgb),0)_100%)]" />
+      <div className="absolute top-40 left-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl -ml-20" />
+      <div className="absolute bottom-20 right-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl -mr-20" />
+
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-background dark:text-foreground">
-            Everything you need for your reflection journey
+        <div className="text-center mb-16 relative">
+          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4">
+            <Sparkles className="h-3.5 w-3.5 mr-2" />
+            Powerful yet simple
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+            Everything you need for meaningful reflection
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Reflecto helps you capture your thoughts and track patterns with minimal effort and maximum impact.
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Reflecto combines powerful features with a simple interface to help you capture thoughts and discover insights with minimal effort.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="p-6 border border-gray-200 dark:border-gray-800 rounded-lg hover:shadow-md transition-shadow bg-white dark:bg-gray-900">
-              <div className="flex items-center mb-4">
-                <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-md mr-4 text-primary">
+            <div
+              key={index}
+              className="group relative p-8 rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-card hover:shadow-lg transition-all overflow-hidden"
+            >
+              {/* Gradient background that appears on hover */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+
+              {/* Icon with gradient */}
+              <div className={`mb-5 w-12 h-12 rounded-lg ${feature.bgLight} ${feature.bgDark} flex items-center justify-center`}>
+                <div className={`bg-gradient-to-br ${feature.color} bg-clip-text text-transparent`}>
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-background dark:text-foreground">{feature.title}</h3>
               </div>
-              <p className="text-gray-700 dark:text-gray-300">
+
+              <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                {feature.title}
+              </h3>
+
+              <p className="text-muted-foreground mb-4">
                 {feature.description}
               </p>
+
+              {/* Subtle line decoration */}
+              <div className="w-12 h-1 bg-gradient-to-r from-primary/30 to-transparent rounded-full"></div>
             </div>
           ))}
+        </div>
+
+        {/* CTA Button */}
+        <div className="mt-16 text-center">
+          <Link
+            href="/notebooks"
+            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-6 py-3 rounded-lg font-medium transition-colors group"
+          >
+            Explore all features
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
       </div>
     </section>

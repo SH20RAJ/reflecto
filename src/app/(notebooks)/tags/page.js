@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -19,44 +19,44 @@ import {
 import { Tag, Search, Grid, List, ArrowLeft } from 'lucide-react';
 import NotebookSidebar from '@/components/NotebookSidebar';
 
-const TagsPage = () => {
+// Client component that uses searchParams
+const TagsContent = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAuthenticated = status === 'authenticated';
-  
+
   // Get tags data using SWR
   const { tags, isLoading, isError } = useTags();
-  
+
   // State for search and view mode
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState(searchParams.get('view') || 'grid'); // 'grid' or 'list'
-  
+
   // Filter tags based on search query
-  const filteredTags = tags.filter(tag => 
+  const filteredTags = tags.filter(tag =>
     tag.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   // Handle search input change
   const handleSearchInput = (e) => {
     setSearchQuery(e.target.value);
   };
-  
+
   // Toggle view mode
   const toggleViewMode = (mode) => {
     setViewMode(mode);
     router.push(`/tags?view=${mode}`, { scroll: false });
   };
-  
+
   // If not authenticated, redirect to login
   if (status === 'unauthenticated') {
     router.push('/login');
     return null;
   }
-  
+
   return (
     <div className="flex min-h-screen">
-      
       <main className="flex-1 p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -69,7 +69,7 @@ const TagsPage = () => {
                 Browse and manage your notebook tags
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -93,7 +93,7 @@ const TagsPage = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
+
               <Link href="/notebooks">
                 <Button variant="ghost" size="sm" className="gap-1 h-9">
                   <ArrowLeft className="h-3.5 w-3.5" />
@@ -102,7 +102,7 @@ const TagsPage = () => {
               </Link>
             </div>
           </div>
-          
+
           {/* Search */}
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -113,11 +113,11 @@ const TagsPage = () => {
               onChange={handleSearchInput}
             />
           </div>
-          
+
           {/* Tags Grid/List */}
           {isLoading ? (
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" 
+            <div className={viewMode === 'grid'
+              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
               : "space-y-3"
             }>
               {Array(8).fill(0).map((_, i) => (
@@ -142,8 +142,8 @@ const TagsPage = () => {
           ) : isError ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Error loading tags. Please try again.</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="mt-4"
                 onClick={() => window.location.reload()}
               >
@@ -195,6 +195,34 @@ const TagsPage = () => {
         </div>
       </main>
     </div>
+  );
+};
+
+// Main page component that wraps the client component in Suspense
+const TagsPage = () => {
+
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen">
+        <main className="flex-1 p-6 md:p-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="h-8 w-64 bg-gray-200 dark:bg-gray-800 rounded-md animate-pulse mb-4"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array(8).fill(0).map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <Skeleton className="h-6 w-24 mb-2" />
+                    <Skeleton className="h-4 w-12" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    }>
+      <TagsContent />
+    </Suspense>
   );
 };
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Editor } from "novel-lightweight";
 import { toast } from 'sonner';
+import '@/styles/novel-editor.css';
 
 export default function TextEditor({
   initialValue = '',
@@ -36,7 +37,7 @@ export default function TextEditor({
     }
   };
 
-  
+
 
   return (
     <div className={`editor-container ${className}`}>
@@ -51,7 +52,7 @@ export default function TextEditor({
         className={`min-h-[300px] border-none focus:outline-none ${readOnly ? 'cursor-default' : ''}`}
         editorProps={{
           attributes: {
-            class: `prose prose-lg max-w-none focus:outline-none ${readOnly ? 'pointer-events-none' : ''}`,
+            class: `prose prose-lg novel-prose max-w-none focus:outline-none ${readOnly ? 'pointer-events-none' : ''}`,
             spellcheck: 'false',
             'data-gramm': 'false',
             placeholder: placeholder,

@@ -49,6 +49,8 @@ export default function NotebookPage({ params }) {
   const [selectedTags, setSelectedTags] = useState([]);
   const [newTag, setNewTag] = useState('');
   const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
   // Fetch all available tags
   const { tags: allTags } = useTags();
@@ -99,6 +101,26 @@ export default function NotebookPage({ params }) {
       router.push('/auth/signin');
     }
   }, [isAuthenticated, notebookId, status, fetchNotebook, router]);
+
+  // Autosave functionality
+  useEffect(() => {
+    if (!autoSaveEnabled || !notebook || !editorData) return;
+
+    // Create autosave timer
+    const autoSaveTimer = setTimeout(async () => {
+      try {
+        // Only save if there's actual content and the notebook exists
+        if (editorData && notebook) {
+          await handleEditorSave(true);
+        }
+      } catch (error) {
+        console.error('Autosave error:', error);
+      }
+    }, 10000); // 10 seconds
+
+    // Cleanup timer on component unmount or when dependencies change
+    return () => clearTimeout(autoSaveTimer);
+  }, [editorData, title, selectedTags, autoSaveEnabled, notebook]);
 
 
 

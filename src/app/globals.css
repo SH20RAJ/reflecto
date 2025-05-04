@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base typography styles */
+@layer base {
+  h1 {
+    @apply text-2xl font-bold mb-2;
+  }
+  h2 {
+    @apply text-xl font-semibold mb-2;
+  }
+  h3 {
+    @apply text-lg font-medium mb-2;
+  }
+}
+
 :root {
   --radius: 0rem;
   --background: oklch(1 0 0);

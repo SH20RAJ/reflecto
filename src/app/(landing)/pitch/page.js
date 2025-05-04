@@ -2,7 +2,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { Check, ArrowRight, Star, Brain, Sparkles, Clock, Calendar, Shield, Zap, MessageSquare, Search, Bot } from "lucide-react";
+import { Check, ArrowRight, Star, Brain, Sparkles, Clock, Calendar, Shield, Zap, MessageSquare, Search, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -273,7 +273,7 @@ export default function PitchPage() {
         {/* Features Comparison */}
         <FeatureComparision/>
 
-       
+
 
         {/* Simplicity Section */}
         <section className="py-20 bg-primary/5">
@@ -333,136 +333,208 @@ export default function PitchPage() {
 
 
 export function ChatFeatures() {
+  return (
+    <section className="py-24 relative overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(40%_40%_at_50%_60%,var(--primary-color-5,rgba(var(--primary-rgb),0.05))_0%,rgba(var(--background-end-rgb),0)_100%)]" />
+      <div className="absolute top-40 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -ml-48" />
+      <div className="absolute bottom-20 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-48" />
 
-  return  (
-  <section className="py-20 bg-white dark:bg-black">{/* Chat Feature Section */}
-    <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-16">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">Chat with Your Memories</h2>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Our revolutionary chat feature lets you search through your entries using natural language.
-        </p>
+      {/* Animated dots */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-1/3 left-1/4 w-2 h-2 rounded-full bg-primary/20 animate-pulse" style={{ animationDelay: '0.8s' }} />
+        <div className="absolute top-2/3 right-1/3 w-3 h-3 rounded-full bg-primary/30 animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute bottom-1/3 right-1/4 w-2 h-2 rounded-full bg-primary/20 animate-pulse" style={{ animationDelay: '1.2s' }} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16">
-        <div>
-          <h3 className="text-2xl font-bold mb-6">Ask Questions, Get Answers</h3>
-          <p className="text-muted-foreground mb-8">
-            Reflecto&apos;s chat interface transforms how you interact with your personal data. Simply ask questions in natural language and get instant, relevant answers from your notebooks.
-          </p>
-
-          <div className="space-y-6">
-            <div className="bg-primary/5 p-4 rounded-lg">
-              <div className="flex items-center mb-2">
-                <Search className="h-5 w-5 text-primary mr-2" />
-                <h4 className="font-medium">Find by Date</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                "What did I write on my birthday last year?"<br />
-                "Show me entries from January 2024"<br />
-                "Find notes I wrote last summer"
-              </p>
-            </div>
-
-            <div className="bg-primary/5 p-4 rounded-lg">
-              <div className="flex items-center mb-2">
-                <Search className="h-5 w-5 text-primary mr-2" />
-                <h4 className="font-medium">Find by Content & People</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                "When did I first mention meeting my girlfriend?"<br />
-                "Find entries where I talked about my job interview"<br />
-                "Show me notes about my vacation in Hawaii"
-              </p>
-            </div>
-
-            <div className="bg-primary/5 p-4 rounded-lg">
-              <div className="flex items-center mb-2">
-                <Search className="h-5 w-5 text-primary mr-2" />
-                <h4 className="font-medium">Find by Media & Emotions</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                "What photos did I take on Saturday in January 2025?"<br />
-                "Show me entries where I felt happy"<br />
-                "Find all pictures from my brother's wedding"
-              </p>
-            </div>
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className="text-center mb-16 relative">
+          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4">
+            <Sparkles className="h-3.5 w-3.5 mr-2" />
+            Revolutionary feature
           </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+            Chat with Your Memories
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Our innovative chat interface transforms how you interact with your journal entries, making your personal insights more accessible than ever.
+          </p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4 border-b pb-4">
-            <div className="flex items-center">
-              <Bot className="h-5 w-5 text-primary mr-2" />
-              <h3 className="font-medium">Notebook Assistant</h3>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16">
+          {/* Left column - Features */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="relative">
+              <h3 className="text-2xl font-bold mb-6 flex items-center">
+                <span className="bg-primary/10 text-primary p-2 rounded-lg mr-3">
+                  <MessageSquare className="h-5 w-5" />
+                </span>
+                Ask Questions, Get Answers
+              </h3>
 
-          <div className="space-y-4 mb-4">
-            <div className="flex items-start">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3 flex-shrink-0">
-                <Bot className="h-4 w-4 text-primary" />
-              </div>
-              <div className="bg-muted p-3 rounded-lg rounded-tl-none max-w-[80%]">
-                <p className="text-sm">Hi there! I can help you search through your notebooks. What would you like to find?</p>
-              </div>
-            </div>
+              <p className="text-muted-foreground mb-8 leading-relaxed">
+                Simply ask questions in natural language and get instant, relevant answers from your journal entries. No more scrolling through endless pages to find what you're looking for.
+              </p>
 
-            <div className="flex items-start justify-end">
-              <div className="bg-primary text-primary-foreground p-3 rounded-lg rounded-tr-none max-w-[80%]">
-                <p className="text-sm">When did I first meet Sarah?</p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-3 flex-shrink-0">
-                <span className="text-xs text-primary-foreground font-medium">You</span>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3 flex-shrink-0">
-                <Bot className="h-4 w-4 text-primary" />
-              </div>
-              <div className="space-y-3 max-w-[80%]">
-                <div className="bg-muted p-3 rounded-lg rounded-tl-none">
-                  <p className="text-sm">I found 3 entries related to meeting Sarah. Here are the most relevant results:</p>
-                </div>
-
-                <div className="bg-card border border-border p-3 rounded-lg text-sm">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-medium">First Coffee with Sarah</div>
-                    <div className="text-xs bg-muted px-2 py-1 rounded-full flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      March 15, 2024
+              <div className="space-y-4">
+                <div className="bg-card border border-border/50 p-5 rounded-xl hover:shadow-md transition-all group">
+                  <div className="flex items-center mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-500 mr-3">
+                      <Calendar className="h-5 w-5" />
+                    </div>
+                    <h4 className="font-semibold group-hover:text-primary transition-colors">Find by Date</h4>
+                  </div>
+                  <div className="pl-13 space-y-2">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="w-1 h-1 rounded-full bg-primary/50 mr-2"></div>
+                      "What did I write on my birthday last year?"
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="w-1 h-1 rounded-full bg-primary/50 mr-2"></div>
+                      "Show me entries from January 2024"
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="w-1 h-1 rounded-full bg-primary/50 mr-2"></div>
+                      "Find notes I wrote last summer"
                     </div>
                   </div>
-                  <p className="text-muted-foreground text-xs line-clamp-2">
-                    Met Sarah for coffee today at that new place downtown. We talked for hours about our shared interest in...
-                  </p>
+                </div>
+
+                <div className="bg-card border border-border/50 p-5 rounded-xl hover:shadow-md transition-all group">
+                  <div className="flex items-center mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-500 mr-3">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <h4 className="font-semibold group-hover:text-primary transition-colors">Find by Content & People</h4>
+                  </div>
+                  <div className="pl-13 space-y-2">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="w-1 h-1 rounded-full bg-primary/50 mr-2"></div>
+                      "When did I first mention meeting my girlfriend?"
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="w-1 h-1 rounded-full bg-primary/50 mr-2"></div>
+                      "Find entries where I talked about my job interview"
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="border-t pt-4 flex gap-2">
-            <div className="flex-1 bg-muted rounded-md px-3 py-2 text-sm text-muted-foreground">
-              Ask about your notebooks...
+          {/* Right column - Chat UI */}
+          <div className="lg:col-span-7 relative">
+            {/* Decorative elements */}
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/10 rounded-full blur-xl" />
+            <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-primary/10 rounded-full blur-xl" />
+
+            {/* Chat UI with enhanced styling */}
+            <div className="relative bg-card rounded-xl overflow-hidden shadow-2xl border border-border/50 backdrop-blur-sm">
+              {/* Browser-like header */}
+              <div className="p-4 border-b border-border/80 bg-muted/30 backdrop-blur-sm flex items-center">
+                <div className="flex space-x-2 mr-4">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <div className="flex-1 text-center">
+                  <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-background/80 text-foreground/80">
+                    <Bot className="h-3.5 w-3.5 mr-1.5" />
+                    Reflecto Memory Assistant
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat content */}
+              <div className="p-6 bg-gradient-to-b from-background to-background/95">
+                <div className="space-y-6 mb-6">
+                  {/* Bot welcome message */}
+                  <div className="flex items-start">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0 border border-primary/20">
+                      <Bot className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="bg-muted/50 backdrop-blur-sm p-4 rounded-2xl rounded-tl-none max-w-[80%] shadow-sm">
+                      <p className="text-sm leading-relaxed">
+                        Hi there! I'm your personal memory assistant. I can help you search through your journal entries using natural language. What would you like to find today?
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* User question */}
+                  <div className="flex items-start justify-end">
+                    <div className="bg-primary/90 text-primary-foreground p-4 rounded-2xl rounded-tr-none max-w-[80%] shadow-sm">
+                      <p className="text-sm">When did I first meet Sarah and what did we talk about?</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center ml-4 flex-shrink-0 border border-primary/20">
+                      <span className="text-xs text-primary-foreground font-medium">You</span>
+                    </div>
+                  </div>
+
+                  {/* Bot response */}
+                  <div className="flex items-start">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0 border border-primary/20">
+                      <Bot className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="space-y-4 max-w-[80%]">
+                      <div className="bg-muted/50 backdrop-blur-sm p-4 rounded-2xl rounded-tl-none shadow-sm">
+                        <p className="text-sm leading-relaxed mb-2">
+                          I found 3 entries related to meeting Sarah. Here's the most relevant one:
+                        </p>
+
+                        <div className="bg-card border border-border/50 p-4 rounded-xl text-sm">
+                          <div className="flex justify-between items-center mb-3 pb-2 border-b border-border/50">
+                            <div className="font-medium text-base">First Coffee with Sarah</div>
+                            <div className="text-xs bg-primary/10 px-2.5 py-1 rounded-full flex items-center text-primary">
+                              <Calendar className="h-3 w-3 mr-1.5" />
+                              March 15, 2024
+                            </div>
+                          </div>
+                          <p className="text-muted-foreground leading-relaxed">
+                            Met Sarah for coffee today at that new place downtown. We talked for hours about our shared interest in photography and travel. She mentioned she's planning a trip to Japan next year and invited me to join her photography club. I really enjoyed our conversation - she has such an interesting perspective on art and culture.
+                          </p>
+                          <div className="mt-3 pt-2 border-t border-border/50 flex justify-between items-center">
+                            <div className="text-xs text-muted-foreground">
+                              Tags: <span className="text-primary">friends, coffee, photography</span>
+                            </div>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs">
+                              View full entry
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Input area */}
+                <div className="border-t border-border/50 pt-4 flex gap-2">
+                  <div className="flex-1 bg-muted/50 backdrop-blur-sm rounded-lg px-4 py-3 text-sm text-muted-foreground border border-border/50">
+                    Ask anything about your journal entries...
+                  </div>
+                  <Button size="icon" className="h-10 w-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90">
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
-            <Button size="icon" className="h-9 w-9">
-              <ArrowRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
-      </div>
 
-      <div className="text-center">
-        <Button asChild size="lg" className="text-lg px-8 py-6">
-          <Link href="/auth/signin">
+        {/* CTA Button */}
+        <div className="text-center">
+          <Link
+            href="/auth/signin"
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-lg font-medium transition-all shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5"
+          >
             Try the Chat Feature
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
-        </Button>
+          <p className="mt-4 text-sm text-muted-foreground">
+            No credit card required. Free forever.
+          </p>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
   );
 }
 
@@ -636,6 +708,6 @@ export function FeatureComparision() {
           </div>
         </section>
 
-      
+
   );
 }
