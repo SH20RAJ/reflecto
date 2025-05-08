@@ -663,23 +663,80 @@ const NotebookService = {
    */
   async deleteNotebook(id, userId) {
     try {
+      console.log(`NotebookService.deleteNotebook called with id: ${id}, userId: ${userId}`);
+
+      if (!id) {
+        console.error('No notebook ID provided for deletion');
+        throw new Error('Notebook ID is required');
+      }
+
+      if (!userId) {
+        console.error('No user ID provided for deletion authorization');
+        throw new Error('User ID is required for authorization');
+      }
+
       // Check if the notebook exists and belongs to the user
+      console.log(`Checking if notebook ${id} exists and belongs to user ${userId}`);
       const notebook = await db
-        .select()
+        .select({
+          id: notebooks.id,
+          userId: notebooks.userId,
+          title: notebooks.title
+        })
         .from(notebooks)
         .where(eq(notebooks.id, id))
         .then((res) => res[0] || null);
 
-      if (!notebook || notebook.userId !== userId) {
+      console.log('Notebook check result:', notebook);
+
+      if (!notebook) {
+        console.error(`Notebook with ID ${id} not found`);
         return false;
       }
 
-      // Delete the notebook (cascade will delete the tag links)
-      await db.delete(notebooks).where(eq(notebooks.id, id));
+      if (notebook.userId !== userId) {
+        console.error(`Notebook with ID ${id} does not belong to user ${userId}`);
+        return false;
+      }
 
-      return true;
+      try {
+        // First, delete any tag associations
+        console.log(`Deleting tag associations for notebook ${id}`);
+        await db.delete(notebooksTags).where(eq(notebooksTags.notebookId, id));
+
+        // Then delete the notebook
+        console.log(`Deleting notebook ${id}`);
+        const result = await db.delete(notebooks).where(eq(notebooks.id, id));
+        console.log('Delete result:', result);
+
+        return true;
+      } catch (deleteError) {
+        console.error(`Error during deletion operations for notebook ${id}:`, deleteError);
+
+        // Try with raw SQL as a fallback
+        console.log('Attempting deletion with raw SQL as fallback');
+        try {
+          // First delete tag associations
+          await executeRawSQL(
+            `DELETE FROM notebooks_tags WHERE notebook_id = ?`,
+            [id]
+          );
+
+          // Then delete the notebook
+          await executeRawSQL(
+            `DELETE FROM notebooks WHERE id = ?`,
+            [id]
+          );
+
+          console.log('Fallback deletion successful');
+          return true;
+        } catch (fallbackError) {
+          console.error('Fallback deletion also failed:', fallbackError);
+          throw new Error(`Failed to delete notebook: ${deleteError.message}. Fallback also failed: ${fallbackError.message}`);
+        }
+      }
     } catch (error) {
-      console.error('Error deleting notebook:', error);
+      console.error('Error in deleteNotebook:', error);
       throw error;
     }
   },
