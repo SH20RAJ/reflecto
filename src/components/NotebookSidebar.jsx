@@ -74,7 +74,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
     <div className="h-full flex flex-col overflow-hidden">
       <div className="p-4 flex items-center justify-between">
         {!isCollapsed ? (
-          <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">Reflecto</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/10 text-transparent bg-clip-text">Reflecto</h2>
         ) : (
           <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">R</span>
         )}

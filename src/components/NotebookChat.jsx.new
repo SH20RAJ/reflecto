@@ -1,43 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Bot } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { LUNA_PERSONALITIES, SAMPLE_QUESTIONS } from "@/lib/luna-personalities";
-import { format } from "date-fns";
-import { motion } from "framer-motion";
 
 // Import modular components
 import { ChatHeader } from "@/components/chat/chat-header";
-import { ChatInput, SampleQuestions } from "@/components/chat/chat-input";
-import { LunaMessage, UserMessage } from "@/components/chat/messages";
-
-/**
- * LoadingMessage component for displaying a loading state while waiting for Luna's response
- */
-function LoadingMessage() {
-  return (
-    <div className="flex justify-start">
-      <div className="flex items-start gap-3 max-w-[80%]">
-        <Avatar className="bg-muted">
-          <AvatarFallback>
-            <Bot className="h-4 w-4" />
-          </AvatarFallback>
-        </Avatar>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-[250px] rounded-lg" />
-          <Skeleton className="h-4 w-[200px] rounded-lg" />
-          <Skeleton className="h-4 w-[170px] rounded-lg" />
-        </div>
-      </div>
-    </div>
-  );
-}
+import { ChatInput } from "@/components/chat/chat-input";
+import { LunaMessage, UserMessage, SystemMessage, LoadingMessage } from "@/components/chat/messages";
 
 /**
  * NotebookChat - Main chat component for interacting with notebooks
@@ -54,14 +27,13 @@ export default function NotebookChat() {
   };
   
   // State management
-  const initialPersonality = getRandomPersonality();
-  const [currentPersonality, setCurrentPersonality] = useState(initialPersonality);
+  const [currentPersonality, setCurrentPersonality] = useState(getRandomPersonality());
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: LUNA_PERSONALITIES[initialPersonality].greeting || 
+      content: LUNA_PERSONALITIES[getRandomPersonality()].greeting || 
         "✨ Hi there! I'm Luna, your magical notebook companion! I'm here to help you explore your memories, discover patterns in your thoughts, or just be a friendly ear when you need someone to talk to. What's on your mind today? You can ask me about your entries, share how you're feeling, or we can just chat about your day! 💫",
-      mood: initialPersonality,
+      mood: currentPersonality,
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +41,7 @@ export default function NotebookChat() {
   const [errorCount, setErrorCount] = useState(0);
   const [lastErrorTime, setLastErrorTime] = useState(null);
   const [showMoodSelector, setShowMoodSelector] = useState(false);
-
+  
   // Date range state
   const [dateRange, setDateRange] = useState({
     startDate: null,
@@ -83,7 +55,7 @@ export default function NotebookChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Randomly select 3 sample questions
+  // Randomly select sample questions
   useEffect(() => {
     const randomQuestions = [...SAMPLE_QUESTIONS]
       .sort(() => 0.5 - Math.random())
@@ -203,8 +175,8 @@ export default function NotebookChat() {
     // Add system message about date range change
     const wasActive = dateRange.isActive;
     if (!wasActive && (dateRange.startDate || dateRange.endDate)) {
-      const startDateStr = dateRange.startDate ? format(dateRange.startDate, 'PPP') : 'the beginning';
-      const endDateStr = dateRange.endDate ? format(dateRange.endDate, 'PPP') : 'today';
+      const startDateStr = dateRange.startDate ? new Date(dateRange.startDate).toLocaleDateString() : 'the beginning';
+      const endDateStr = dateRange.endDate ? new Date(dateRange.endDate).toLocaleDateString() : 'today';
 
       setMessages(prev => [
         ...prev,
@@ -240,7 +212,7 @@ export default function NotebookChat() {
       }
     ]);
   };
-  
+
   // Handle personality change
   const handlePersonalityChange = (personalityKey) => {
     setCurrentPersonality(personalityKey);
@@ -301,7 +273,7 @@ export default function NotebookChat() {
 
   // Render the component
   return (
-    <Card className="w-full h-full flex flex-col overflow-hidden border-0 shadow-lg rounded-xl">
+    <Card className="w-full h-full flex flex-col">
       <ChatHeader 
         currentPersonality={currentPersonality}
         dateRange={dateRange}
@@ -315,18 +287,13 @@ export default function NotebookChat() {
         handlePersonalityChange={handlePersonalityChange}
       />
 
-      <ScrollArea className="flex-1 p-6 bg-gradient-to-b from-slate-50 dark:from-slate-900/30 to-white dark:to-slate-950">
+      <ScrollArea className="flex-1 p-4 bg-gradient-to-b from-slate-50 dark:from-slate-900/30 to-white dark:to-slate-950">
         <div className="space-y-6 pb-4 max-w-3xl mx-auto">
           {messages.map((message, index) => {
             if (message.role === "user") {
-              return <UserMessage 
-                key={index} 
-                message={message} 
-                avatarUrl={session?.user?.image}
-                userName={session?.user?.name}
-              />;
+              return <UserMessage key={index} message={message} session={session} />;
             } else if (message.role === "system") {
-              return <LunaMessage key={index} message={{...message, role: "system"}} />;
+              return <SystemMessage key={index} message={message} />;
             } else {
               return <LunaMessage key={index} message={message} />;
             }
@@ -337,11 +304,23 @@ export default function NotebookChat() {
         </div>
       </ScrollArea>
 
-      {selectedQuestions.length > 0 && (
-        <SampleQuestions 
-          questions={selectedQuestions}
-          onSelect={handleSend}
-        />
+      {selectedQuestions && selectedQuestions.length > 0 && (
+        <div className="px-4 py-2 border-t border-b bg-muted/50 dark:bg-slate-900/30">
+          <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+          <div className="flex flex-wrap gap-2">
+            {selectedQuestions.map((question, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                className="text-xs dark:text-slate-300 dark:hover:text-white"
+                onClick={() => handleSend(question)}
+              >
+                {question}
+              </Button>
+            ))}
+          </div>
+        </div>
       )}
 
       <ChatInput 
@@ -349,7 +328,7 @@ export default function NotebookChat() {
         loading={isLoading}
         currentPersonality={currentPersonality}
         dateRangeActive={dateRange.isActive}
-        className="p-5 pt-3 border-t bg-gradient-to-r from-indigo-50/30 to-purple-50/30 dark:from-indigo-950/30 dark:to-purple-950/30"
+        className="border-t bg-gradient-to-r from-indigo-50/30 to-purple-50/30 dark:from-indigo-950/30 dark:to-purple-950/30"
       />
     </Card>
   );

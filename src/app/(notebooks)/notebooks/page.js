@@ -442,7 +442,7 @@ function NotebooksContent() {
   };
 
   return (
-    <div>
+    <div className='p-4'>
       {/* Global AlertDialog for notebook deletion */}
       <AlertDialog
         open={isAlertDialogOpen}
@@ -942,10 +942,10 @@ Enjoy your journaling journey with Reflecto!`,
             )}
           </div>
         ) : (
-          <div>
+          <div className='h-screen'>
             {viewMode === 'table' ? (
               <div className="rounded-md border mb-8 overflow-hidden shadow-md bg-card">
-                <div className="max-h-[calc(100vh-220px)] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                <div className="max-h-[calc(100vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
                   <Table className="w-full">
                   <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm shadow-sm">
                     <TableRow className="border-b hover:bg-transparent">

@@ -165,7 +165,7 @@ export default function NotebookPage({ params }) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative p-4 md:p-8 lg:p-12   mx-auto">
       {/* Actions Bar */}
       {!isLoading && notebook && (
         <NotebookActions
