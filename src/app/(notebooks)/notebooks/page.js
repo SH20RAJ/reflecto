@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
@@ -7,6 +8,7 @@ import { useNotebooks, useNotebooksByTag, useSearchNotebooks, useTags } from '@/
 import { useRouter } from "next/navigation";
 import { format } from 'date-fns';
 import { Tag, CalendarDays, Clock, ArrowUpDown, Sparkles, ChevronLeft, ChevronRight, Hash, Search, LayoutGrid, List, MoreVertical, Edit, Trash, Eye, Calendar, Loader2 } from 'lucide-react';
+import { MobileNotebookList } from '@/components/notebooks';
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -23,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import NovelEditor from "@/components/NovelEditor";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -102,8 +104,19 @@ function NotebooksContent() {
         // Sort alphabetically by title
         const comparison = a.title.localeCompare(b.title);
         return sortDirection === 'asc' ? comparison : -comparison;
+      } else if (sortBy === 'created') {
+        // Sort by creation date
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      } else if (sortBy === 'status') {
+        // Sort by public/private status
+        // Public notebooks first if ascending, private first if descending
+        const statusA = a.isPublic ? 1 : 0;
+        const statusB = b.isPublic ? 1 : 0;
+        return sortDirection === 'asc' ? statusB - statusA : statusA - statusB;
       } else {
-        // Sort by date (recent or oldest)
+        // Sort by updated date (recent or oldest)
         const dateA = new Date(a.updatedAt).getTime();
         const dateB = new Date(b.updatedAt).getTime();
         return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
@@ -115,8 +128,8 @@ function NotebooksContent() {
                              selectedTag ? tagPagination :
                              pagination;
 
-  // Determine overall loading state - but we'll use isLoadingNotebooks specifically for the notebooks loading UI
-  const isLoading = isLoadingTags || isSearching || isLoadingTagNotebooks || isLoadingState;
+  // We'll use isLoadingNotebooks specifically for the notebooks loading UI
+  // Other loading states are used for specific UI elements
 
   // Create specific loading states for UI elements
   const isSearchLoading = isSearching && searchQuery;
@@ -830,19 +843,37 @@ function NotebooksContent() {
         isLoadingNotebooks ? (
           // Show loading skeleton while notebooks are being fetched
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-                <div key={i} className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse">
-                  <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
-                  <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
-                  <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
-                  <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
-                  <div className="flex gap-2">
-                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
-                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+            {/* Table loading skeleton */}
+            <div className="rounded-md border mb-8 overflow-hidden shadow-sm animate-pulse">
+              <div className="w-full">
+                {/* Table header skeleton */}
+                <div className="bg-muted/30 border-b">
+                  <div className="grid grid-cols-6 px-4 py-3">
+                    <div className="h-5 w-24 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded ml-auto"></div>
                   </div>
                 </div>
-              ))}
+                {/* Table rows skeleton */}
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+                  <div key={i} className="border-b last:border-b-0">
+                    <div className="grid grid-cols-6 px-4 py-4 gap-4">
+                      <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                      <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                      <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                      <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                      <div className="flex gap-1">
+                        <div className="h-5 w-12 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                        <div className="h-5 w-12 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                      </div>
+                      <div className="h-5 w-8 bg-gray-200 dark:bg-gray-800 rounded ml-auto"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : notebooks.length === 0 ? (
@@ -913,12 +944,13 @@ Enjoy your journaling journey with Reflecto!`,
         ) : (
           <div>
             {viewMode === 'table' ? (
-              <div className="rounded-md border mb-8 overflow-hidden shadow-sm">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/30 hover:bg-muted/30">
-                      <TableHead className="w-[40%]">
-                        <div className="flex items-center cursor-pointer"
+              <div className="rounded-md border mb-8 overflow-hidden shadow-md bg-card">
+                <div className="max-h-[calc(100vh-220px)] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                  <Table className="w-full">
+                  <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm shadow-sm">
+                    <TableRow className="border-b hover:bg-transparent">
+                      <TableHead className="w-[40%] py-3 font-semibold text-foreground">
+                        <div className="flex items-center cursor-pointer group"
                           onClick={() => {
                             if (sortBy === 'alphabetical') {
                               setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -928,28 +960,47 @@ Enjoy your journaling journey with Reflecto!`,
                             }
                           }}
                         >
-                          Title
-                          {sortBy === 'alphabetical' && (
-                            <span className="ml-2">
-                              {sortDirection === 'asc' ?
-                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="18 15 12 9 6 15"></polyline>
-                                </svg> :
-                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                              }
-                            </span>
-                          )}
+                          <span className="font-medium">Title</span>
+                          <span className={`ml-2 transition-opacity ${sortBy === 'alphabetical' ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}>
+                            {sortDirection === 'asc' ?
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                              </svg> :
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
+                            }
+                          </span>
                         </div>
                       </TableHead>
-                      <TableHead>
-                        <div className="flex items-center">
-                          Created
+                      <TableHead className="py-3 font-semibold text-foreground">
+                        <div className="flex items-center cursor-pointer group"
+                          onClick={() => {
+                            // Define a new sort type for created date
+                            const newSortBy = 'created';
+                            if (sortBy === newSortBy) {
+                              setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSortBy(newSortBy);
+                              setSortDirection('desc'); // Default to newest first
+                            }
+                          }}
+                        >
+                          <span className="font-medium">Created</span>
+                          <span className={`ml-2 transition-opacity ${sortBy === 'created' ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}>
+                            {sortDirection === 'asc' ?
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                              </svg> :
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
+                            }
+                          </span>
                         </div>
                       </TableHead>
-                      <TableHead>
-                        <div className="flex items-center cursor-pointer"
+                      <TableHead className="py-3 font-semibold text-foreground">
+                        <div className="flex items-center cursor-pointer group"
                           onClick={() => {
                             if (sortBy === 'recent' || sortBy === 'oldest') {
                               setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -960,104 +1011,163 @@ Enjoy your journaling journey with Reflecto!`,
                             }
                           }}
                         >
-                          Updated
-                          {(sortBy === 'recent' || sortBy === 'oldest') && (
-                            <span className="ml-2">
-                              {sortDirection === 'asc' ?
-                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="18 15 12 9 6 15"></polyline>
-                                </svg> :
-                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                              }
-                            </span>
-                          )}
+                          <span className="font-medium">Updated</span>
+                          <span className={`ml-2 transition-opacity ${(sortBy === 'recent' || sortBy === 'oldest') ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}>
+                            {sortDirection === 'asc' ?
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                              </svg> :
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
+                            }
+                          </span>
                         </div>
                       </TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Tags</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="py-3 font-semibold text-foreground">
+                        <div className="flex items-center cursor-pointer group"
+                          onClick={() => {
+                            // Define a new sort type for status
+                            const newSortBy = 'status';
+                            if (sortBy === newSortBy) {
+                              setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSortBy(newSortBy);
+                              setSortDirection('asc'); // Default to public first
+                            }
+                          }}
+                        >
+                          <span className="font-medium">Status</span>
+                          <span className={`ml-2 transition-opacity ${sortBy === 'status' ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`}>
+                            {sortDirection === 'asc' ?
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                              </svg> :
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
+                            }
+                          </span>
+                        </div>
+                      </TableHead>
+                      <TableHead className="py-3 font-semibold text-foreground">
+                        <span className="font-medium">Tags</span>
+                      </TableHead>
+                      <TableHead className="text-right py-3 font-semibold text-foreground">
+                        <span className="font-medium">Actions</span>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {displayedNotebooks.map((notebook) => (
-                      <TableRow
-                        key={notebook.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={(e) => handleViewNotebook(notebook.id, e)}
-                      >
-                        <TableCell className="font-medium">
-                          <Button
-                          variant={"link"}
-                          className="p-0 text-foreground"
-                          >
-
-                          {notebook.title}
-                          </Button>
-                          </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {format(new Date(notebook.createdAt), 'MMM d, yyyy')}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {format(new Date(notebook.updatedAt), 'MMM d, yyyy')}
-                        </TableCell>
-                        <TableCell>
-                          {notebook.isPublic ? (
-                            <Badge variant="outline" className="text-xs py-0 h-5">Public</Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Private</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {notebook.tags.slice(0, 3).map(tag => (
-                              <div
-                                key={tag.id}
-                                className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  router.push(`/notebooks?tag=${tag.id}`);
-                                }}
-                              >
-                                <Tag className="mr-1 h-2.5 w-2.5" />
-                                {tag.name}
-                              </div>
-                            ))}
-                            {notebook.tags.length > 3 && (
-                              <div className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                                +{notebook.tags.length - 3}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end">
+                    {displayedNotebooks.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          <div className="flex flex-col items-center justify-center text-muted-foreground">
+                            <p className="mb-2">No notebooks found</p>
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors duration-200"
-                              onClick={(e) => openDeleteDialog(notebook, e)}
-                              disabled={deletingNotebookId === notebook.id}
+                              onClick={() => {
+                                setSearchQuery('');
+                                setSelectedTag(null);
+                                setCurrentPage(1);
+                              }}
                             >
-                              {deletingNotebookId === notebook.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash className="h-4 w-4" />
-                              )}
+                              Reset filters
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      displayedNotebooks.map((notebook, index) => (
+                        <TableRow
+                          key={notebook.id}
+                          className={`cursor-pointer hover:bg-muted/50 transition-colors ${index % 2 === 0 ? 'bg-muted/20 dark:bg-muted/10' : ''}`}
+                          onClick={(e) => handleViewNotebook(notebook.id, e)}
+                        >
+                          <TableCell className="py-3.5">
+                            <Button
+                              variant={"link"}
+                              className="p-0 text-foreground font-medium hover:text-primary"
+                            >
+                              {notebook.title}
+                            </Button>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm py-3.5 whitespace-nowrap">
+                            {format(new Date(notebook.createdAt), 'MMM d, yyyy')}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm py-3.5 whitespace-nowrap">
+                            {format(new Date(notebook.updatedAt), 'MMM d, yyyy')}
+                          </TableCell>
+                          <TableCell className="py-3.5">
+                            {notebook.isPublic ? (
+                              <Badge variant="outline" className="text-xs py-0 h-5 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">Public</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs py-0 h-5 bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800">Private</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="py-3.5">
+                            <div className="flex flex-wrap gap-1">
+                              {notebook.tags.slice(0, 3).map(tag => (
+                                <div
+                                  key={tag.id}
+                                  className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full cursor-pointer hover:bg-muted/80"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    router.push(`/notebooks?tag=${tag.id}`);
+                                  }}
+                                >
+                                  <Tag className="mr-1 h-2.5 w-2.5" />
+                                  {tag.name}
+                                </div>
+                              ))}
+                              {notebook.tags.length > 3 && (
+                                <div className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                  +{notebook.tags.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right py-3.5">
+                            <div className="flex justify-end">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors duration-200"
+                                onClick={(e) => openDeleteDialog(notebook, e)}
+                                disabled={deletingNotebookId === notebook.id}
+                              >
+                                {deletingNotebookId === notebook.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             ) : (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8' : viewMode === 'list' ? 'space-y-4 mb-8' : ''}>
-                {displayedNotebooks.map((notebook) => {
-                  return viewMode === 'grid' ? (
+              <>
+                {/* Mobile view - always shown on small screens */}
+                <MobileNotebookList
+                  notebooks={displayedNotebooks}
+                  onView={handleViewNotebook}
+                  onEdit={handleEditNotebook}
+                  onDelete={openDeleteDialog}
+                  deletingNotebookId={deletingNotebookId}
+                />
+
+                {/* Desktop view - grid or list based on viewMode */}
+                <div className={`hidden md:${viewMode === 'grid' ? 'grid grid-cols-2 xl:grid-cols-3 gap-5' : viewMode === 'list' ? 'block space-y-4' : ''} mb-8`}>
+                  {displayedNotebooks.map((notebook) => {
+                    return viewMode === 'grid' ? (
                   <Card
                     key={notebook.id}
                     className="cursor-pointer rounded-lg hover:shadow-lg transition-all hover:border-primary/20 overflow-hidden group relative bg-card/50 backdrop-blur-sm border-muted/60"
@@ -1343,7 +1453,8 @@ Enjoy your journaling journey with Reflecto!`,
                   </div>
                 );
               })}
-            </div>
+                </div>
+              </>
             )}
 
             {/* Pagination */}
@@ -1420,19 +1531,37 @@ export default function NotebooksPage() {
           <div className="h-8 w-64 bg-gray-200 dark:bg-gray-800 rounded-md animate-pulse mb-4"></div>
           <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-6 animate-pulse"></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 animate-pulse">
-              <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
-              <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
-              <div className="h-4 w-full bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
-              <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-800 rounded mb-4"></div>
-              <div className="flex gap-2">
-                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
-                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+        {/* Table loading skeleton */}
+        <div className="rounded-md border mb-8 overflow-hidden shadow-sm animate-pulse">
+          <div className="w-full">
+            {/* Table header skeleton */}
+            <div className="bg-muted/30 border-b">
+              <div className="grid grid-cols-6 px-4 py-3">
+                <div className="h-5 w-24 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded ml-auto"></div>
               </div>
             </div>
-          ))}
+            {/* Table rows skeleton */}
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="border-b last:border-b-0">
+                <div className="grid grid-cols-6 px-4 py-4 gap-4">
+                  <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                  <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                  <div className="h-5 w-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                  <div className="h-5 w-16 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                  <div className="flex gap-1">
+                    <div className="h-5 w-12 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                    <div className="h-5 w-12 bg-gray-200 dark:bg-gray-800 rounded"></div>
+                  </div>
+                  <div className="h-5 w-8 bg-gray-200 dark:bg-gray-800 rounded ml-auto"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     }>

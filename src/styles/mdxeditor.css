@@ -1,0 +1,53 @@
+/* MDXEditor styles */
+@import '@mdxeditor/editor/style.css';
+
+/* Custom overrides for MDXEditor */
+.mdxeditor-container {
+  width: 100%;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.mdxeditor {
+  min-height: 300px;
+  padding: 1rem;
+  background-color: var(--background-color, #ffffff);
+  color: var(--text-color, #1a202c);
+}
+
+/* Dark mode support */
+.dark .mdxeditor {
+  background-color: var(--background-color, #1e293b);
+  color: var(--text-color, #f8fafc);
+}
+
+.dark .mdxeditor-toolbar {
+  background-color: var(--toolbar-bg, #1e293b);
+  border-color: var(--border-color, #334155);
+}
+
+/* Make toolbar look consistent with the rest of the application */
+.mdxeditor-toolbar {
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background-color: var(--toolbar-bg, #f8fafc);
+  padding: 0.5rem;
+}
+
+/* Style toolbar buttons */
+.mdxeditor-toolbar-group button {
+  border-radius: 0.25rem;
+  margin-right: 0.25rem;
+}
+
+.dark .mdxeditor-toolbar-group button {
+  color: var(--text-color, #f8fafc);
+}
+
+.mdxeditor-toolbar-group button:hover {
+  background-color: var(--button-hover-bg, #f1f5f9);
+}
+
+.dark .mdxeditor-toolbar-group button:hover {
+  background-color: var(--button-hover-bg, #334155);
+}

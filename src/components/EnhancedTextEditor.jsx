@@ -1,13 +1,12 @@
 'use client';
 
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
- * Simple Fallback Text Editor
- * Used when the MDX editor fails to load or encounters errors
+ * Simple Text Editor Component with Markdown Support
+ * A lightweight textarea-based editor that avoids the issues with MDX editor
  */
-export default function TextEditor({
+export default function EnhancedTextEditor({
   initialValue = '',
   onChange = () => {},
   readOnly = false,
@@ -42,4 +41,3 @@ export default function TextEditor({
     </div>
   );
 }
-
