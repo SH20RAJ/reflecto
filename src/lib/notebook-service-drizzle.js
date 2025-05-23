@@ -497,6 +497,19 @@ const NotebookService = {
         });
       }
 
+      // Queue the notebook for embedding generation
+      try {
+        // Using dynamic import to avoid circular dependencies
+        import('@/lib/aiUtils').then(({ queueEmbeddingUpdate }) => {
+          queueEmbeddingUpdate(notebookId);
+        }).catch(err => {
+          console.error('Failed to import aiUtils for embedding queue:', err);
+        });
+      } catch (embeddingError) {
+        console.error('Error queueing notebook for embedding:', embeddingError);
+        // Non-blocking - continue even if embedding queueing fails
+      }
+
       // Get the created notebook with tags
       return this.getNotebookById(notebookId, userId);
     } catch (error) {

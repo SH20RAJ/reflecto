@@ -104,6 +104,28 @@ export async function POST(request) {
       tags: data.tags || [],
     }, session.user.id);
 
+    // Generate embedding asynchronously (don't await to avoid blocking)
+    try {
+      import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
+        generateAndSaveEmbedding(notebook.id)
+          .then(success => {
+            if (success) {
+              console.log(`Generated embedding for new notebook ${notebook.id}`);
+            } else {
+              console.warn(`Failed to generate embedding for new notebook ${notebook.id}`);
+            }
+          })
+          .catch(err => {
+            console.error(`Error generating embedding for notebook ${notebook.id}:`, err);
+          });
+      }).catch(err => {
+        console.error('Error importing generateEmbeddings module:', err);
+      });
+    } catch (embeddingError) {
+      // Just log the error, don't block the notebook creation
+      console.error('Error initiating embedding generation:', embeddingError);
+    }
+
     return NextResponse.json(notebook, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/notebooks:', error);

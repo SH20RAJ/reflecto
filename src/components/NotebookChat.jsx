@@ -44,6 +44,8 @@ export default function NotebookChat() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [errorCount, setErrorCount] = useState(0);
+  const [lastErrorTime, setLastErrorTime] = useState(null);
 
   // Date range state
   const [dateRange, setDateRange] = useState({
@@ -104,27 +106,58 @@ export default function NotebookChat() {
 
       const data = await response.json();
 
-      // Add assistant response to chat
+      // Format date for display if available
+      const formattedDateRange = dateRange.isActive ? {
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate
+      } : null;
+
+      // Add assistant response to chat with additional metadata
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content: data.message,
           entries: data.entries || [],
-          dateRange: dateRange.isActive ? {
-            startDate: dateRange.startDate,
-            endDate: dateRange.endDate
-          } : null
+          dateRange: formattedDateRange,
+          query: data.query, // Store original query
+          usedFallback: data.usedFallback // Flag if fallback search was used
         },
       ]);
     } catch (error) {
       console.error("Error in chat:", error);
+      
+      // Error tracking - check for repeated errors
+      const now = new Date();
+      
+      // If last error was less than 1 minute ago, increment counter
+      if (lastErrorTime && (now - lastErrorTime) < 60000) {
+        setErrorCount(prev => prev + 1);
+      } else {
+        // Reset error count if it's been a while
+        setErrorCount(1);
+      }
+      
+      setLastErrorTime(now);
+      
+      // Different error messages based on error count
+      let errorMessage = "Sorry, I encountered an error while searching your notebooks. Please try again.";
+      
+      if (errorCount >= 2) {
+        errorMessage = "I'm having trouble connecting to the server. This might be a temporary issue. You could try refreshing the page or coming back later.";
+      }
+      
+      if (errorCount >= 3) {
+        errorMessage = "We're experiencing technical difficulties. Please try refreshing the page or clearing your browser cache. If problems persist, please contact support.";
+      }
+      
       // Add error message
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I encountered an error while searching your notebooks. Please try again."
+          content: errorMessage,
+          isError: true
         },
       ]);
     } finally {
@@ -389,29 +422,47 @@ export default function NotebookChat() {
                   </div>
 
                   {message.entries && message.entries.length > 0 && (
-                    <div className="mt-2 space-y-2">
-                      {message.entries.map((entry, i) => (
-                        <Card key={i} className="p-3 text-sm">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="font-medium">{entry.title}</div>
-                            <Badge variant="outline" className="text-xs">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {new Date(entry.date).toLocaleDateString()}
-                            </Badge>
-                          </div>
-                          <p className="text-muted-foreground text-xs line-clamp-2">
-                            {entry.excerpt}
-                          </p>
-                          {entry.hasImage && (
-                            <div className="mt-2">
-                              <Badge variant="secondary" className="text-xs">
-                                <Image className="h-3 w-3 mr-1" />
-                                Contains images
-                              </Badge>
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="text-xs font-medium text-muted-foreground">Related Entries</h4>
+                        <Badge variant="secondary" className="text-xs">
+                          {message.entries.length} {message.entries.length === 1 ? 'entry' : 'entries'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {message.entries.map((entry, i) => (
+                          <Card key={i} className="p-3 text-sm hover:border-primary/50 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="font-medium">{entry.title}</div>
+                              <div className="flex gap-1">
+                                {entry.similarity !== undefined && (
+                                  <Badge variant="outline" className="text-xs bg-green-50">
+                                    {entry.similarity}% match
+                                  </Badge>
+                                )}
+                                <Badge variant="outline" className="text-xs">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {new Date(entry.date).toLocaleDateString()}
+                                </Badge>
+                              </div>
                             </div>
-                          )}
-                        </Card>
-                      ))}
+                            <p className="text-muted-foreground text-xs line-clamp-2">
+                              {entry.excerpt}
+                            </p>
+                            <div className="mt-2 flex gap-2 flex-wrap">
+                              {entry.hasImage && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Image className="h-3 w-3 mr-1" />
+                                  Contains images
+                                </Badge>
+                              )}
+                              <Button variant="link" size="sm" className="h-6 p-0 text-xs">
+                                View notebook
+                              </Button>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
