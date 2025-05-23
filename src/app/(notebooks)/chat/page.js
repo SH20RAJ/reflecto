@@ -24,15 +24,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-10rem)]">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold tracking-tight">Chat with Your Data</h1>
-        <p className="text-muted-foreground mt-1">
-          Ask questions about your notebooks and get insights from your entries.
-          You can now filter by date range to narrow your search.
-        </p>
-      </div>
-
+    <div className="flex flex-col h-[calc(100vh)]">
       <NotebookChat />
     </div>
   );

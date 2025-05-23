@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Calendar, Image, Search, Clock, Bot, User, CalendarRange, X, Filter, Settings, ChevronDown } from "lucide-react";
+import { Send, Calendar, Image, Search, Clock, Bot, User, CalendarRange, X, Filter, Settings, ChevronDown, AlignLeft, Sparkles, Heart, Coffee, Sun, Moon, Cloud, CloudRain, Smile, Frown, Zap, Star, MessageCircle, Lightbulb, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -14,8 +14,119 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+
+// Function to render markdown to HTML with improved error handling
+function renderMarkdownToHTML(markdown) {
+  try {
+    // Safety check for invalid input
+    if (!markdown || typeof markdown !== 'string') {
+      console.warn('Invalid markdown input:', markdown);
+      return '';
+    }
+
+    // Use a simple regex-based approach if the unified/remark libraries aren't available
+    if (typeof unified !== 'function') {
+      return simpleMarkdownToHTML(markdown);
+    }
+    
+    // Process the markdown with unified/remark
+    const result = unified()
+      .use(remarkParse)
+      .use(remarkGfm)
+      .use(remarkBreaks)
+      .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeSanitize)
+      .use(rehypeRaw)
+      .use(rehypeStringify)
+      .processSync(markdown);
+    
+    return result.toString();
+  } catch (error) {
+    console.error('Error rendering markdown:', error);
+    // Fallback to simple HTML escaping to avoid breaking the UI
+    return simpleMarkdownToHTML(markdown);
+  }
+}
+
+// Fallback simple markdown renderer that handles basic formatting
+function simpleMarkdownToHTML(markdown) {
+  if (!markdown) return '';
+  
+  // Safety check - ensure it's a string
+  if (typeof markdown !== 'string') {
+    try {
+      markdown = String(markdown);
+    } catch (e) {
+      console.error('Failed to convert markdown to string:', e);
+      return '<p>Error displaying content</p>';
+    }
+  }
+  
+  // Escape HTML to prevent XSS
+  const escapeHTML = (str) => str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+    
+  const escaped = escapeHTML(markdown);
+  
+  // Process markdown with improved regex patterns
+  return escaped
+    // Handle bold
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // Handle italic
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // Handle links - ensure they're safe
+    .replace(/\[([^\[]+)\]\(([^\)]+)\)/g, (match, text, url) => {
+      // Basic URL validation
+      if (url.startsWith('javascript:')) {
+        return `[${text}](unsafe link)`;
+      }
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    })
+    // Handle headers (h3)
+    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+    // Handle headers (h2)
+    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+    // Handle headers (h1)
+    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+    // Handle unordered lists
+    .replace(/^\s*[\-\*] (.*$)/gm, '<li>$1</li>')
+    // Handle ordered lists
+    .replace(/^\s*(\d+)\. (.*$)/gm, '<li>$2</li>')
+    // Wrap lists in ul/ol tags
+    .replace(/(<li>.*<\/li>)\n(?![<]li>)/g, '<ul>$1</ul>')
+    // Handle code blocks with language support
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+      return `<pre class="language-${lang || 'text'}"><code>${code}</code></pre>`;
+    })
+    // Handle inline code
+    .replace(/`([^`]*?)`/g, '<code>$1</code>')
+    // Handle blockquotes
+    .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
+    // Handle horizontal rules
+    .replace(/^\s*[\-=_]{3,}\s*$/gm, '<hr>')
+    // Handle paragraphs - wrap text that isn't already wrapped
+    .replace(/^([^<].*[^>])$/gm, '<p>$1</p>')
+    // Handle paragraphs
+    .replace(/\n\n/g, '</p><p>')
+    // Wrap in paragraph
+    .replace(/^(.*)/, '<p>$1</p>');
+}
 
 const SAMPLE_QUESTIONS = [
   "When did I first mention Sarah in my notebooks?",
@@ -32,12 +143,74 @@ const SAMPLE_QUESTIONS = [
   "When did I last update my fitness goals?",
 ];
 
+// Assistant personalities and moods
+const LUNA_PERSONALITIES = {
+  friendly: {
+    name: "Friendly Luna",
+    icon: <Smile className="h-5 w-5 text-yellow-400" />,
+    color: "bg-gradient-to-br from-yellow-100 to-amber-50",
+    borderColor: "border-yellow-200",
+    textColor: "text-amber-800"
+  },
+  cheerful: {
+    name: "Cheerful Luna",
+    icon: <Sun className="h-5 w-5 text-orange-400" />,
+    color: "bg-gradient-to-br from-orange-100 to-yellow-50",
+    borderColor: "border-orange-200",
+    textColor: "text-orange-800"
+  },
+  calm: {
+    name: "Calm Luna",
+    icon: <Cloud className="h-5 w-5 text-sky-400" />,
+    color: "bg-gradient-to-br from-sky-100 to-blue-50",
+    borderColor: "border-sky-200",
+    textColor: "text-sky-800"
+  },
+  thoughtful: {
+    name: "Thoughtful Luna",
+    icon: <Lightbulb className="h-5 w-5 text-violet-400" />,
+    color: "bg-gradient-to-br from-violet-100 to-purple-50", 
+    borderColor: "border-violet-200",
+    textColor: "text-violet-800"
+  },
+  cozy: {
+    name: "Cozy Luna",
+    icon: <Coffee className="h-5 w-5 text-amber-500" />,
+    color: "bg-gradient-to-br from-amber-100 to-orange-50",
+    borderColor: "border-amber-200",
+    textColor: "text-amber-800"
+  },
+  insightful: {
+    name: "Insightful Luna",
+    icon: <Star className="h-5 w-5 text-indigo-400" />,
+    color: "bg-gradient-to-br from-indigo-100 to-blue-50",
+    borderColor: "border-indigo-200", 
+    textColor: "text-indigo-800"
+  },
+  playful: {
+    name: "Playful Luna",
+    icon: <Music className="h-5 w-5 text-pink-400" />,
+    color: "bg-gradient-to-br from-pink-100 to-rose-50",
+    borderColor: "border-pink-200",
+    textColor: "text-pink-800"
+  }
+};
+
 export default function NotebookChat() {
   const { data: session } = useSession();
+  
+  // Get a random personality for initial load
+  const getRandomPersonality = () => {
+    const personalities = Object.keys(LUNA_PERSONALITIES);
+    return personalities[Math.floor(Math.random() * personalities.length)];
+  };
+  
+  const [currentPersonality, setCurrentPersonality] = useState(getRandomPersonality());
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: "Hi there! I can help you search through your notebooks. What would you like to find?",
+      content: "✨ Hi there! I'm Luna, your magical notebook companion! I'm here to help you explore your memories, discover patterns in your thoughts, or just be a friendly ear when you need someone to talk to. What's on your mind today? You can ask me about your entries, share how you're feeling, or we can just chat about your day! 💫",
+      mood: currentPersonality,
     },
   ]);
   const [inputValue, setInputValue] = useState("");
@@ -46,6 +219,7 @@ export default function NotebookChat() {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [errorCount, setErrorCount] = useState(0);
   const [lastErrorTime, setLastErrorTime] = useState(null);
+  const [showMoodSelector, setShowMoodSelector] = useState(false);
 
   // Date range state
   const [dateRange, setDateRange] = useState({
@@ -112,6 +286,53 @@ export default function NotebookChat() {
         endDate: dateRange.endDate
       } : null;
 
+      // Determine a contextually appropriate mood based on the content and user's message
+      const determineMood = (message, entries, userMessage) => {
+        // Default to user's preferred personality if they've selected one
+        if (currentPersonality) {
+          // 60% chance to stay with selected personality for consistency
+          if (Math.random() < 0.6) {
+            return currentPersonality;
+          }
+        }
+        
+        // Check for emotional keywords in user message to match mood
+        const userMessageLower = userMessage.toLowerCase();
+        
+        if (/\b(happy|joy|excite|celebrate|good news|yay|hurray)\b/i.test(userMessageLower)) {
+          return 'cheerful';
+        }
+        
+        if (/\b(sad|upset|depressed|worried|anxious|stress)\b/i.test(userMessageLower)) {
+          return 'calm'; // Calm and reassuring for emotional support
+        }
+        
+        if (/\b(think|wonder|curious|question|ponder|reflect)\b/i.test(userMessageLower)) {
+          return 'thoughtful';
+        }
+        
+        if (/\b(relax|home|comfort|chill|rest|cozy)\b/i.test(userMessageLower)) {
+          return 'cozy';
+        }
+        
+        if (/\b(play|fun|game|joke|entertain|amuse)\b/i.test(userMessageLower)) {
+          return 'playful';
+        }
+        
+        // Content-based mood selection
+        if (entries && entries.length > 3) {
+          return Math.random() > 0.5 ? 'insightful' : 'thoughtful';
+        }
+        
+        if (!entries || entries.length === 0) {
+          return Math.random() > 0.5 ? 'friendly' : 'calm';
+        }
+        
+        // Variability for natural conversation flow
+        const moods = ['cheerful', 'cozy', 'playful', 'thoughtful', 'friendly'];
+        return moods[Math.floor(Math.random() * moods.length)];
+      };
+
       // Add assistant response to chat with additional metadata
       setMessages((prev) => [
         ...prev,
@@ -121,7 +342,8 @@ export default function NotebookChat() {
           entries: data.entries || [],
           dateRange: formattedDateRange,
           query: data.query, // Store original query
-          usedFallback: data.usedFallback // Flag if fallback search was used
+          usedFallback: data.usedFallback, // Flag if fallback search was used
+          mood: determineMood(data.message, data.entries || [], userMessage)
         },
       ]);
     } catch (error) {
@@ -151,13 +373,14 @@ export default function NotebookChat() {
         errorMessage = "We're experiencing technical difficulties. Please try refreshing the page or clearing your browser cache. If problems persist, please contact support.";
       }
       
-      // Add error message
+      // Add error message with a concerned mood
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content: errorMessage,
-          isError: true
+          isError: true,
+          mood: 'calm' // Using calm mood for errors to be reassuring
         },
       ]);
     } finally {
@@ -225,13 +448,29 @@ export default function NotebookChat() {
   };
 
   return (
-    <Card className="w-full h-[calc(100vh-12rem)] flex flex-col">
-      <CardHeader className="px-4 py-3 border-b">
+    <Card className="w-full h-full flex flex-col p-0 m-0">
+      <CardHeader className="p-4 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-lg flex items-center">
-            <Bot className="h-5 w-5 mr-2 text-primary" />
-            Notebook Assistant
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Avatar className="h-10 w-10 border-2 border-primary shadow-sm">
+                <AvatarFallback className="bg-gradient-to-br from-purple-400 to-indigo-500 text-white">
+                  {LUNA_PERSONALITIES[currentPersonality].icon}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" />
+            </div>
+            
+            <div>
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <span className="bg-gradient-to-br from-purple-600 to-indigo-600 bg-clip-text text-transparent">Luna</span>
+                <Badge variant="outline" className="h-5 ml-1 text-xs font-normal">
+                  {LUNA_PERSONALITIES[currentPersonality].name.split(" ")[0]}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Your Personal Notebook Companion</p>
+            </div>
+          </div>
 
           <div className="flex items-center gap-2">
             {dateRange.isActive && (
@@ -251,6 +490,47 @@ export default function NotebookChat() {
                 </Button>
               </Badge>
             )}
+
+            <Popover open={showMoodSelector} onOpenChange={setShowMoodSelector}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1 border-dashed">
+                  <Heart className="h-3.5 w-3.5 text-pink-500" />
+                  <span className="text-xs">Luna's Mood</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-3" align="end">
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Choose Luna's Personality</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Select how you'd like Luna to interact with you today.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {Object.entries(LUNA_PERSONALITIES).map(([key, personality]) => (
+                      <Button
+                        key={key}
+                        variant={currentPersonality === key ? "default" : "outline"} 
+                        size="sm"
+                        className={`justify-start h-full ${currentPersonality === key ? 'border-2' : ''}`}
+                        onClick={() => {
+                          setCurrentPersonality(key);
+                          setShowMoodSelector(false);
+                          setMessages(prev => [...prev, {
+                            role: "system",
+                            content: `Luna's mood has changed to ${personality.name.split(" ")[0]}. How can I help you today?`,
+                            mood: key
+                          }]);
+                        }}
+                      >
+                        <div className={`mr-2 p-1 rounded-full ${personality.color}`}>
+                          {personality.icon}
+                        </div>
+                        <span className="text-xs">{personality.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <Popover open={showDateFilter} onOpenChange={setShowDateFilter}>
               <PopoverTrigger asChild>
@@ -366,8 +646,8 @@ export default function NotebookChat() {
         </div>
       </CardHeader>
 
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4 pb-4">
+      <ScrollArea className="flex-1 p-4 bg-gradient-to-b from-slate-50 to-white">
+        <div className="space-y-6 pb-4 max-w-3xl mx-auto">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -376,39 +656,66 @@ export default function NotebookChat() {
               }`}
             >
               <div
-                className={`flex items-start gap-3 max-w-[80%] ${
+                className={`flex items-start gap-3 max-w-[85%] ${
                   message.role === "user"
                     ? "flex-row-reverse"
                     : "flex-row"
                 }`}
               >
-                <Avatar className={message.role === "user" ? "bg-primary" : "bg-muted"}>
-                  {message.role === "user" ? (
-                    session?.user?.image ? (
-                      <AvatarImage src={session.user.image} alt={session.user.name || "User"} />
+                {message.role === "user" ? (
+                  <Avatar className="h-9 w-9 border-2 border-indigo-100 bg-gradient-to-br from-indigo-500 to-blue-600 shadow-sm">
+                    {session?.user?.image ? (
+                      <AvatarImage src={session.user.image} alt={session.user.name || "You"} />
                     ) : (
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
                         <User className="h-4 w-4" />
                       </AvatarFallback>
-                    )
-                  ) : (
-                    <AvatarFallback>
-                      <Bot className="h-4 w-4" />
+                    )}
+                  </Avatar>
+                ) : (
+                  <Avatar className={`h-9 w-9 border-2 ${message.mood && LUNA_PERSONALITIES[message.mood]?.borderColor || 'border-purple-200'} shadow-sm`}>
+                    <AvatarFallback className={`${message.mood && LUNA_PERSONALITIES[message.mood]?.color || 'bg-gradient-to-br from-purple-400 to-indigo-500'} text-white`}>
+                      {message.mood && LUNA_PERSONALITIES[message.mood]?.icon || <Sparkles className="h-4 w-4" />}
                     </AvatarFallback>
-                  )}
-                </Avatar>
+                  </Avatar>
+                )}
 
-                <div>
+                <div className={`w-full ${message.role === "user" ? "items-end" : "items-start"}`}>
                   <div
-                    className={`rounded-lg px-4 py-2 ${
+                    className={`rounded-lg px-4 py-3 ${
                       message.role === "user"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : message.role === "system"
-                        ? "bg-muted/50 border border-dashed"
-                        : "bg-muted"
+                        ? "bg-muted/50 border border-dashed text-muted-foreground"
+                        : message.mood && LUNA_PERSONALITIES[message.mood]
+                        ? `${LUNA_PERSONALITIES[message.mood].color} border ${LUNA_PERSONALITIES[message.mood].borderColor} shadow-sm animate-in fade-in-0 slide-in-from-bottom-2 duration-300`
+                        : "bg-card shadow-sm border animate-in fade-in-0 slide-in-from-bottom-2 duration-200"
                     }`}
                   >
-                    <p className="text-sm">{message.content}</p>
+                    {message.role === "assistant" && message.mood && (
+                      <div className="flex items-center gap-2 mb-1.5 pb-1.5 border-b border-dashed border-opacity-30">
+                        <div className={`p-0.5 rounded-full ${LUNA_PERSONALITIES[message.mood].color}`}>
+                          {LUNA_PERSONALITIES[message.mood].icon}
+                        </div>
+                        <span className={`text-xs font-medium ${LUNA_PERSONALITIES[message.mood].textColor}`}>
+                          {LUNA_PERSONALITIES[message.mood].name}
+                        </span>
+                      </div>
+                    )}
+                    <div 
+                      className={`text-sm prose prose-sm max-w-none dark:prose-invert overflow-hidden ${
+                        message.role === "assistant" && message.mood && LUNA_PERSONALITIES[message.mood] 
+                        ? LUNA_PERSONALITIES[message.mood].textColor 
+                        : ""
+                      }`}
+                      dangerouslySetInnerHTML={{ 
+                        __html: message.role === "assistant" || message.role === "system"
+                          ? renderMarkdownToHTML(message.content) 
+                          : (typeof message.content === 'string' 
+                             ? message.content
+                             : String(message.content)) 
+                      }}
+                    />
 
                     {message.dateRange && (
                       <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
@@ -510,17 +817,47 @@ export default function NotebookChat() {
         </div>
       )}
 
-      <CardFooter className="p-4 pt-2">
-        <form onSubmit={handleSend} className="flex w-full gap-2">
-          <Input
-            placeholder="Ask about your notebooks..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="flex-1"
-            disabled={isLoading}
-          />
-          <Button type="submit" size="icon" disabled={isLoading || !inputValue.trim()}>
-            <Send className="h-4 w-4" />
+      <CardFooter className="p-4 pt-2 border-t bg-gradient-to-r from-indigo-50/30 to-purple-50/30">
+        <form onSubmit={handleSend} className="flex w-full gap-2 relative">
+          <div className="relative flex-1 rounded-full border shadow-sm">
+            <Input
+              placeholder={`Chat with Luna... ${currentPersonality ? `(${LUNA_PERSONALITIES[currentPersonality].name})` : ''}`}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="flex-1 pl-5 pr-12 focus-visible:ring-1 focus-visible:ring-offset-0 rounded-full bg-white"
+              disabled={isLoading}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend(e);
+                }
+              }}
+            />
+            {dateRange.isActive && (
+              <Badge 
+                className="absolute right-12 top-1/2 -translate-y-1/2 bg-primary/10 hover:bg-primary/20 text-xs"
+                variant="outline"
+              >
+                <CalendarRange className="h-3 w-3 mr-1" /> Date filter active
+              </Badge>
+            )}
+          </div>
+          <Button 
+            type="submit" 
+            size="icon" 
+            variant="default"
+            className={`rounded-full shadow-sm ${
+              currentPersonality && LUNA_PERSONALITIES[currentPersonality]
+              ? LUNA_PERSONALITIES[currentPersonality].color.replace('from-', 'from-opacity-80 from-').replace('to-', 'to-opacity-80 to-')
+              : ''
+            }`}
+            disabled={isLoading || !inputValue.trim()}
+          >
+            {isLoading ? (
+              <span className="animate-spin h-4 w-4 border-t-2 border-primary-foreground rounded-full" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </form>
       </CardFooter>

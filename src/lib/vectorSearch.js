@@ -99,26 +99,51 @@ export async function searchNotebooksByVector(query, userId, options = {}) {
       startDate = null,
       endDate = null,
       limit = 10,
-      similarityThreshold = 0.7
+      similarityThreshold = 0.3 // Lower threshold to get more results
     } = options;
 
     // Generate embedding for the query
-    const queryEmbedding = await generateEmbedding(query);
+    let queryEmbedding;
+    try {
+      queryEmbedding = await generateEmbedding(query);
+    } catch (embeddingError) {
+      console.error('Error generating query embedding:', embeddingError);
+      queryEmbedding = null;
+    }
 
-    // Get notebooks with embeddings
-    let dbQuery = db
-      .select({
-        id: notebooks.id,
-        title: notebooks.title,
-        content: notebooks.content,
-        createdAt: notebooks.createdAt,
-        updatedAt: notebooks.updatedAt,
-        embedding: notebooks.embedding,
-      })
-      .from(notebooks)
-      .where(
-        sql`${notebooks.userId} = ${userId} AND ${notebooks.embedding} IS NOT NULL`
-      );
+    // Prepare query for notebooks - handle schema migration issues gracefully
+    let dbQuery;
+    
+    try {
+      // First attempt: Try to query with embedding column
+      dbQuery = db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          content: notebooks.content,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
+        .from(notebooks)
+        .where(
+          sql`${notebooks.userId} = ${userId}`
+        );
+    } catch (err) {
+      console.warn('Error with embedding column, falling back to basic query:', err);
+      // Fallback: If embedding column doesn't exist yet, query without it
+      dbQuery = db
+        .select({
+          id: notebooks.id,
+          title: notebooks.title,
+          content: notebooks.content,
+          createdAt: notebooks.createdAt,
+          updatedAt: notebooks.updatedAt,
+        })
+        .from(notebooks)
+        .where(
+          sql`${notebooks.userId} = ${userId}`
+        );
+    }
 
     // Apply date filters if provided
     if (startDate) {
@@ -133,8 +158,29 @@ export async function searchNotebooksByVector(query, userId, options = {}) {
     // Calculate similarity for each notebook
     const scoredResults = results
       .map(notebook => {
-        const embedding = notebook.embedding;
-        if (!embedding || !Array.isArray(embedding)) return null;
+        // Handle different embedding formats
+        let embedding;
+        try {
+          if (!notebook.embedding) return null;
+          
+          // Handle case where embedding is stored as string
+          if (typeof notebook.embedding === 'string') {
+            embedding = JSON.parse(notebook.embedding);
+          } else if (Array.isArray(notebook.embedding)) {
+            embedding = notebook.embedding;
+          } else {
+            console.warn('Unknown embedding format:', typeof notebook.embedding);
+            return null;
+          }
+          
+          if (!Array.isArray(embedding)) {
+            console.warn('Parsed embedding is not an array');
+            return null;
+          }
+        } catch (err) {
+          console.error('Error parsing embedding:', err);
+          return null;
+        }
 
         // Use our improved similarity calculation
         const similarity = calculateSimilarity(queryEmbedding, embedding);

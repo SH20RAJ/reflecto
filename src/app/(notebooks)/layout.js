@@ -24,7 +24,7 @@ export default function NotebookLayout({ children }) {
 
         <ResizablePanel defaultSize={80} className="bg-background">
           <div className="h-screen overflow-y-auto">
-            <div className="px-4 w-full sm:px-6 lg:px-8 py-6 mx-auto">
+            <div className="w-full mx-auto">
               {children}
             </div>
           </div>

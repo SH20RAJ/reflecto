@@ -4,6 +4,18 @@ import AuthProvider from "@/components/auth-provider";
 import { SWRProvider } from "@/lib/swr-config";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import ensureDatabaseSchema from "@/lib/db-init";
+
+// Initialize database schema on app startup
+// This is run server-side only
+try {
+  if (typeof window === 'undefined') {
+    console.log('Initializing database schema...');
+    ensureDatabaseSchema();
+  }
+} catch (error) {
+  console.error('Error initializing database schema:', error);
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

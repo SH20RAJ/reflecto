@@ -42,7 +42,10 @@ export async function POST(request) {
 
     // Use vector search to find relevant notebooks
     let searchResults = [];
+    let fallbackReason = null;
+    
     try {
+      // Try vector search first
       searchResults = await searchNotebooksByVector(
         message, 
         session.user.id, 
@@ -61,6 +64,14 @@ export async function POST(request) {
         options: searchOptions,
         errorMessage: searchError.message
       });
+      
+      // Set fallback reason to inform the user
+      if (searchError.message.includes("no such column: notebooks.embedding")) {
+        fallbackReason = "embedding_column_missing";
+      } else {
+        fallbackReason = "vector_search_failed";
+      }
+      
       // Continue with empty results instead of failing completely
     }
 

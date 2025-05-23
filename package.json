@@ -82,6 +82,7 @@
     "recharts": "^2.15.3",
     "rehype-sanitize": "^6.0.0",
     "remark": "^15.0.1",
+    "remark-breaks": "^4.0.0",
     "remark-html": "^16.0.1",
     "slate": "^0.102.0",
     "slate-dom": "^0.112.2",
