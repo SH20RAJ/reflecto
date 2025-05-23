@@ -106,20 +106,39 @@ export async function POST(request) {
 
     // Generate embedding asynchronously (don't await to avoid blocking)
     try {
-      import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
-        generateAndSaveEmbedding(notebook.id)
-          .then(success => {
-            if (success) {
+      // Try the new embeddings module first
+      import('@/lib/embeddings').then(({ updateNotebookEmbedding }) => {
+        updateNotebookEmbedding(notebook.id, data.content || '')
+          .then(result => {
+            if (result.success) {
               console.log(`Generated embedding for new notebook ${notebook.id}`);
             } else {
-              console.warn(`Failed to generate embedding for new notebook ${notebook.id}`);
+              console.warn(`Failed to generate embedding for new notebook ${notebook.id}: ${result.message}`);
+              // Fall back to the old method if the new one fails
+              import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
+                generateAndSaveEmbedding(notebook.id);
+              }).catch(err => {
+                console.error('Error with fallback embedding generation:', err);
+              });
             }
           })
           .catch(err => {
             console.error(`Error generating embedding for notebook ${notebook.id}:`, err);
+            // Fall back to the old method if the new one fails
+            import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
+              generateAndSaveEmbedding(notebook.id);
+            }).catch(err => {
+              console.error('Error with fallback embedding generation:', err);
+            });
           });
       }).catch(err => {
-        console.error('Error importing generateEmbeddings module:', err);
+        // If new module fails, use the old one
+        console.error('Error importing embeddings module, trying legacy module:', err);
+        import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
+          generateAndSaveEmbedding(notebook.id);
+        }).catch(err => {
+          console.error('Error with legacy embedding generation:', err);
+        });
       });
     } catch (embeddingError) {
       // Just log the error, don't block the notebook creation

@@ -2,7 +2,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { Check, ArrowRight, Star, Brain, Sparkles, Clock, Calendar, Shield, Zap, MessageSquare, Search, Bot, User } from "lucide-react";
+import { Check, ArrowRight, Star, Brain, Sparkles, Clock, Calendar, Shield, Zap, MessageSquare, Search, Bot, User, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -58,6 +58,10 @@ export default function PitchPage() {
     {
       question: "Can I search through my entries with natural language?",
       answer: "Absolutely! Our innovative chat feature allows you to have natural conversations with your notebooks. Ask questions like 'When did I first meet Sarah?' or 'Show me photos I took during my vacation last summer' and get instant, relevant results. You can search by dates, emotions, events, people, and even find entries containing specific types of media like photos. This makes your personal memories and reflections truly accessible in a way that traditional search can't match."
+    },
+    {
+      question: "What is Luna and how does it enhance my journaling experience?",
+      answer: "Luna is your AI notebook companion with adaptable personalities to match your mood. Whether you need cheerful encouragement, thoughtful analysis, or calm reflection, Luna dynamically adjusts to provide the right kind of interaction. Beyond searching your notebooks, Luna identifies patterns in your writing, offers emotional support, suggests journaling prompts, and helps you reflect on your entries with new perspectives. Luna makes the experience of revisiting your journals more insightful and conversational."
     },
     {
       question: "How does Reflecto compare to Notion for journaling?",
@@ -351,13 +355,13 @@ export function ChatFeatures() {
         <div className="text-center mb-16 relative">
           <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary mb-4">
             <Sparkles className="h-3.5 w-3.5 mr-2" />
-            Revolutionary feature
+            Meet Luna
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
             Chat with Your Memories
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Our innovative chat interface transforms how you interact with your journal entries, making your personal insights more accessible than ever.
+            Luna, your AI notebook assistant, transforms how you interact with your journal entries, making your personal insights more accessible than ever.
           </p>
         </div>
 
@@ -450,12 +454,12 @@ export function ChatFeatures() {
                 <div className="space-y-6 mb-6">
                   {/* Bot welcome message */}
                   <div className="flex items-start">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0 border border-primary/20">
-                      <Bot className="h-5 w-5 text-primary" />
+                    <div className="w-10 h-10 rounded-full bg-yellow-100/80 dark:bg-yellow-900/40 flex items-center justify-center mr-4 flex-shrink-0 border border-yellow-200 dark:border-yellow-900/60">
+                      <Smile className="h-5 w-5 text-yellow-400" />
                     </div>
-                    <div className="bg-muted/50 backdrop-blur-sm p-4 rounded-2xl rounded-tl-none max-w-[80%] shadow-sm">
-                      <p className="text-sm leading-relaxed">
-                        Hi there! I'm your personal memory assistant. I can help you search through your journal entries using natural language. What would you like to find today?
+                    <div className="bg-yellow-50/80 dark:bg-yellow-900/20 p-4 rounded-2xl rounded-tl-none max-w-[80%] shadow-sm">
+                      <p className="text-sm leading-relaxed text-amber-800 dark:text-amber-300">
+                        Hi there! I'm Luna, your notebook companion. I can help you explore your journals and discover insights. What would you like to know today?
                       </p>
                     </div>
                   </div>
@@ -473,11 +477,11 @@ export function ChatFeatures() {
                   {/* Bot response */}
                   <div className="flex items-start">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0 border border-primary/20">
-                      <Bot className="h-5 w-5 text-primary" />
+                      <Smile className="h-5 w-5 text-yellow-400" />
                     </div>
                     <div className="space-y-4 max-w-[80%]">
-                      <div className="bg-muted/50 backdrop-blur-sm p-4 rounded-2xl rounded-tl-none shadow-sm">
-                        <p className="text-sm leading-relaxed mb-2">
+                      <div className="bg-yellow-50/80 dark:bg-yellow-900/20 p-4 rounded-2xl rounded-tl-none shadow-sm">
+                        <p className="text-sm leading-relaxed mb-2 text-amber-800 dark:text-amber-300">
                           I found 3 entries related to meeting Sarah. Here's the most relevant one:
                         </p>
 

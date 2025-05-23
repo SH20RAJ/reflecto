@@ -155,19 +155,87 @@ export async function searchNotebooksByVector(query, userId, options = {}) {
 
     const results = await dbQuery;
 
+    // If we don't have a query embedding, use text search instead
+    if (!queryEmbedding) {
+      console.log('No query embedding available, using text-based search only');
+      return results
+        .map(notebook => {
+          const queryLower = query.toLowerCase();
+          const titleLower = notebook.title.toLowerCase();
+          const contentLower = (notebook.content || '').toLowerCase();
+          
+          // Check if query terms are in the content
+          const queryTerms = queryLower.split(/\s+/).filter(term => term.length > 2);
+          let termMatches = 0;
+          for (const term of queryTerms) {
+            if (titleLower.includes(term) || contentLower.includes(term)) {
+              termMatches++;
+            }
+          }
+          
+          // Calculate a text match score (0-1)
+          const textMatchScore = queryTerms.length > 0 ? termMatches / queryTerms.length : 0;
+          
+          return {
+            ...notebook,
+            similarity: textMatchScore * 100, // Scale to percentage for display
+            textMatchScore: textMatchScore * 100
+          };
+        })
+        .filter(result => result.similarity > 0) // Only return results with some match
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, limit);
+    }
+
     // Calculate similarity for each notebook
     const scoredResults = results
       .map(notebook => {
         // Handle different embedding formats
         let embedding;
         try {
-          if (!notebook.embedding) return null;
+          if (!notebook.embedding) {
+            // No embedding, use text match only
+            const queryLower = query.toLowerCase();
+            const titleLower = notebook.title.toLowerCase();
+            const contentLower = (notebook.content || '').toLowerCase();
+            
+            // Check if query appears in title or content
+            const hasExactMatch = titleLower.includes(queryLower) || contentLower.includes(queryLower);
+            
+            // Check if query terms are in the content
+            const queryTerms = queryLower.split(/\s+/).filter(term => term.length > 2);
+            let termMatches = 0;
+            for (const term of queryTerms) {
+              if (titleLower.includes(term) || contentLower.includes(term)) {
+                termMatches++;
+              }
+            }
+            
+            // Calculate a text match score (0-1)
+            const textMatchScore = queryTerms.length > 0 ? termMatches / queryTerms.length : 0;
+            
+            return {
+              ...notebook,
+              similarity: textMatchScore * 100, // Scale to percentage for display
+              textMatchScore: textMatchScore * 100,
+              hasExactMatch,
+              noEmbedding: true
+            };
+          }
           
           // Handle case where embedding is stored as string
           if (typeof notebook.embedding === 'string') {
             embedding = JSON.parse(notebook.embedding);
           } else if (Array.isArray(notebook.embedding)) {
             embedding = notebook.embedding;
+          } else if (notebook.embedding && typeof notebook.embedding === 'object') {
+            // Handle other object formats that might contain the embedding
+            const values = Object.values(notebook.embedding);
+            if (Array.isArray(values[0])) {
+              embedding = values[0];
+            } else {
+              embedding = values;
+            }
           } else {
             console.warn('Unknown embedding format:', typeof notebook.embedding);
             return null;

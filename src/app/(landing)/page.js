@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import WhyReflecto from "@/components/WhyReflecto";
 import HowItWorks from "@/components/HowItWorks";
+import LunaShowcase from "@/components/LunaShowcase";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
@@ -18,6 +19,7 @@ export default function Home() {
       <CTA />
       <Features />
       <WhyReflecto />
+      <LunaShowcase /> {/* Dedicated Luna section */}
       <ChatFeatures />
       <HowItWorks />
       <Testimonials />

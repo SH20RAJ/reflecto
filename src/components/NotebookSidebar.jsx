@@ -255,16 +255,29 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
 
 // Client component that uses useSearchParams
 const SidebarWithParams = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Persist sidebar collapse state using localStorage
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    // Check if we're in the browser environment
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      return savedState === 'true';
+    }
+    return false;
+  });
 
   const handleToggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebarCollapsed', newState.toString());
+    }
   };
 
   return (
     <>
       {/* Desktop sidebar - now works with ResizablePanel */}
-      <div className="h-full w-full border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex flex-col">
+      <div className={`h-full w-full border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex flex-col ${isCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
         <SidebarContent
           onClose={() => {}}
           isCollapsed={isCollapsed}

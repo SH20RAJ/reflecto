@@ -24,7 +24,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh)]">
+    <div className="flex flex-col h-full">
       <NotebookChat />
     </div>
   );

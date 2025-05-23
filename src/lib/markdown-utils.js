@@ -95,13 +95,13 @@ export function simpleMarkdownToHTML(markdown) {
     // Handle headers (h1)
     .replace(/^# (.*$)/gm, '<h1>$1</h1>')
     // Handle unordered lists
-    .replace(/^\\s*[\\-\\*] (.*$)/gm, '<li>$1</li>')
+    .replace(/^\s*[\-\*] (.*$)/gm, '<li>$1</li>')
     // Handle ordered lists
-    .replace(/^\\s*(\\d+)\\. (.*$)/gm, '<li>$2</li>')
+    .replace(/^\s*(\d+)\. (.*$)/gm, '<li>$2</li>')
     // Wrap lists in ul/ol tags
-    // .replace(/(<li>.*<\\/li>)\\n(?![<]li>)/g, '<ul>$1</ul>')
+    // .replace(/(<li>.*<\/li>)\n(?![<]li>)/g, '<ul>$1</ul>')
     // Handle code blocks with language support
-    .replace(/```(\\w*)\\n([\\s\\S]*?)```/g, (match, lang, code) => {
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
       return `<pre class="language-${lang || 'text'}"><code>${code}</code></pre>`;
     })
     // Handle inline code
@@ -109,11 +109,11 @@ export function simpleMarkdownToHTML(markdown) {
     // Handle blockquotes
     .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
     // Handle horizontal rules
-    .replace(/^\\s*[\\_=-]{3,}\\s*$/gm, '<hr>')
+    .replace(/^\s*[\-_=]{3,}\s*$/gm, '<hr>')
     // Handle paragraphs - wrap text that isn't already wrapped
     .replace(/^([^<].*[^>])$/gm, '<p>$1</p>')
     // Handle paragraphs
-    .replace(/\\n\\n/g, '</p><p>')
+    .replace(/\n\n/g, '</p><p>')
     // Wrap in paragraph
     .replace(/^(.*)/, '<p>$1</p>');
 }

@@ -26,7 +26,7 @@ export function ChatHeader({
 }) {
   return (
     <motion.div 
-      className="flex justify-between items-center p-4 border-b"
+      className="flex justify-between items-center p-4 border-b overflow-scroll"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}

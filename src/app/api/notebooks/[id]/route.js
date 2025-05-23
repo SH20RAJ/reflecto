@@ -94,6 +94,47 @@ export async function PUT(request, context) {
     if (!notebook) {
       return NextResponse.json({ error: 'Notebook not found' }, { status: 404 });
     }
+    
+    // Generate embedding asynchronously (don't await to avoid blocking the response)
+    try {
+      // Try the new embeddings module first
+      import('@/lib/embeddings').then(({ updateNotebookEmbedding }) => {
+        updateNotebookEmbedding(notebook.id, data.content || '')
+          .then(result => {
+            if (result.success) {
+              console.log(`Generated embedding for updated notebook ${notebook.id}`);
+            } else {
+              console.warn(`Failed to generate embedding for updated notebook ${notebook.id}: ${result.message}`);
+              // Fall back to the old method if the new one fails
+              import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
+                generateAndSaveEmbedding(notebook.id);
+              }).catch(err => {
+                console.error('Error with fallback embedding generation:', err);
+              });
+            }
+          })
+          .catch(err => {
+            console.error(`Error generating embedding for notebook ${notebook.id}:`, err);
+            // Fall back to the old method if the new one fails
+            import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
+              generateAndSaveEmbedding(notebook.id);
+            }).catch(err => {
+              console.error('Error with fallback embedding generation:', err);
+            });
+          });
+      }).catch(err => {
+        // If new module fails, use the old one
+        console.error('Error importing embeddings module, trying legacy module:', err);
+        import('@/lib/generateEmbeddings').then(({ generateAndSaveEmbedding }) => {
+          generateAndSaveEmbedding(notebook.id);
+        }).catch(err => {
+          console.error('Error with legacy embedding generation:', err);
+        });
+      });
+    } catch (embeddingError) {
+      // Just log the error, don't block the notebook update
+      console.error('Error initiating embedding generation:', embeddingError);
+    }
 
     return NextResponse.json(notebook);
   } catch (error) {

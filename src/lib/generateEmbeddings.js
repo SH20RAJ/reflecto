@@ -115,12 +115,35 @@ export async function generateAndSaveEmbedding(notebookId) {
     }
 
     // Save embedding to the notebook
-    await db.update(notebooks)
-      .set({ embedding: embedding })
-      .where(eq(notebooks.id, notebookId));
-    
-    console.log(`Successfully generated and saved embedding for notebook ${notebookId}`);
-    return true;
+    try {
+      // Try to store the embedding as a proper vector
+      await db.update(notebooks)
+        .set({ 
+          embedding: embedding,
+          updatedAt: new Date() // Also update the timestamp
+        })
+        .where(eq(notebooks.id, notebookId));
+      
+      console.log(`Successfully generated and saved embedding for notebook ${notebookId}`);
+      return true;
+    } catch (dbError) {
+      // If there's an error with the vector format, try storing as JSON string
+      console.warn(`Error saving embedding as vector, trying JSON: ${dbError.message}`);
+      try {
+        await db.update(notebooks)
+          .set({ 
+            embedding: JSON.stringify(embedding),
+            updatedAt: new Date()
+          })
+          .where(eq(notebooks.id, notebookId));
+        
+        console.log(`Successfully saved embedding as JSON string for notebook ${notebookId}`);
+        return true;
+      } catch (jsonError) {
+        console.error(`Failed to save embedding as JSON: ${jsonError.message}`);
+        return false;
+      }
+    }
   } catch (error) {
     console.error(`Error generating embedding for notebook ${notebookId}:`, error);
     return false;
