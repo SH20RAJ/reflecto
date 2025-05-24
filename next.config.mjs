@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  
+    experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
+
   images: {
     domains: ['lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
     formats: ['image/avif', 'image/webp'],
