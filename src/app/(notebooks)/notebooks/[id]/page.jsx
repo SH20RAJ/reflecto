@@ -640,26 +640,26 @@ export default function PremiumNotebookPage({ params }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Mobile Header (visible on small screens only) */}
-      <header className="sticky top-0 z-50 border-b border-border/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
-        <div className="container flex h-14 max-w-full items-center justify-between px-4">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 border-b border-border/10 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 md:hidden">
+        <div className="container flex h-14 max-w-full items-center justify-between gap-2 px-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             {/* Menu Button for mobile */}
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 shrink-0 rounded-full"
               onClick={() => router.push('/notebooks')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             
-            {/* Hidden sheet trigger for insights panel */}
+            {/* Luna insights trigger - now consistent with navigation icons */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 rounded-full hidden"
+                  className="h-8 w-8 shrink-0 rounded-full"
                   data-sheet-trigger="true"
                 >
                   <Sparkles className="h-4 w-4" />
@@ -685,7 +685,7 @@ export default function PremiumNotebookPage({ params }) {
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="h-8 w-full truncate border-none bg-transparent px-0 text-base font-medium focus-visible:ring-0"
+                className="h-8 w-full truncate border-none bg-transparent px-0 text-base font-medium focus-visible:ring-0 focus-visible:ring-offset-0"
                 placeholder="Untitled Notebook"
               />
             </div>
@@ -695,7 +695,7 @@ export default function PremiumNotebookPage({ params }) {
             <Button
               variant={isSaving ? "outline" : "ghost"}
               size="icon"
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 shrink-0 rounded-full"
               onClick={() => handleEditorSave(false)}
               disabled={isSaving}
             >
@@ -708,7 +708,7 @@ export default function PremiumNotebookPage({ params }) {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
