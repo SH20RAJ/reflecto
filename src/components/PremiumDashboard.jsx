@@ -79,9 +79,13 @@ export default function PremiumDashboard() {
           <p className="text-muted-foreground">{notebooks.length} notebooks available</p>
         </div>
         
-        <Button className="mt-4 md:mt-0" onClick={() => router.push('/notebooks/new')}>
-          <PlusCircle className="h-4 w-4 mr-2" />
-          New Notebook
+        <Button 
+          className="mt-4 md:mt-0 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-600/90 hover:to-indigo-600/90 text-white shadow-md" 
+          onClick={() => router.push('/notebooks/new')}
+          size="lg"
+        >
+          <PlusCircle className="h-5 w-5 mr-2" />
+          Create New Notebook
         </Button>
       </div>
       
