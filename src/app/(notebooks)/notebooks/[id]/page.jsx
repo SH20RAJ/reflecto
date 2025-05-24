@@ -659,12 +659,12 @@ export default function PremiumNotebookPage({ params }) {
             <div className="flex items-center gap-5">
               <div className="flex items-center">
                 <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                <span>Created {notebook?.createdAt ? format(new Date(notebook.createdAt), 'MMM d, yyyy') : 'Just now'}</span>
+                <span>Created {notebook && notebook.createdAt ? format(new Date(notebook.createdAt), 'MMM d, yyyy') : 'Just now'}</span>
               </div>
 
               <div className="flex items-center">
                 <Clock className="h-3.5 w-3.5 mr-1.5" />
-                <span>Updated {lastSaved || notebook?.updatedAt ? format(new Date(lastSaved || notebook?.updatedAt), 'MMM d, yyyy h:mm a') : 'Just now'}</span>
+                <span>Updated {notebook && (lastSaved || notebook.updatedAt) ? format(new Date(lastSaved || notebook.updatedAt), 'MMM d, yyyy h:mm a') : 'Just now'}</span>
               </div>
             </div>
             

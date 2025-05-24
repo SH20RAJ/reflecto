@@ -13,7 +13,11 @@ import {
   SlidersHorizontal, 
   Grid, 
   List, 
-  Layout
+  Layout,
+  Star,
+  Tag,
+  Check,
+  Timer
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -161,40 +165,88 @@ export default function PremiumDashboard() {
         </div>
       </div>
       
-      {/* Notebooks Grid */}
+      {/* Create new notebook prominent card */}
+      <Card className="mb-6 bg-gradient-to-r from-violet-600/10 to-indigo-600/10 border-violet-500/20 hover:shadow-md transition-all">
+        <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-semibold mb-1">Start a New Notebook</h3>
+            <p className="text-muted-foreground">Capture your thoughts, ideas, memories or anything that matters to you.</p>
+          </div>
+          <Button 
+            className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-600/90 hover:to-indigo-600/90 text-white shadow-md self-start" 
+            onClick={() => router.push('/notebooks/new')}
+            size="lg"
+          >
+            <PlusCircle className="h-5 w-5 mr-2" />
+            Create New Notebook
+          </Button>
+        </CardContent>
+      </Card>
+      
+      {/* Notebooks Grid/List */}
       <div className={cn(
         'grid gap-4 animate-in fade-in-50',
-        view === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5' : 'grid-cols-1'
+        view === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'
       )}>
+        {/* Create new notebook inline card */}
+        <Card 
+          className="h-full border-dashed hover:border-primary/30 hover:bg-accent/50 hover:shadow-md transition-all flex flex-col items-center justify-center p-6 cursor-pointer"
+          role="button"
+          onClick={() => router.push('/notebooks/new')}
+        >
+          <PlusCircle className="h-8 w-8 text-primary/70 mb-4" />
+          <h3 className="font-medium">New Notebook</h3>
+          <p className="text-sm text-muted-foreground mt-1">Start with a blank notebook</p>
+        </Card>
+        
         {displayedNotebooks.map((notebook) => (
-          <Link href={`/notebooks/${notebook.id}`} key={notebook.id}>
-            <Card className="h-full hover:shadow-md transition-shadow">
+          <Card 
+            key={notebook.id}
+            className={cn(
+              "h-full hover:shadow-md transition-all border-border/50",
+              view === 'grid' ? 'flex flex-col' : 'flex flex-row items-center'
+            )}
+            onClick={() => router.push(`/notebooks/${notebook.id}`)}
+            role="button"
+          >
+            <div className={cn(
+              view === 'grid' ? 'w-full' : 'w-2/3'
+            )}>
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <CardTitle className="line-clamp-1">{notebook.title}</CardTitle>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(notebook.updatedAt), 'MMM d')}
-                  </span>
+                  <CardTitle className={cn(
+                    view === 'grid' ? 'line-clamp-1' : 'text-lg line-clamp-1 flex-1'
+                  )}>
+                    {notebook.title || 'Untitled Notebook'}
+                  </CardTitle>
+                  {notebook.updatedAt && (
+                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                      {format(new Date(notebook.updatedAt), 'MMM d, yyyy')}
+                    </span>
+                  )}
                 </div>
                 <CardDescription className="line-clamp-2 mt-2">
                   {notebook.content?.substring(0, 120) || 'No content yet'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-1 mb-4">
-                  {notebook.tags && Array.isArray(notebook.tags) ? (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {notebook.tags && Array.isArray(notebook.tags) && notebook.tags.length > 0 ? (
                     notebook.tags.slice(0, 3).map((tag, i) => (
-                      <span key={i} className="flex items-center">
-                        <Badge variant="secondary" className="text-xs">
-                          {typeof tag === 'string' ? tag : tag.name || 'Untitled'}
-                        </Badge>
-                      </span>
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {typeof tag === 'string' ? tag : tag.name || 'Untitled'}
+                      </Badge>
                     ))
                   ) : (
                     <span className="text-xs text-muted-foreground">No tags</span>
                   )}
+                  {notebook.tags && Array.isArray(notebook.tags) && notebook.tags.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{notebook.tags.length - 3} more
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Book className="h-3.5 w-3.5" />
                     <span>{notebook.entryCount || 0} entries</span>
@@ -205,18 +257,25 @@ export default function PremiumDashboard() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </Link>
+            </div>
+            {view !== 'grid' && (
+              <div className="flex-shrink-0 p-4">
+                <Button 
+                  variant="outline"
+                  className="gap-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/notebooks/${notebook.id}`);
+                  }}
+                >
+                  Open
+                </Button>
+              </div>
+            )}
+          </Card>
         ))}
         
-        {/* Create new notebook card */}
-        <Link href="/notebooks/new">
-          <Card className="h-full border-dashed hover:border-primary/30 hover:bg-accent/50 transition-colors flex flex-col items-center justify-center p-6">
-            <PlusCircle className="h-8 w-8 text-muted-foreground mb-4" />
-            <h3 className="font-medium">Create new notebook</h3>
-            <p className="text-sm text-muted-foreground mt-1">Start with a blank notebook</p>
-          </Card>
-        </Link>
+        
       </div>
     </div>
   );
