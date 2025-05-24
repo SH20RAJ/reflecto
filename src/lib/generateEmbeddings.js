@@ -6,8 +6,8 @@ import { notebooks } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 // Cloudflare API credentials
-const CLOUDFLARE_ACCOUNT_ID = "091539408595ba99a0ef106d42391d5b";
-const CLOUDFLARE_AUTH_TOKEN = "zdOYsqUJk_c7BKC_X0eHfxNlPp91pwNBLE2BG9fl";
+const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
+const CLOUDFLARE_AUTH_TOKEN = process.env.CLOUDFLARE_AUTH_TOKEN;
 
 /**
  * Generate embeddings for text using Cloudflare AI API (BGE-M3)
@@ -112,11 +112,9 @@ export async function generateAndSaveEmbedding(notebookId) {
     // Validate embedding before saving
     if (!embedding || !Array.isArray(embedding)) {
       throw new Error('Generated embedding is not a valid array');
-    }
-
-    // Save embedding to the notebook
+    }      // Save embedding to the notebook
     try {
-      // Try to store the embedding as a proper vector
+      // Store the embedding array directly - Drizzle will handle JSON serialization
       await db.update(notebooks)
         .set({ 
           embedding: embedding,

@@ -78,7 +78,18 @@ export default function NotebookChat() {
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      const scrollContainer = messagesEndRef.current.parentNode.parentNode;
+      
+      // Force layout recalculation to ensure accurate heights
+      setTimeout(() => {
+        // Using both methods to ensure scroll works consistently
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        
+        // Manually scroll to bottom as a fallback
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }, 150); // Slightly longer delay to ensure content is fully rendered
+    }
   }, [messages]);
 
   // Randomly select 3 sample questions

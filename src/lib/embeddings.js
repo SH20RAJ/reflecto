@@ -89,54 +89,56 @@ export async function findSimilarNotebooks(query, options = {}) {
     if (!queryEmbedding) {
       return { success: false, notebooks: [], error: "Failed to generate query embedding" };
     }
-    
-    // If using SQLite with Turso:
-    // We need to construct a query that uses vector_top_k function
-    // Note: This is simplified and would need to be adjusted for your schema
-    const sql = `
-      SELECT n.*, 
-        libsql_vector_cosine_similarity(n.embedding, ?) as similarity
-      FROM notebooks n
-      WHERE n.user_id = ?
-      ${dateRange?.startDate ? 'AND n.created_at >= ?' : ''}
-      ${dateRange?.endDate ? 'AND n.created_at <= ?' : ''}
-      AND n.embedding IS NOT NULL
-      ORDER BY similarity DESC
-      LIMIT ?
-    `;
-    
-    // Prepare parameters
-    const params = [
-      JSON.stringify(queryEmbedding), // Convert embedding array to string
-      userId
-    ];
-    
-    if (dateRange?.startDate) {
-      params.push(dateRange.startDate.toISOString());
-    }
-    
-    if (dateRange?.endDate) {
-      params.push(dateRange.endDate.toISOString());
-    }
-    
-    params.push(limit);
-    
-    // Execute SQL query
-    // This is pseudocode - you'll need to adapt this to your specific SQL executor
-    // const results = await db.execute(sql, params);
-    
-    // For now, we'll do a simpler query with drizzle-orm
-    const notebooks = await db.query.notebooks.findMany({
-      where: (notebooks) => {
-        let condition = eq(notebooks.userId, userId);
-        // Add date filters if provided
-        // Note: This doesn't do vector similarity search yet
-        return condition;
-      },
-      limit: limit,
-    });
-    
-    return { success: true, notebooks };
+
+    // Fetch notebooks with their embeddings
+    let notebooks = await db.select({
+      id: notebooks.id,
+      title: notebooks.title,
+      content: notebooks.content,
+      userId: notebooks.userId,
+      embedding: notebooks.embedding,
+      createdAt: notebooks.createdAt,
+      updatedAt: notebooks.updatedAt,
+    })
+    .from(notebooks)
+    .where(
+      and(
+        eq(notebooks.userId, userId),
+        sql`${notebooks.embedding} IS NOT NULL`,
+        dateRange?.startDate ? gte(notebooks.createdAt, dateRange.startDate) : undefined,
+        dateRange?.endDate ? lte(notebooks.createdAt, dateRange.endDate) : undefined
+      )
+    );
+    // Calculate similarities and sort
+    const notebooksWithSimilarity = notebooks
+      .map(notebook => {
+        try {
+          const embedding = notebook.embedding;
+          if (!embedding) return null;
+
+          // Calculate cosine similarity between query embedding and notebook embedding
+          const similarity = calculateCosineSimilarity(queryEmbedding, embedding);
+          
+          return {
+            ...notebook,
+            similarity
+          };
+        } catch (error) {
+          console.error(`Error processing notebook ${notebook.id}:`, error);
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+
+    return { 
+      success: true, 
+      notebooks: notebooksWithSimilarity.map(n => ({
+        ...n,
+        similarity: Math.round(n.similarity * 100) // Convert to percentage
+      }))
+    };
   } catch (error) {
     console.error("Error finding similar notebooks:", error);
     return { success: false, notebooks: [], error: error.message };
@@ -169,5 +171,40 @@ export async function updateMissingEmbeddings() {
   } catch (error) {
     console.error("Error updating missing embeddings:", error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Calculate cosine similarity between two vectors
+ * @param {number[]} vec1 - First vector
+ * @param {number[]} vec2 - Second vector
+ * @returns {number} - Cosine similarity (0-1)
+ */
+function calculateCosineSimilarity(vec1, vec2) {
+  if (!Array.isArray(vec1) || !Array.isArray(vec2) || vec1.length !== vec2.length) {
+    return 0;
+  }
+
+  try {
+    // Calculate dot product
+    let dotProduct = 0;
+    let norm1 = 0;
+    let norm2 = 0;
+
+    for (let i = 0; i < vec1.length; i++) {
+      dotProduct += vec1[i] * vec2[i];
+      norm1 += vec1[i] * vec1[i];
+      norm2 += vec2[i] * vec2[i];
+    }
+
+    // Calculate magnitudes
+    norm1 = Math.sqrt(norm1);
+    norm2 = Math.sqrt(norm2);
+
+    // Return cosine similarity
+    return dotProduct / (norm1 * norm2);
+  } catch (error) {
+    console.error('Error calculating cosine similarity:', error);
+    return 0;
   }
 }

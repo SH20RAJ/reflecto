@@ -3,7 +3,7 @@
  * This will run on application startup to ensure the database schema is properly configured
  */
 
-import { db } from '@/db';
+import { db, tursoClient } from '@/db';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -18,15 +18,15 @@ export async function ensureDatabaseSchema() {
     // so we need to check if the column exists first
     try {
       // Check if the embedding column exists
-      const result = await db.execute(sql`
-        SELECT name FROM pragma_table_info('notebooks') WHERE name = 'embedding'
-      `);
+      const result = await tursoClient.execute({
+        sql: 'SELECT name FROM pragma_table_info(\'notebooks\') WHERE name = \'embedding\'',
+      });
       
       if (result.rows.length === 0) {
         console.log('Adding embedding column to notebooks table...');
-        await db.execute(sql`
-          ALTER TABLE notebooks ADD COLUMN embedding TEXT
-        `);
+        await tursoClient.execute({
+          sql: 'ALTER TABLE notebooks ADD COLUMN embedding TEXT',
+        });
         console.log('Embedding column added successfully');
       } else {
         console.log('Embedding column already exists');

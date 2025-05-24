@@ -7,6 +7,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { LUNA_PERSONALITIES, SAMPLE_QUESTIONS } from "@/lib/luna-personalities";
+import LunaChatDemo from "@/components/LunaChatDemo";
+import dynamic from "next/dynamic";
+
+// Use dynamic import for the journaling demo to ensure client-side rendering
+const JournalingDemo = dynamic(() => import("@/components/JournalingDemo"), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full max-w-3xl h-[300px] bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200/70 dark:border-slate-800/50 animate-pulse" />
+  )
+});
 
 export default function LunaShowcase() {
   const [currentPersonality, setCurrentPersonality] = useState("friendly");

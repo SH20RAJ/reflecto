@@ -56,20 +56,23 @@ const NotebooksHeader = ({
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-background pb-4 md:mt-0 mt-20">
-      <div className="flex border-b-1/2 flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 mt-4">
+    <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md pb-4 md:mt-0 mt-16 border-b border-border/30 shadow-sm mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-6 px-1">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
             {selectedTag ? (
               <div className="flex items-center gap-2">
-                <span>Tag:</span>
-                <Badge variant="outline" className="text-base font-normal py-1 px-3">
+                <span className="text-foreground">Tag:</span>
+                <Badge 
+                  variant="outline" 
+                  className="text-base font-normal py-1 px-3 border-primary/20 bg-primary/5 text-primary"
+                >
                   {tags.find(t => t.id === selectedTag)?.name || 'Loading...'}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="ml-2 h-8 w-8 p-0"
+                  className="ml-1 h-8 w-8 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
                   onClick={() => {
                     setSelectedTag(null);
                   }}
@@ -78,17 +81,25 @@ const NotebooksHeader = ({
                   ×
                 </Button>
               </div>
-            ) : 'All Notebooks'}
+            ) : (
+              <span className="relative">
+                Your Notebooks
+                <span className="absolute -bottom-1.5 left-0 right-0 h-[2px] bg-gradient-to-r from-primary/80 via-primary to-primary/30"></span>
+              </span>
+            )}
           </h1>
           {showDateFilter && selectedMonth !== null && (
-            <div className="mt-2 flex items-center gap-2">
-              <Badge variant="outline" className="flex items-center gap-1">
-                <CalendarDays className="h-3 w-3" />
-                Filtered by: {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth]} {selectedYear}
+            <div className="mt-3 flex items-center gap-2">
+              <Badge 
+                variant="outline" 
+                className="flex items-center gap-1.5 py-1 px-3 text-sm border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300"
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][selectedMonth]} {selectedYear}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-4 w-4 p-0 ml-1"
+                  className="h-5 w-5 p-0 ml-1 rounded-full hover:bg-indigo-200/50 dark:hover:bg-indigo-800/50"
                   onClick={resetFilters}
                 >
                   <span className="sr-only">Clear filter</span>

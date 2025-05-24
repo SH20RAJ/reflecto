@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Book, Calendar, User, PenLine, Settings, Plus, Tag, ChevronRight, ChevronDown, Grid, Menu, LogOut, MessageSquare } from 'lucide-react';
@@ -72,7 +72,7 @@ const SidebarContent = ({ onClose }) => {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">Reflecto</h2>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary  text-transparent bg-clip-text">dwq</h2>
       </div>
 
       <div className="px-3 mb-4">
