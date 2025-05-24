@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { 
@@ -17,7 +17,10 @@ import {
   Star,
   Tag,
   Check,
-  Timer
+  Timer,
+  Trash2,
+  StarFilled,
+  MoreHorizontal
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,41 +29,155 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useNotebooks, useSearchNotebooks } from '@/lib/hooks';
+import { useNotebooks, useSearchNotebooks, useTags } from '@/lib/hooks';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function PremiumDashboard() {
   const router = useRouter();
   const [view, setView] = useState('grid');
   const [sortBy, setSortBy] = useState('updated');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterTag, setFilterTag] = useState(null);
+  const [filterStarred, setFilterStarred] = useState(false);
+  const [selectedNotebooks, setSelectedNotebooks] = useState([]);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [notebookToDelete, setNotebookToDelete] = useState(null);
   const { notebooks, isLoading, isError, mutate } = useNotebooks();
   const { notebooks: searchResults, isLoading: isSearching } = useSearchNotebooks(searchQuery || '');
+  const { tags } = useTags();
 
-  const displayedNotebooks = React.useMemo(() => {
-    if (searchQuery && searchQuery.trim() !== '' && searchResults) {
-      return searchResults;
+  // Reset search results when query is empty
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      mutate(); // Refresh notebooks when search query is cleared
     }
-    if (!notebooks) return [];
+  }, [searchQuery, mutate]);
+  
+  // Filter and sort notebooks
+  const displayedNotebooks = React.useMemo(() => {
+    let filteredBooks = [];
     
-    const sorted = [...notebooks].sort((a, b) => {
+    // Handle search results
+    if (searchQuery && searchQuery.trim() !== '' && searchResults) {
+      filteredBooks = [...searchResults];
+    } else if (notebooks) {
+      filteredBooks = [...notebooks];
+    } else {
+      return [];
+    }
+    
+    // Apply tag filter
+    if (filterTag) {
+      filteredBooks = filteredBooks.filter(notebook => 
+        notebook.tags && 
+        Array.isArray(notebook.tags) && 
+        notebook.tags.some(tag => 
+          (typeof tag === 'string' && tag === filterTag) || 
+          (tag.id === filterTag)
+        )
+      );
+    }
+    
+    // Apply starred filter
+    if (filterStarred) {
+      filteredBooks = filteredBooks.filter(notebook => notebook.isFavorite);
+    }
+    
+    // Sort notebooks
+    return filteredBooks.sort((a, b) => {
       if (sortBy === 'updated') {
-        return new Date(b.updatedAt) - new Date(a.updatedAt);
+        return new Date(b.updatedAt || Date.now()) - new Date(a.updatedAt || Date.now());
       }
       if (sortBy === 'created') {
-        return new Date(b.createdAt) - new Date(a.createdAt);
+        return new Date(b.createdAt || Date.now()) - new Date(a.createdAt || Date.now());
       }
       if (sortBy === 'title') {
-        return a.title.localeCompare(b.title);
+        return (a.title || 'Untitled').localeCompare(b.title || 'Untitled');
       }
       return 0;
     });
-    return sorted;
-  }, [notebooks, searchResults, searchQuery, sortBy]);
+  }, [notebooks, searchResults, searchQuery, sortBy, filterTag, filterStarred]);
 
-  if (isLoading || isSearching) {
+  // Handle notebook deletion
+  const handleDeleteNotebook = async (notebook) => {
+    try {
+      const response = await fetch(`/api/notebooks/${notebook.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete notebook');
+      }
+      
+      toast.success('Notebook deleted');
+      mutate(); // Refresh notebooks list
+    } catch (error) {
+      console.error('Error deleting notebook:', error);
+      toast.error('Failed to delete notebook');
+    } finally {
+      setNotebookToDelete(null);
+      setShowDeleteAlert(false);
+    }
+  };
+  
+  // Confirm deletion of a notebook
+  const confirmDelete = (notebook, e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setNotebookToDelete(notebook);
+    setShowDeleteAlert(true);
+  };
+  
+  // Toggle a notebook's favorite status
+  const toggleFavorite = async (notebook, e) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    
+    try {
+      const response = await fetch(`/api/notebooks/${notebook.id}/favorite`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isFavorite: !notebook.isFavorite,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update favorite status');
+      }
+      
+      mutate(); // Refresh notebooks list
+      toast.success(notebook.isFavorite ? 'Removed from favorites' : 'Added to favorites');
+    } catch (error) {
+      console.error('Error updating favorite status:', error);
+      toast.error('Failed to update favorite status');
+    }
+  };
+  
+  // Clear all filters
+  const clearFilters = () => {
+    setFilterTag(null);
+    setFilterStarred(false);
+    setSearchQuery('');
+  };
+  
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse">Loading notebooks...</div>
+        <div className="flex items-center gap-2">
+          <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <span>Loading notebooks...</span>
+        </div>
       </div>
     );
   }
@@ -106,8 +223,76 @@ export default function PremiumDashboard() {
         </div>
         
         <div className="flex space-x-2 overflow-x-auto pb-2 lg:justify-center">
-          <Button variant="default" size="sm" className="bg-primary text-primary-foreground">All</Button>
-          <Button variant="outline" size="sm"><Filter className="h-3.5 w-3.5 mr-1" />Filter</Button>
+          <Button 
+            variant={!filterTag && !filterStarred ? "default" : "outline"} 
+            size="sm" 
+            className={!filterTag && !filterStarred ? "bg-primary text-primary-foreground" : ""}
+            onClick={clearFilters}
+          >
+            All
+          </Button>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Filter className="h-3.5 w-3.5 mr-1" />
+                Filter
+                {(filterTag || filterStarred) && (
+                  <Badge className="ml-2 px-1 py-0 h-5 bg-primary text-white">
+                    {(filterTag ? 1 : 0) + (filterStarred ? 1 : 0)}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72" align="start">
+              <div className="space-y-4 pt-1">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">Tags</h4>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                    {tags?.map(tag => (
+                      <Badge 
+                        key={tag.id}
+                        variant={filterTag === tag.id ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => setFilterTag(filterTag === tag.id ? null : tag.id)}
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                    {!tags?.length && (
+                      <div className="text-sm text-muted-foreground">No tags available</div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Status</h4>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={filterStarred ? "default" : "outline"}
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => setFilterStarred(!filterStarred)}
+                    >
+                      <Star className="h-3.5 w-3.5" fill={filterStarred ? "currentColor" : "none"} />
+                      Favorites
+                    </Button>
+                  </div>
+                </div>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  disabled={!filterTag && !filterStarred}
+                >
+                  Clear filters
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         
         <div className="flex justify-between lg:justify-end space-x-2">
