@@ -30,6 +30,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from 'sonner';
+import MobileBottomNav from './MobileBottomNav';
 
 export default function PremiumDashboard() {
   const router = useRouter();
@@ -717,6 +718,12 @@ export default function PremiumDashboard() {
           </Button>
         </div>
       )}
+      
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav onCreateNew={() => router.push('/notebooks/new')} />
+      
+      {/* Add padding for bottom nav on mobile */}
+      <div className="md:hidden h-20"></div>
     </div>
   );
 }

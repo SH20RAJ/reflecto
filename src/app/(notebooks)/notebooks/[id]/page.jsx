@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+
+// Import debounce function
+import { debounce } from 'lodash';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
@@ -45,6 +48,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import NotebookChat from '@/components/NotebookChat';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import TipTapEditor from '@/components/TipTapEditor';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 
 // Minimalist tag input component
 const MinimalistTagInput = ({ selectedTags, setSelectedTags, allTags, disabled }) => {
@@ -162,7 +167,7 @@ const MinimalistTagInput = ({ selectedTags, setSelectedTags, allTags, disabled }
 };
 
 // AI Sidebar Component (for notebook insights)
-const AISidebar = ({ notebook, content }) => {
+const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [insights, setInsights] = useState(null);
   const [activeTab, setActiveTab] = useState('insights');
@@ -201,7 +206,7 @@ const AISidebar = ({ notebook, content }) => {
         name: tagName
       };
       setSelectedTags(prevTags => [...prevTags, newTag]);
-      // Could add a toast notification here
+      toast.success(`Added tag: ${tagName}`);
     }
   };
 
@@ -212,16 +217,39 @@ const AISidebar = ({ notebook, content }) => {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="p-4 border-b border-border/10 bg-gradient-to-r from-background via-background to-muted/10">
+      <div className="p-4 md:border-b border-b-0 border-border/10 bg-gradient-to-r from-background via-background to-muted/10">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold flex items-center">
-            <Sparkles className="h-5 w-5 mr-2 text-primary" />
-            Luna AI Insights
-          </h3>
+          <div className="flex items-center">
+            <div className="relative mr-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-500/30 to-indigo-500/30 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <motion.div 
+                className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold flex items-center">
+                Luna
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Your AI Writing Assistant
+              </p>
+            </div>
+          </div>
+          {/* Close button for mobile */}
+          <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full p-0 md:hidden" onClick={() => {
+            // Find all sheet close buttons and click the first one
+            const closeButtons = document.querySelectorAll('[data-radix-collection-item]');
+            if (closeButtons.length > 0) {
+              closeButtons[0].click();
+            }
+          }}>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          AI-powered analysis of your notebook content to help you gain deeper insights.
-        </p>
       </div>
       
       <div className="p-5">
@@ -358,6 +386,7 @@ const AISidebar = ({ notebook, content }) => {
                           key={i} 
                           variant="outline" 
                           className="cursor-pointer hover:bg-primary/10 transition-colors"
+                          onClick={() => handleAddSuggestedTag(tag)}
                         >
                           + {tag}
                         </Badge>
@@ -503,6 +532,22 @@ export default function PremiumNotebookPage({ params }) {
     }
   };
 
+  // Debounced auto-save function
+  const debouncedAutoSave = useRef(
+    debounce((newContent) => {
+      // Only save if there are changes
+      if (newContent !== editorData) {
+        handleEditorSave(true);
+      }
+    }, 1000)
+  ).current;
+
+  useEffect(() => {
+    if (autoSaveEnabled) {
+      debouncedAutoSave(editorData);
+    }
+  }, [editorData, autoSaveEnabled, debouncedAutoSave]);
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
@@ -559,24 +604,145 @@ export default function PremiumNotebookPage({ params }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <motion.div
-          animate={{ 
-            scale: [1, 1.1, 1],
-            opacity: [0.6, 1, 0.6]
-          }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        >
-          <div className="h-16 w-16 rounded-full border-2 border-t-primary border-r-transparent border-b-primary/20 border-l-transparent" />
-        </motion.div>
+        <div className="relative">
+          <motion.div
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.6, 1, 0.6]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <div className="h-16 w-16 rounded-full border-2 border-t-primary border-r-transparent border-b-primary/20 border-l-transparent" />
+          </motion.div>
+          <motion.div
+            className="absolute inset-0"
+            initial={{ rotate: 0 }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <div className="h-16 w-16 rounded-full border-2 border-t-transparent border-r-primary/30 border-b-transparent border-l-primary/30" />
+          </motion.div>
+        </div>
         <p className="mt-4 text-muted-foreground">Loading notebook...</p>
+        <div className="mt-2 text-xs text-muted-foreground/70">
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 0.5 }}
+          >
+            Preparing your writing space
+          </motion.span>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-10 border-b border-border/10 bg-background/95 backdrop-blur">
+      {/* Mobile Header (visible on small screens only) */}
+      <header className="sticky top-0 z-50 border-b border-border/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+        <div className="container flex h-14 max-w-full items-center justify-between px-4">
+          <div className="flex items-center gap-3">
+            {/* Menu Button for mobile */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-full"
+              onClick={() => router.push('/notebooks')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
+            {/* Hidden sheet trigger for insights panel */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full hidden"
+                  data-sheet-trigger="true"
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent 
+                side="bottom" 
+                className="h-[85%] p-0 border-t border-border/20 rounded-t-xl"
+              >
+                <div className="flex justify-center py-2">
+                  <div className="w-12 h-1 rounded-full bg-muted-foreground/20"></div>
+                </div>
+                <AISidebar
+                  notebook={notebook}
+                  content={editorData}
+                  selectedTags={selectedTags}
+                  setSelectedTags={setSelectedTags}
+                />
+              </SheetContent>
+            </Sheet>
+            
+            <div className="min-w-0 flex-1">
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="h-8 w-full truncate border-none bg-transparent px-0 text-base font-medium focus-visible:ring-0"
+                placeholder="Untitled Notebook"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant={isSaving ? "outline" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={() => handleEditorSave(false)}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem className="cursor-pointer" onClick={toggleStarred}>
+                  {isStarred ? (
+                    <>
+                      <StarOff className="h-4 w-4 mr-2" />
+                      <span>Remove from starred</span>
+                    </>
+                  ) : (
+                    <>
+                      <Star className="h-4 w-4 mr-2" />
+                      <span>Add to starred</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => setActiveTab('chat')}>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  <span>Chat with Luna</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer" onClick={() => setConfirmDeleteDialog(true)}>
+                  <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                  <span className="text-red-500">Delete</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+      
+      {/* Desktop Header (hidden on mobile) */}
+      <header className="sticky top-0 z-10 border-b border-border/10 bg-background/95 backdrop-blur hidden md:block">
         <div className="container max-w-full px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button 
@@ -687,6 +853,26 @@ export default function PremiumNotebookPage({ params }) {
                     </Button>
                   </div>
                 </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Save className="h-4 w-4 mr-2" />
+                    <span>Auto-save</span>
+                  </div>
+                  <div className="flex items-center h-4">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-4 p-0" 
+                      onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                    >
+                      {autoSaveEnabled ? (
+                        <span className="text-xs text-green-500">On</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Off</span>
+                      )}
+                    </Button>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer">
                   <Share2 className="h-4 w-4 mr-2" />
                   <span>Share</span>
@@ -717,7 +903,7 @@ export default function PremiumNotebookPage({ params }) {
               <TabsContent value="editor" className="mt-0 h-full px-4 py-2">
                 <div className="h-full flex flex-col">
                   {/* Tag Manager - Simplified */}
-                  <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="mb-2 hidden md:flex items-center gap-2 text-xs text-muted-foreground">
                     <Tag className="h-3 w-3" />
                     <MinimalistTagInput 
                       selectedTags={selectedTags}
@@ -726,19 +912,34 @@ export default function PremiumNotebookPage({ params }) {
                     />
                   </div>
                   
-                  {/* Editor Area - Maximized */}
-                  <div className="flex-1 rounded-md">
-                    <textarea 
-                      className="w-full h-full text-lg leading-relaxed resize-none border-none focus:outline-none focus:ring-0 p-1"
-                      value={editorData || ''}
-                      onChange={(e) => {
-                        setEditorData(e.target.value);
+                  {/* Mobile Tag Display - Simplified */}
+                  <div className="md:hidden mb-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedTags.length > 0 ? (
+                        selectedTags.map((tag, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            {tag.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <div className="text-xs text-muted-foreground">No tags</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Editor Area - Maximized with TipTap */}
+                  <div className="flex-1 pb-4 md:pb-0">
+                    <TipTapEditor 
+                      initialContent={editorData || ''}
+                      onChange={(newContent) => {
+                        setEditorData(newContent);
                         if (autoSaveEnabled) {
-                          // Debounced auto-save would go here
+                          debouncedAutoSave(newContent);
                         }
                       }}
                       placeholder="Start writing your thoughts here..."
-                    ></textarea>
+                      className="h-full md:border md:rounded-md dark:border-border/30 md:p-1"
+                    />
                   </div>
                 </div>
               </TabsContent>
@@ -768,11 +969,108 @@ export default function PremiumNotebookPage({ params }) {
               <AISidebar
                 notebook={notebook}
                 content={editorData}
+                selectedTags={selectedTags}
+                setSelectedTags={setSelectedTags}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+      
+      {/* Mobile Bottom Navigation (visible on small screens only) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border/10 p-2 md:hidden z-20">
+        <div className="flex items-center justify-around max-w-md mx-auto">
+          <Button 
+            variant={activeTab === 'editor' ? "ghost" : "ghost"}
+            size="sm" 
+            className={cn(
+              "h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl",
+              activeTab === 'editor' ? "text-primary" : "text-muted-foreground"
+            )}
+            onClick={() => setActiveTab('editor')}
+          >
+            <PencilRuler className={cn(
+              "h-5 w-5",
+              activeTab === 'editor' ? "text-primary" : "text-muted-foreground"
+            )} />
+            <span className="text-[10px]">Editor</span>
+            {activeTab === 'editor' && (
+              <motion.div 
+                layoutId="activeTabIndicator"
+                className="absolute bottom-1 w-6 h-1 rounded-full bg-primary"
+              />
+            )}
+          </Button>
+          
+          <Button 
+            variant="ghost"
+            size="sm"
+            className="h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground relative"
+            onClick={() => {
+              // Open the AI insights sheet on mobile
+              const sheetTriggerButton = document.querySelector('[data-sheet-trigger="true"]');
+              if (sheetTriggerButton) {
+                sheetTriggerButton.click();
+              }
+            }}
+          >
+            <div className="relative">
+              <Sparkles className="h-5 w-5" />
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: [0.8, 1.2, 1] }}
+                transition={{ 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+                className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary"
+              />
+            </div>
+            <span className="text-[10px]">Luna</span>
+          </Button>
+          
+          <Button 
+            variant={activeTab === 'chat' ? "ghost" : "ghost"}
+            size="sm" 
+            className={cn(
+              "h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl",
+              activeTab === 'chat' ? "text-primary" : "text-muted-foreground"
+            )}
+            onClick={() => setActiveTab('chat')}
+          >
+            <MessageCircle className={cn(
+              "h-5 w-5",
+              activeTab === 'chat' ? "text-primary" : "text-muted-foreground"
+            )} />
+            <span className="text-[10px]">Chat</span>
+            {activeTab === 'chat' && (
+              <motion.div 
+                layoutId="activeTabIndicator"
+                className="absolute bottom-1 w-6 h-1 rounded-full bg-primary"
+              />
+            )}
+          </Button>
+          
+          <Button 
+            variant="ghost"
+            size="sm" 
+            className="h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground"
+            onClick={() => router.push('/notebooks')}
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5 stroke-current fill-none stroke-[1.5]">
+              <path d="M9 4H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Z" />
+              <path d="M19 4h-4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1Z" />
+              <path d="M9 14H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1Z" />
+              <path d="M19 14h-4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1Z" />
+            </svg>
+            <span className="text-[10px]">Notebooks</span>
+          </Button>
+        </div>
+      </div>
+      
+      {/* Add padding at the bottom on mobile to account for the navigation bar */}
+      <div className="h-16 md:hidden"></div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={confirDeleteDialog} onOpenChange={setConfirmDeleteDialog}>
@@ -802,6 +1100,21 @@ export default function PremiumNotebookPage({ params }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating Action Button for quick save on mobile */}
+      <Button 
+        variant="primary"
+        size="icon"
+        className="fixed bottom-20 right-4 z-50 h-12 w-12 rounded-full shadow-lg md:hidden bg-primary text-primary-foreground hover:bg-primary/90"
+        onClick={() => handleEditorSave(false)}
+        disabled={isSaving}
+      >
+        {isSaving ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <Save className="h-5 w-5" />
+        )}
+      </Button>
     </div>
   );
 }

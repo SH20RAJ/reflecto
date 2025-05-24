@@ -88,18 +88,18 @@ const MobileNotebookList = ({
           </div>
           
           {notebook.tags && notebook.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
+            <div className="flex flex-wrap gap-1 mt-2 max-w-full overflow-hidden">
               {notebook.tags.slice(0, 3).map(tag => (
                 <div
                   key={tag.id}
-                  className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full"
+                  className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full whitespace-nowrap"
                 >
-                  <Tag className="mr-1 h-2.5 w-2.5" />
-                  {tag.name}
+                  <Tag className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                  <span className="truncate max-w-[80px]">{tag.name}</span>
                 </div>
               ))}
               {notebook.tags.length > 3 && (
-                <div className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                <div className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full whitespace-nowrap">
                   +{notebook.tags.length - 3}
                 </div>
               )}

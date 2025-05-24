@@ -58,35 +58,23 @@ export default function NotebookLayout({ children }) {
     return <LoadingSkeleton />;
   }
 
-  return (
+   return (
     <motion.div 
       className="h-screen overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="min-h-screen">
-
-        <ResizablePanel
-          defaultSize={20}
-          minSize={15}
-          maxSize={30}
-          className="hidden md:block">
+      <div className="flex min-h-screen">
+        <div className="hidden md:block max-w-68 border-r border-border/30">
           <PremiumNotebookSidebar />
-        </ResizablePanel>
-
-        <ResizableHandle withHandle className="hidden md:flex z-10" />
-
-        <ResizablePanel defaultSize={80} className="bg-background">
-          <div className="h-screen overflow-y-auto">
-            <div className="w-full mx-auto h-screen">
-              {children}
-            </div>
+        </div>
+        <div className="flex-1 w-full bg-background overflow-y-auto h-screen">
+          <div className="w-full mx-auto h-full">
+            {children}
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+      </div>
     </motion.div>
   );
 }

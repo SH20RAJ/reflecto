@@ -1,6 +1,11 @@
+@import '../styles/tiptap.css';
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import TipTap styles */
 
 /* Base typography styles */
 @layer base {
