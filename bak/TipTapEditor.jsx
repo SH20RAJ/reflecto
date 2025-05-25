@@ -1,32 +1,21 @@
-// Placeholder file for backward compatibility - we've migrated to Yoopta Editor
-// This file is kept to avoid breaking imports but should be removed in future updates
-
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import {
-  Bold,
-  Italic,
-  Strikethrough,
-  Code,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Quote,
-  Divide,
-  LinkIcon,
-  Undo,
-  Redo
+import { 
+  Bold, Italic, Underline, Strikethrough,
+  List, ListOrdered, Quote, Code, 
+  Heading1, Heading2, Heading3, 
+  Undo, Redo, Link as LinkIcon, 
+  Image as ImageIcon, Divide, AlignLeft, 
+  AlignCenter, AlignRight
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function TipTapEditor({
   initialContent = '',
@@ -75,7 +64,7 @@ export default function TipTapEditor({
   }, [initialContent, editor]);
 
   if (!isMounted) {
-    return null;
+    return null; // Return null during SSR to avoid hydration issues
   }
 
   // If no editor is available, show a loading indicator
@@ -91,6 +80,7 @@ export default function TipTapEditor({
         .extendMarkRange('link')
         .setLink({ href: linkUrl })
         .run();
+      
       setLinkUrl('');
       setShowLinkInput(false);
     }

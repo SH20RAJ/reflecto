@@ -114,6 +114,33 @@ export const contactMessages = sqliteTable("contact_messages", {
   userId: text("user_id").references(() => users.id),
 });
 
+// Chat sessions table
+export const chatSessions = sqliteTable("chat_sessions", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title"), // Optional title for the chat
+  notebookId: text("notebook_id").references(() => notebooks.id, { onDelete: "cascade" }), // Optional reference to a notebook
+  personality: text("personality").default("friendly"), // Store Luna's personality for this chat
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  isArchived: integer("is_archived", { mode: "boolean" }).notNull().default(0), // Flag to archive chats
+  isPinned: integer("is_pinned", { mode: "boolean" }).notNull().default(0), // Flag to pin important chats
+  summary: text("summary"), // AI-generated summary of the conversation
+  lastMessageAt: integer("last_message_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`), // Timestamp of the last message
+});
+
+// Chat messages table
+export const chatMessages = sqliteTable("chat_messages", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  sessionId: text("session_id").notNull().references(() => chatSessions.id, { onDelete: "cascade" }),
+  role: text("role").notNull(), // 'user' or 'assistant'
+  content: text("content").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`CURRENT_TIMESTAMP`),
+  metadata: blob("metadata", { mode: "json" }), // Store additional message metadata as JSON
+  tokenCount: integer("token_count"), // Track token usage for analytics or rate limiting
+  isError: integer("is_error", { mode: "boolean" }).default(0), // Flag for error messages
+});
+
 // Keep the foo table for testing
 export const fooTable = sqliteTable("foo", {
   bar: text("bar").notNull().default("Hey!"),

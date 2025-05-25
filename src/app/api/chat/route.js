@@ -50,11 +50,17 @@ export async function POST(request) {
       try {
         // This is a non-blocking operation, so we don't await it
         // It will run in the background while we continue processing the request
-        updateMissingEmbeddings().then(result => {
-          console.log(`Background embedding update complete: ${result.successful}/${result.processed} successful`);
-        }).catch(err => {
-          console.error("Background embedding update failed:", err);
-        });
+        updateMissingEmbeddings()
+          .then(result => {
+            if (result && result.success) {
+              console.log(`Background embedding update complete: ${result.successful}/${result.processed} successful`);
+            } else {
+              console.warn(`Background embedding update issue: ${result ? JSON.stringify(result) : 'unknown result'}`);
+            }
+          })
+          .catch(err => {
+            console.error("Background embedding update failed:", err);
+          });
       } catch (embeddingError) {
         console.error("Error updating missing embeddings:", embeddingError);
         // Non-blocking - continue with search

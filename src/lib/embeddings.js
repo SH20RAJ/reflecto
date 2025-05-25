@@ -151,11 +151,13 @@ export async function findSimilarNotebooks(query, options = {}) {
 export async function updateMissingEmbeddings() {
   try {
     // Get all notebooks without embeddings
-    const notebooksWithoutEmbeddings = await db.query.notebooks.findMany({
-      where: (notebooks) => {
-        return eq(notebooks.embedding, null);
-      },
-    });
+    const notebooksWithoutEmbeddings = await db.select({
+      id: notebooks.id,
+      title: notebooks.title,
+      content: notebooks.content
+    })
+    .from(notebooks)
+    .where(eq(notebooks.embedding, null));
 
     console.log(`Found ${notebooksWithoutEmbeddings.length} notebooks without embeddings`);
 

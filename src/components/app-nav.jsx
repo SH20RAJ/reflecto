@@ -10,6 +10,7 @@ import {
   Home,
   LogOut,
   Menu,
+  MessageSquare,
   Moon,
   Search,
   Settings,
@@ -66,6 +67,12 @@ export function AppNav() {
       label: "Notebooks",
       icon: Book,
       active: pathname === "/notebooks" || pathname.startsWith("/notebooks/"),
+    },
+    {
+      href: "/chat-history",
+      label: "Chat History",
+      icon: MessageSquare,
+      active: pathname === "/chat-history" || pathname.startsWith("/chat-history/"),
     },
     {
       href: "/calendar",
@@ -328,11 +335,15 @@ export function AppNav() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Suggestions">
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/notebooks'; }}>
               <Book className="mr-2 h-4 w-4" />
               <span>My Notebooks</span>
             </CommandItem>
-            <CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/chat-history'; }}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              <span>Chat History</span>
+            </CommandItem>
+            <CommandItem onSelect={() => { setOpen(false); window.location.href = '/calendar'; }}>
               <Calendar className="mr-2 h-4 w-4" />
               <span>Calendar View</span>
             </CommandItem>
