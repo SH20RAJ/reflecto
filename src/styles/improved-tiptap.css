@@ -7,13 +7,18 @@
   line-height: 1.6;
   outline: none !important;
   padding: 1rem;
-  color: white;
 }
 
 /* Make the entire editor area clickable by ensuring it fills the space */
 .ProseMirror {
-  color: hsl(var(--foreground));
+  color: black;
 }
+.dark .ProseMirror, .dark .ProseMirror * {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  color: whitesmoke;
+}
+
 
 /* Make the entire editor area clickable and ensure text cursor */
 .tiptap-editor-container {

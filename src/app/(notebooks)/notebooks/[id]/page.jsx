@@ -510,7 +510,29 @@ export default function PremiumNotebookPage({ params }) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update notebook');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+        
+        // Provide more specific error messages based on status codes
+        let errorMessage = 'Failed to save notebook';
+        if (response.status === 400) {
+          errorMessage = errorData.error || 'Invalid notebook data';
+        } else if (response.status === 401) {
+          errorMessage = 'You are not authorized to edit this notebook';
+        } else if (response.status === 403) {
+          errorMessage = 'You do not have permission to edit this notebook';
+        } else if (response.status === 404) {
+          errorMessage = 'Notebook not found';
+        } else if (response.status === 413) {
+          errorMessage = 'Notebook content is too large';
+        } else if (response.status === 500) {
+          errorMessage = errorData.error || 'Server error - please try again';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server error - please try again later';
+        } else {
+          errorMessage = errorData.error || `Failed to update notebook (${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const updatedNotebook = await response.json();
@@ -522,8 +544,26 @@ export default function PremiumNotebookPage({ params }) {
       }
     } catch (error) {
       console.error('Error updating notebook:', error);
+      
+      // More specific error handling for different types of errors
+      let errorMessage = 'Failed to save notebook';
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage = 'Network error - please check your connection';
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Invalid response from server - please try again';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       if (!isAutoSave) {
-        toast.error("Failed to save notebook");
+        toast.error(errorMessage, {
+          description: 'Your changes may not have been saved. Please try again.',
+          duration: 5000,
+        });
+      } else {
+        // For autosave, show a less intrusive notification
+        console.warn('Autosave failed:', errorMessage);
       }
     } finally {
       if (!isAutoSave) {

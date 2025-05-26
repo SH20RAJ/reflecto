@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/Navbar.premium";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { Check, ArrowRight, Star, Brain, Sparkles, Clock, Calendar, Shield, Zap, MessageSquare, Search, Bot, User, Smile } from "lucide-react";
