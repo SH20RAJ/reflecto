@@ -7,6 +7,12 @@
   line-height: 1.6;
   outline: none !important;
   padding: 1rem;
+  color: white;
+}
+
+/* Make the entire editor area clickable by ensuring it fills the space */
+.ProseMirror {
+  color: hsl(var(--foreground));
 }
 
 /* Make the entire editor area clickable and ensure text cursor */
@@ -84,16 +90,15 @@
 
 /* Fix for horizontal rule visibility */
 .ProseMirror hr {
-  height: 1px;
-  border: none;
-  border-radius: 4px;
-  background-color: hsl(var(--border, var(--input, 217 19% 27%)));
-  margin: 2rem 0;
+  border: 0;
+  height: 3px;
+  background-color: black;
+  margin: 1rem 0;
 }
 
 /* Make the horizontal rule stand out better in dark mode */
 .dark .ProseMirror hr {
-  background-color: hsl(var(--border, var(--input, 217 19% 40%)));
+  background-color: whitesmoke;
   opacity: 0.5;
 }
 
