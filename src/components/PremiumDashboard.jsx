@@ -198,19 +198,13 @@ export default function PremiumDashboard() {
   
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/30 z-50">
-        <div className="flex flex-col items-center px-4 text-center">
-          <div className="relative mb-6">
-            <div className="h-16 w-16 rounded-full border-4 border-violet-200/30 dark:border-violet-700/30"></div>
-            <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-t-violet-600 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-            <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-r-indigo-500 border-t-transparent border-b-transparent border-l-transparent animate-spin animation-delay-500 opacity-70"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="relative h-10 w-10">
+            <div className="absolute inset-0 rounded-full border-2 border-primary/20"></div>
+            <div className="absolute inset-0 rounded-full border-2 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
           </div>
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-violet-700 to-indigo-700 dark:from-violet-400 dark:to-indigo-400 text-transparent bg-clip-text mb-2">
-            Loading your notebooks
-          </h3>
-          <p className="text-muted-foreground max-w-sm">
-            Preparing your creative space. Your ideas and insights will be ready in a moment...
-          </p>
+          <p className="text-sm text-muted-foreground">Loading notebooks</p>
         </div>
       </div>
     );

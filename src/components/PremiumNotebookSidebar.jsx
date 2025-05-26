@@ -1,29 +1,21 @@
 // filepath: /Users/shaswatraj/Desktop/startups/reflecto/src/components/PremiumNotebookSidebar.jsx
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Book, Calendar, User, Plus, Tag, ChevronRight, ChevronLeft, 
-  ChevronDown, Menu, LogOut, MessageSquare, Settings, 
-  Bookmark, Sparkles, Search 
-} from 'lucide-react';
+import { Plus, Search, Menu, Calendar, MessageSquare, Book, Sparkles, Bookmark, User, ChevronLeft, Tag, ChevronDown, Settings, LogOut, ChevronRight, PhoneCall } from 'lucide-react';
 import { useTags } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ModeToggle } from '@/components/mode-toggle';
 import { Input } from '@/components/ui/input';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { signOut } from "next-auth/react";
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { signOut } from "next-auth/react";
+import { ModeToggle } from './mode-toggle';
 
 const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
   const pathname = usePathname();
@@ -68,6 +60,13 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
       icon: Sparkles,
       description: 'Discover patterns in your writing',
       badge: 'New',
+    },
+    {
+      name: 'AI Companion',
+      href: '#',
+      icon: PhoneCall,
+      badge: 'Coming Soon',
+      disabled: true,
     },
     {
       name: 'Saved Items',

@@ -1,9 +1,11 @@
+/* filepath: /Users/shaswatraj/Desktop/startups/reflecto/src/app/globals.css */
+/* Import TipTap styles */
+@import url('../styles/enhanced-tiptap.css');
+@import url('../styles/improved-tiptap.css');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import TipTap styles */
 
 /* Base typography styles */
 @layer base {
@@ -113,4 +115,3 @@
     --gray-dark: #9CA3AF;
   }
 }
-

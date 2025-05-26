@@ -48,7 +48,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import NotebookChat from '@/components/NotebookChat';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TipTapEditor from '@/components/TipTapEditor';
+import ImprovedTipTapEditor from '@/components/ImprovedTipTapEditor';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 
 // Minimalist tag input component
@@ -602,6 +602,7 @@ export default function PremiumNotebookPage({ params }) {
   };
   
   if (isLoading) {
+    return ;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="relative">
@@ -755,11 +756,20 @@ export default function PremiumNotebookPage({ params }) {
             </Button>
             
             <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-lg font-medium focus-visible:ring-transparent border-none bg-transparent px-0 h-9 w-full max-w-md"
-              placeholder="Untitled Notebook"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-lg font-medium border-none bg-transparent px-0 h-9 w-[400px] focus-visible:ring-0 focus-visible:ring-offset-0"
+            placeholder="Unteditled Notebook"
+          />
+
+            <MinimalistTagInput
+            className="md:flex-1 hidden sm:flex"
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              allTags={allTags}
+              disabled={isSaving}
             />
+
           </div>
           
           <div className="flex items-center gap-2">
@@ -903,7 +913,7 @@ export default function PremiumNotebookPage({ params }) {
               <TabsContent value="editor" className="mt-0 h-full px-4 py-2">
                 <div className="h-full flex flex-col">
                   {/* Tag Manager - Simplified */}
-                  <div className="mb-2 hidden md:flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="mb-2 hidden   items-center gap-2 text-xs text-muted-foreground">
                     <Tag className="h-3 w-3" />
                     <MinimalistTagInput 
                       selectedTags={selectedTags}
@@ -929,7 +939,7 @@ export default function PremiumNotebookPage({ params }) {
                   
                   {/* Editor Area - Maximized with TipTap */}
                   <div className="flex-1 pb-4 md:pb-0">
-                    <TipTapEditor 
+                    <ImprovedTipTapEditor 
                       initialContent={editorData || ''}
                       onChange={(newContent) => {
                         setEditorData(newContent);
@@ -937,7 +947,7 @@ export default function PremiumNotebookPage({ params }) {
                           debouncedAutoSave(newContent);
                         }
                       }}
-                      placeholder="Start writing your thoughts here..."
+                      placeholder="Start writing your thoughts here... Click anywhere to begin"
                       className="h-full md:border md:rounded-md dark:border-border/30 md:p-1"
                     />
                   </div>

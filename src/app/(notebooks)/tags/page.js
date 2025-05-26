@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tag, Search, Grid, List, ArrowLeft } from 'lucide-react';
-import NotebookSidebar from '@/components/NotebookSidebar';
 
 // Client component that uses searchParams
 const TagsContent = () => {

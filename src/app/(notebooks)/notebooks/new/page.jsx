@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Book, Save, ArrowLeft, Tag as TagIcon } from 'lucide-react';
+import { Book, Save, ArrowLeft, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useTags } from '@/lib/hooks';
 import {
@@ -17,6 +16,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from "@/components/ui/checkbox";
+import { format } from 'date-fns';
 
 export default function NewNotebookPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function NewNotebookPage() {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [appendDate, setAppendDate] = useState(false);
   const { tags } = useTags();
   const [showTagSelector, setShowTagSelector] = useState(false);
 
@@ -38,13 +40,20 @@ export default function NewNotebookPage() {
     setIsSubmitting(true);
     
     try {
+      // If appendDate is checked, add the current date to the title
+      let finalTitle = title.trim();
+      if (appendDate) {
+        const currentDate = format(new Date(), 'MMM d, yyyy');
+        finalTitle = `${finalTitle} - ${currentDate}`;
+      }
+      
       const response = await fetch('/api/notebooks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          title: title.trim(),
+          title: finalTitle,
           description: description.trim(),
           tags: selectedTags.map(tag => tag.id)
         }),
@@ -143,26 +152,51 @@ export default function NewNotebookPage() {
                 <label htmlFor="title" className="block text-sm font-medium mb-1">
                   Title *
                 </label>
-                <Input
-                  id="title"
-                  placeholder="Give your notebook a name..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  autoFocus
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="title"
+                    placeholder="Give your notebook a name..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    autoFocus
+                    required
+                    className="pr-20 text-lg font-medium h-12 transition-all"
+                  />
+                  <div className="absolute inset-y-0 right-2 flex items-center">
+                    <span className="text-xs text-muted-foreground">
+                      {title.length > 0 ? `${title.length} chars` : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 mt-2">
+                  <Checkbox 
+                    id="appendDate"
+                    checked={appendDate}
+                    onCheckedChange={setAppendDate}
+                  />
+                  <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <label
+                      htmlFor="appendDate"
+                      className="text-xs cursor-pointer"
+                    >
+                      Append current date to title ({format(new Date(), 'MMM d, yyyy')})
+                    </label>
+                  </div>
+                </div>
               </div>
               
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium mb-1">
+              <div className="space-y-1">
+                <label htmlFor="description" className="block text-sm font-medium mb-2">
                   Description (optional)
                 </label>
-                <Textarea
+                <textarea
                   id="description"
-                  placeholder="Add a short description..."
+                  placeholder="Add a short description for your notebook..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
+                  className="w-full min-h-[120px] p-3 text-base rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
               
@@ -240,3 +274,4 @@ export default function NewNotebookPage() {
     </div>
   );
 }
+

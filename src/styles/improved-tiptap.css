@@ -1,0 +1,176 @@
+/* Medium-like TipTap Editor Styles */
+
+.ProseMirror {
+  min-height: 300px;
+  width: 100%;
+  cursor: text;
+  line-height: 1.6;
+  outline: none !important;
+  padding: 1rem;
+}
+
+/* Make the entire editor area clickable and ensure text cursor */
+.tiptap-editor-container {
+  cursor: text;
+}
+
+/* Better focus and blur transitions */
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* Margin for paragraphs - Medium-like */
+.ProseMirror p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  line-height: 1.6;
+}
+
+/* Fix for first paragraph */
+.ProseMirror > p:first-child {
+  margin-top: 0;
+}
+
+/* Fix for last paragraph */
+.ProseMirror > p:last-child {
+  margin-bottom: 0;
+}
+
+/* Improved placeholder styling */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+/* Readable width for text in larger screens */
+@media (min-width: 768px) {
+  .ProseMirror {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}
+
+/* Medium-like headings with better spacing */
+.ProseMirror h1 {
+  font-size: 1.875rem; /* 30px */
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Fix for horizontal rule visibility */
+.ProseMirror hr {
+  height: 1px;
+  border: none;
+  border-radius: 4px;
+  background-color: hsl(var(--border, var(--input, 217 19% 27%)));
+  margin: 2rem 0;
+}
+
+/* Make the horizontal rule stand out better in dark mode */
+.dark .ProseMirror hr {
+  background-color: hsl(var(--border, var(--input, 217 19% 40%)));
+  opacity: 0.5;
+}
+
+/* Medium-like blockquotes */
+.ProseMirror blockquote {
+  padding-left: 1rem;
+  border-left: 3px solid hsl(var(--primary));
+  font-style: italic;
+  margin: 1.5rem 0;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Code blocks */
+.ProseMirror pre {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-family: monospace;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+/* Inline code */
+.ProseMirror code {
+  background-color: hsl(var(--muted));
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+  font-family: monospace;
+  font-size: 0.875em;
+}
+
+/* Lists */
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.ProseMirror li {
+  margin-bottom: 0.5rem;
+}
+
+.ProseMirror li > p {
+  margin: 0;
+}
+
+/* Links */
+.ProseMirror a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* Toolbar styling */
+.tiptap-toolbar {
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+/* Minimal styling for focus mode */
+.focus-mode .ProseMirror {
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+/* Make sure the editor allows clicking anywhere to focus */
+.tiptap-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tiptap-editor-click-area {
+  flex: 1;
+  min-height: 300px;
+  cursor: text;
+  display: flex;
+}

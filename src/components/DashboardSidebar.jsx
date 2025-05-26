@@ -88,6 +88,33 @@ const SidebarContent = ({ onClose }) => {
       </div>
 
       <nav className="flex-1 px-3 py-2 space-y-3">
+        {/* AI Companion Feature - Coming Soon */}
+        <div className="mb-4 relative">
+          <Button
+            variant="outline"
+            className="w-full justify-start rounded-lg h-14 border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 relative overflow-hidden"
+            disabled
+          >
+            <div className="flex items-center">
+              <div className="relative mr-3">
+                <div className="h-7 w-7 rounded-full bg-gradient-to-r from-violet-500/20 to-indigo-500/20 flex items-center justify-center">
+                  <span role="img" aria-label="sparkle" className="text-primary text-xs">✨</span>
+                </div>
+                <span className="animate-ping absolute top-0 right-0 h-2 w-2 rounded-full bg-primary/60"></span>
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-primary">Call Luna</div>
+                <div className="text-xs text-muted-foreground">Talk to your AI companion</div>
+              </div>
+            </div>
+            <div className="absolute top-1 right-2">
+              <span className="px-1.5 py-0.5 rounded-sm bg-primary/20 text-primary text-[10px] font-medium">
+                Soon
+              </span>
+            </div>
+          </Button>
+        </div>
+        
         {navItems.map((item) => (
           <Link key={item.href} href={item.href} passHref onClick={onClose}>
             <Button
