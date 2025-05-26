@@ -91,7 +91,7 @@ export default function SignIn() {
                   className="w-full py-6 group"
                   onClick={() => router.push('/notebooks')}
                 >
-                  <span>Continue as Guest</span>
+                  <span>Continue as Guest (Soon)</span>
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </CardContent>
@@ -124,20 +124,25 @@ export default function SignIn() {
                 title="Digital Notebooks"
                 description="Create beautiful notebooks for different aspects of your life."
               />
-              <FeatureCard
+              {/* <FeatureCard
                 icon={<Calendar className="h-6 w-6" />}
                 title="Calendar View"
                 description="Organize and browse your entries by date for easy reflection."
+              /> */}
+              <FeatureCard
+                icon={<Sparkles className="h-6 w-6" />}
+                title="Meet Luna, Your AI Companion"
+                description="Get personalized insights and writing prompts from your intelligent journaling assistant."
               />
               <FeatureCard
                 icon={<User className="h-6 w-6" />}
                 title="Personal Profile"
-                description="Track your writing progress and notebook statistics."
+                description="Track your writing progress and notebook statistics with calendar view integration."
               />
               <FeatureCard
                 icon={<Sparkles className="h-6 w-6" />}
-                title="Simple & Beautiful"
-                description="Clean interface designed for distraction-free writing."
+                title="Minimalistic Writing Experience"
+                description="Focus on your thoughts with a clean, distraction-free interface designed for clarity and ease."
               />
             </div>
           </div>
