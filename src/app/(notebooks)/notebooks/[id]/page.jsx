@@ -947,7 +947,7 @@ export default function PremiumNotebookPage({ params }) {
                           debouncedAutoSave(newContent);
                         }
                       }}
-                      placeholder="Start writing your thoughts here... Click anywhere to begin"
+                      placeholder="Start writing your thoughts here... "
                       className="h-full md:border md:rounded-md dark:border-border/30 md:p-1"
                     />
                   </div>

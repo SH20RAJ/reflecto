@@ -13,7 +13,7 @@ import {
   Bold, Italic, ListOrdered, List, 
   Heading1, Heading2, Quote, Undo, Redo, 
   Link as LinkIcon, Divide, Maximize2, Minimize2, 
-  X, Moon, Type, Code 
+  X, Moon, Type, Code, Mic, MicOff, Loader2
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,12 @@ export default function ImprovedTipTapEditor({
   const [fullscreen, setFullscreen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [wordCount, setWordCount] = useState(0);
+  
+  // Speech recognition states
+  const [isListening, setIsListening] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState(null);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(true);
+  const [transcriptProcessing, setTranscriptProcessing] = useState(false);
 
   // Initialize the editor with extensions
   const editor = useEditor({
@@ -78,7 +84,111 @@ export default function ImprovedTipTapEditor({
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    
+    // Initialize speech recognition if available
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+          setIsListening(true);
+          // Vibrate if supported (mobile feedback)
+          if (navigator.vibrate) {
+            navigator.vibrate(100);
+          }
+        };
+        
+        recognition.onend = () => {
+          setIsListening(false);
+          // Short vibration to indicate stopped recording
+          if (navigator.vibrate) {
+            navigator.vibrate([50, 50, 50]);
+          }
+        };
+        
+        let lastProcessedIndex = 0;
+        
+        recognition.onresult = (event) => {
+          setTranscriptProcessing(true);
+          
+          // Get only the new results since last processing
+          const results = Array.from(event.results);
+          const newResults = results.slice(lastProcessedIndex);
+          
+          const isFinal = newResults.some(result => result.isFinal);
+          
+          // Process all transcripts
+          const transcript = newResults
+            .map(result => result[0].transcript)
+            .join(' ');
+          
+          // Insert the transcript at the current cursor position
+          if (editor && transcript) {
+            // If we have final results, insert them with proper spacing
+            if (isFinal) {
+              // Check if we need to add punctuation or spacing
+              let processedTranscript = transcript;
+              
+              // Add a space at the beginning if we're not at the start of a paragraph
+              const currentPosition = editor.view.state.selection.$from;
+              const isAtStart = currentPosition.parent.isTextblock && 
+                               currentPosition.parent.nodeSize === 2;
+              
+              if (!isAtStart) {
+                processedTranscript = ' ' + processedTranscript;
+              }
+              
+              // Insert the content and focus back on the editor
+              editor.commands.insertContent(processedTranscript);
+              editor.commands.focus();
+              
+              // Update the last processed index
+              lastProcessedIndex = results.length;
+            }
+          }
+          
+          // Finish processing after a slight delay
+          setTimeout(() => setTranscriptProcessing(false), 300);
+        };
+        
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error', event.error);
+          setIsListening(false);
+          // Show error toast or feedback here
+          
+          // Vibrate to indicate error
+          if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100, 50, 100]);
+          }
+        };
+        
+        // Auto restart recognition if it stops unexpectedly
+        recognition.onnomatch = () => {
+          console.warn('No speech detected');
+          if (isListening) {
+            try {
+              recognition.stop();
+              setTimeout(() => {
+                recognition.start();
+              }, 300);
+            } catch (e) {
+              console.error('Failed to restart speech recognition', e);
+            }
+          }
+        };
+        
+        setSpeechRecognition(recognition);
+      } else {
+        console.warn('Speech recognition not supported in this browser');
+        setIsSpeechSupported(false);
+      }
+    }
+  }, [editor]);
 
   useEffect(() => {
     if (editor && initialContent !== editor.getHTML()) {
@@ -118,6 +228,45 @@ export default function ImprovedTipTapEditor({
       document.body.style.overflow = '';
     };
   }, [fullscreen]);
+
+  // Toggle speech recognition - moved before early returns to fix hooks order
+  const toggleSpeechRecognition = useCallback(() => {
+    if (!isSpeechSupported) {
+      // Could show a toast here to inform user
+      console.warn('Speech recognition not supported in this browser');
+      return;
+    }
+    
+    if (isListening) {
+      try {
+        speechRecognition?.stop();
+        setIsListening(false);
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+      }
+    } else {
+      // Focus the editor before starting speech recognition
+      editor?.commands.focus();
+      
+      try {
+        speechRecognition?.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Speech recognition error:', error);
+        // If there's an error, likely because it's already running
+        try {
+          speechRecognition?.stop();
+          setTimeout(() => {
+            speechRecognition?.start();
+            setIsListening(true);
+          }, 300);
+        } catch (innerError) {
+          console.error('Failed to restart speech recognition:', innerError);
+          setIsListening(false);
+        }
+      }
+    }
+  }, [isListening, speechRecognition, isSpeechSupported, editor]);
 
   if (!isMounted) {
     return null;
@@ -229,6 +378,16 @@ export default function ImprovedTipTapEditor({
       action: () => editor.chain().focus().redo().run(),
       disabled: !editor.can().redo(),
       tooltip: 'Redo'
+    },
+    {
+      type: 'separator'
+    },
+    {
+      icon: isListening ? <MicOff size={16} /> : <Mic size={16} />,
+      action: toggleSpeechRecognition,
+      isActive: isListening,
+      disabled: !isSpeechSupported || transcriptProcessing,
+      tooltip: isListening ? 'Stop Dictation' : 'Start Dictation'
     },
     {
       type: 'separator'
@@ -364,6 +523,44 @@ export default function ImprovedTipTapEditor({
             focusMode && "max-w-2xl mx-auto"
           )}
         />
+        
+        {/* Speech recognition active indicator */}
+        {isListening && (
+          <motion.div 
+            className="fixed bottom-6 right-6 bg-primary text-primary-foreground px-3 py-2 rounded-full shadow-lg flex items-center gap-2 z-50"
+            initial={{ opacity: 0, scale: 0.8 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 20 }}
+          >
+            <motion.div 
+              className="w-3 h-3 rounded-full bg-red-500"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+            <span className="text-sm font-medium">Recording...</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={toggleSpeechRecognition} 
+              className="h-6 w-6 p-0 hover:bg-primary-foreground/20 rounded-full ml-1"
+            >
+              <X size={14} />
+            </Button>
+          </motion.div>
+        )}
+        
+        {/* Transcript processing indicator */}
+        {transcriptProcessing && (
+          <motion.div 
+            className="fixed bottom-6 right-6 bg-secondary text-secondary-foreground px-3 py-2 rounded-full shadow-lg flex items-center gap-2 z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span className="text-sm">Processing...</span>
+          </motion.div>
+        )}
       </div>
 
       {/* Fade overlay for focus mode */}
@@ -372,6 +569,39 @@ export default function ImprovedTipTapEditor({
           <div className="absolute inset-x-0 top-0 h-16 pointer-events-none bg-gradient-to-b from-background/80 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none bg-gradient-to-t from-background/80 to-transparent" />
         </>
+      )}
+      
+      {/* Mobile floating microphone button */}
+      {!readOnly && isSpeechSupported && (
+        <motion.div 
+          className="md:hidden fixed bottom-6 right-6 z-50"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Button
+            size="icon"
+            variant={isListening ? "destructive" : "default"}
+            onClick={toggleSpeechRecognition}
+            className="h-12 w-12 rounded-full shadow-lg"
+            disabled={transcriptProcessing}
+          >
+            {transcriptProcessing ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : isListening ? (
+              <MicOff className="h-5 w-5" />
+            ) : (
+              <Mic className="h-5 w-5" />
+            )}
+          </Button>
+          {isListening && (
+            <motion.div 
+              className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          )}
+        </motion.div>
       )}
     </motion.div>
   );

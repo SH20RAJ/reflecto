@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1745328485140,
+      "tag": "0000_oval_photon",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1745329560066,
+      "tag": "0001_blue_cargill",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1745614892531,
+      "tag": "0002_warm_roughhouse",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1745618862615,
+      "tag": "0003_goofy_gabe_jones",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1748253997461,
+      "tag": "0004_colossal_strong_guy",
+      "breakpoints": true
+    }
+  ]
+}
