@@ -232,6 +232,7 @@ function NotebooksContent() {
       
       {/* Search input */}
       <NotebooksSearch
+      className="mb-4"
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         isSearching={isSearching}
@@ -287,13 +288,30 @@ function NotebooksContent() {
         />
       ) : (
         <>
-          {/* Mobile view - always shown on small screens */}
+          {/* Mobile view - enhanced for better mobile experience */}
           <MobileNotebookList 
             notebooks={paginatedNotebooks}
             onView={handleViewNotebook}
             onEdit={handleEditNotebook}
             onDelete={openDeleteDialog}
             deletingNotebookId={deletingNotebookId}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onCreateNew={() => {
+              setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
+              setIsDialogOpen(true);
+            }}
+            showFilter={selectedTag || showDateFilter}
+            onToggleFilter={() => setShowDateFilter(!showDateFilter)}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
+            viewMode={viewMode}
+            setViewMode={(mode) => {
+              setViewMode(mode);
+              saveViewModePreference(mode);
+            }}
           />
           
           {/* Desktop view - grid, list, or table based on viewMode */}

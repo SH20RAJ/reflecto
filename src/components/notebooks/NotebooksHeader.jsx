@@ -56,7 +56,7 @@ const NotebooksHeader = ({
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md pb-4 md:mt-0 mt-16 border-b border-border/30 shadow-sm mb-6">
+    <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-md pb-4 md:mt-0   border-b border-border/30 shadow-sm mb-6 hidden md:block">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-6 px-1">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
@@ -82,7 +82,7 @@ const NotebooksHeader = ({
                 </Button>
               </div>
             ) : (
-              <span className="relative">
+              <span className="relative text-black dark:text-white">
                 Your Notebooks
                 <span className="absolute -bottom-1.5 left-0 right-0 h-[2px] bg-gradient-to-r from-primary/80 via-primary to-primary/30"></span>
               </span>
@@ -110,7 +110,7 @@ const NotebooksHeader = ({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="  flex-wrap items-center gap-3 hidden md:flex">
           {/* Tags Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -245,9 +245,9 @@ const NotebooksHeader = ({
 
           {/* Create Notebook Button */}
           <Button
-            className="gap-1.5"
+            className="gap-1.5 hidden md:inline-flex"
             variant="default"
-            style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
+            // style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
             onClick={() => {
               setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
               setIsDialogOpen(true);

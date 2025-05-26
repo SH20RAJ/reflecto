@@ -1,24 +1,25 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
-import { motion } from 'framer-motion';
-import '@/styles/improved-tiptap.css';
-
-import { 
-  Bold, Italic, ListOrdered, List, 
-  Heading1, Heading2, Quote, Undo, Redo, 
-  Link as LinkIcon, Divide, Maximize2, Minimize2, 
-  X, Moon, Type, Code, Mic, MicOff, Loader2
-} from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { motion } from 'framer-motion';
+import {
+  Bold, Italic, Code, Heading1, Heading2, List, ListOrdered,
+  Quote, Divide, Link as LinkIcon, Undo, Redo, Mic, MicOff,
+  Moon, X, Type, Minimize2, Maximize2, Loader2
+} from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function ImprovedTipTapEditor({
   initialContent = '',
@@ -40,6 +41,8 @@ export default function ImprovedTipTapEditor({
   const [speechRecognition, setSpeechRecognition] = useState(null);
   const [isSpeechSupported, setIsSpeechSupported] = useState(true);
   const [transcriptProcessing, setTranscriptProcessing] = useState(false);
+  
+
 
   // Initialize the editor with extensions
   const editor = useEditor({

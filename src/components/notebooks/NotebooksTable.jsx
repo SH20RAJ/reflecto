@@ -34,7 +34,7 @@ const NotebooksTable = ({
   };
 
   return (
-    <div className="rounded-md border mb-8 overflow-hidden shadow-md bg-card">
+    <div className="rounded-md border mb-8 overflow-hidden shadow-md bg-card hidden sm:block">
       <div className="max-h-[calc(100vh-220px)] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         <Table className="w-full">
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm shadow-sm">

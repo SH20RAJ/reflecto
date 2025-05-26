@@ -169,7 +169,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
         <div className="flex gap-2">
           <Button
             className={cn(
-              "w-full gap-2 h-10 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-600/90 hover:to-indigo-600/90 text-white border-0",
+              "w-full gap-2 h-10 bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-violet-600/90 hover:to-indigo-600/90 text-white border-0",
               isCollapsed ? "justify-center px-0" : "justify-start px-4"
             )}
             onClick={(e) => handleNavigation("/notebooks?new=true", e)}

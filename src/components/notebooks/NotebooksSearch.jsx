@@ -10,7 +10,7 @@ const NotebooksSearch = ({
   isSearchLoading 
 }) => {
   return (
-    <div className="relative">
+    <div className="relative hidden sm:block">
       {isSearchLoading ? (
         <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 animate-spin" />
       ) : (
