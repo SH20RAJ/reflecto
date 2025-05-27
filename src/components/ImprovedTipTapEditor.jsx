@@ -6,14 +6,23 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
+import Youtube from '@tiptap/extension-youtube';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import {
   Bold, Italic, Code, Heading1, Heading2, List, ListOrdered,
   Quote, Divide, Link as LinkIcon, Undo, Redo, Mic, MicOff,
-  Moon, X, Type, Minimize2, Maximize2, Loader2
+  Moon, X, Type, Minimize2, Maximize2, Loader2, Image as ImageIcon, Video
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -36,14 +45,80 @@ export default function ImprovedTipTapEditor({
   const [focusMode, setFocusMode] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   
+  // Image and YouTube dialog states
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [showYoutubeDialog, setShowYoutubeDialog] = useState(false);
+  
+  // Image and YouTube preview states
+  const [imagePreview, setImagePreview] = useState('');
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState('');
+  const [youtubePreview, setYoutubePreview] = useState('');
+  const [youtubeError, setYoutubeError] = useState('');
+  
   // Speech recognition states
   const [isListening, setIsListening] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState(null);
   const [isSpeechSupported, setIsSpeechSupported] = useState(true);
   const [transcriptProcessing, setTranscriptProcessing] = useState(false);
+
+  // Define all callback functions before using the editor
+  const updateWordCount = useCallback((text) => {
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    setWordCount(words);
+  }, []);
+
+  // Add image from URL with preview and validation
+  const validateAndPreviewImage = useCallback((url) => {
+    if (!url) {
+      setImagePreview('');
+      setImageError('');
+      return;
+    }
+
+    setImageLoading(true);
+    setImageError('');
+
+    // Create a test image to see if the URL is valid
+    const img = new Image();
+    img.onload = () => {
+      setImagePreview(url);
+      setImageLoading(false);
+    };
+    img.onerror = () => {
+      setImageError('Could not load image from this URL');
+      setImagePreview('');
+      setImageLoading(false);
+    };
+    img.src = url;
+  }, []);
+
+  // Add YouTube video with validation
+  const validateYoutubeUrl = useCallback((url) => {
+    if (!url) {
+      setYoutubePreview('');
+      setYoutubeError('');
+      return;
+    }
+
+    // Regular expressions for YouTube URL formats
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    
+    if (match && match[2].length === 11) {
+      // Valid YouTube URL
+      setYoutubePreview(`https://www.youtube.com/embed/${match[2]}`);
+      setYoutubeError('');
+    } else {
+      // Not a valid YouTube URL
+      setYoutubeError('Please enter a valid YouTube URL');
+      setYoutubePreview('');
+    }
+  }, []);
   
-
-
   // Initialize the editor with extensions
   const editor = useEditor({
     extensions: [
@@ -63,6 +138,18 @@ export default function ImprovedTipTapEditor({
       }),
       Image.configure({
         allowBase64: true,
+        inline: true,
+        HTMLAttributes: {
+          class: 'rounded-md max-w-full my-4',
+        },
+      }),
+      Youtube.configure({
+        width: 640,
+        height: 360,
+        nocookie: true,
+        HTMLAttributes: {
+          class: 'rounded-md overflow-hidden my-4',
+        },
       }),
       Link.configure({
         openOnClick: false,
@@ -79,11 +166,45 @@ export default function ImprovedTipTapEditor({
     editable: !readOnly,
     autofocus: 'end',
   });
-
-  const updateWordCount = useCallback((text) => {
-    const words = text.trim().split(/\s+/).filter(Boolean).length;
-    setWordCount(words);
-  }, []);
+  
+  // Toggle speech recognition - now defined after editor initialization
+  const toggleSpeechRecognition = useCallback(() => {
+    if (!isSpeechSupported) {
+      // Could show a toast here to inform user
+      console.warn('Speech recognition not supported in this browser');
+      return;
+    }
+    
+    if (isListening) {
+      try {
+        speechRecognition?.stop();
+        setIsListening(false);
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+      }
+    } else {
+      // Focus the editor before starting speech recognition
+      editor?.commands.focus();
+      
+      try {
+        speechRecognition?.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Speech recognition error:', error);
+        // If there's an error, likely because it's already running
+        try {
+          speechRecognition?.stop();
+          setTimeout(() => {
+            speechRecognition?.start();
+            setIsListening(true);
+          }, 300);
+        } catch (innerError) {
+          console.error('Failed to restart speech recognition:', innerError);
+          setIsListening(false);
+        }
+      }
+    }
+  }, [isListening, speechRecognition, isSpeechSupported, editor]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -201,6 +322,14 @@ export default function ImprovedTipTapEditor({
   }, [initialContent, editor, updateWordCount]);
 
   useEffect(() => {
+    validateAndPreviewImage(imageUrl);
+  }, [imageUrl, validateAndPreviewImage]);
+
+  useEffect(() => {
+    validateYoutubeUrl(youtubeUrl);
+  }, [youtubeUrl, validateYoutubeUrl]);
+
+  useEffect(() => {
     const handleKeydown = (e) => {
       // Escape to exit fullscreen or focus mode
       if (e.key === 'Escape') {
@@ -232,45 +361,6 @@ export default function ImprovedTipTapEditor({
     };
   }, [fullscreen]);
 
-  // Toggle speech recognition - moved before early returns to fix hooks order
-  const toggleSpeechRecognition = useCallback(() => {
-    if (!isSpeechSupported) {
-      // Could show a toast here to inform user
-      console.warn('Speech recognition not supported in this browser');
-      return;
-    }
-    
-    if (isListening) {
-      try {
-        speechRecognition?.stop();
-        setIsListening(false);
-      } catch (error) {
-        console.error('Error stopping speech recognition:', error);
-      }
-    } else {
-      // Focus the editor before starting speech recognition
-      editor?.commands.focus();
-      
-      try {
-        speechRecognition?.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Speech recognition error:', error);
-        // If there's an error, likely because it's already running
-        try {
-          speechRecognition?.stop();
-          setTimeout(() => {
-            speechRecognition?.start();
-            setIsListening(true);
-          }, 300);
-        } catch (innerError) {
-          console.error('Failed to restart speech recognition:', innerError);
-          setIsListening(false);
-        }
-      }
-    }
-  }, [isListening, speechRecognition, isSpeechSupported, editor]);
-
   if (!isMounted) {
     return null;
   }
@@ -290,6 +380,35 @@ export default function ImprovedTipTapEditor({
       editor.chain().focus().extendMarkRange('link').setLink({ href: finalUrl }).run();
       setLinkUrl('');
       setShowLinkInput(false);
+    }
+  };
+
+  // Add image from URL
+  const addImageFromUrl = () => {
+    if (imageUrl && editor && !imageError && !imageLoading) {
+      editor.chain().focus().setImage({ src: imageUrl, alt: imageAlt }).run();
+      // Reset fields
+      setImageUrl('');
+      setImageAlt('');
+      setImagePreview('');
+      setShowImageDialog(false);
+    }
+  };
+  
+  // Add YouTube video
+  const addYoutubeVideo = () => {
+    if (youtubeUrl && editor && !youtubeError) {
+      // Extract YouTube ID for tiptap YouTube extension
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = youtubeUrl.match(regExp);
+      
+      if (match && match[2].length === 11) {
+        editor.chain().focus().setYoutubeVideo({ src: match[2] }).run();
+        // Reset fields
+        setYoutubeUrl('');
+        setYoutubePreview('');
+        setShowYoutubeDialog(false);
+      }
     }
   };
 
@@ -366,6 +485,16 @@ export default function ImprovedTipTapEditor({
       action: () => setShowLinkInput(!showLinkInput),
       isActive: editor.isActive('link'),
       tooltip: 'Add Link'
+    },
+    {
+      icon: <ImageIcon size={16} />,
+      action: () => setShowImageDialog(true),
+      tooltip: 'Insert Image'
+    },
+    {
+      icon: <Video size={16} />,
+      action: () => setShowYoutubeDialog(true),
+      tooltip: 'Insert YouTube Video'
     },
     {
       type: 'separator'
@@ -551,21 +680,150 @@ export default function ImprovedTipTapEditor({
             </Button>
           </motion.div>
         )}
-        
-        {/* Transcript processing indicator */}
-        {transcriptProcessing && (
-          <motion.div 
-            className="fixed bottom-6 right-6 bg-secondary text-secondary-foreground px-3 py-2 rounded-full shadow-lg flex items-center gap-2 z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span className="text-sm">Processing...</span>
-          </motion.div>
-        )}
       </div>
-
+      
+      {/* Image URL Dialog */}
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Insert Image</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="imageUrl" className="text-right text-sm font-medium col-span-1">
+                Image URL
+              </label>
+              <Input
+                id="imageUrl"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="imageAlt" className="text-right text-sm font-medium col-span-1">
+                Alt Text
+              </label>
+              <Input
+                id="imageAlt"
+                value={imageAlt}
+                onChange={(e) => setImageAlt(e.target.value)}
+                placeholder="Image description"
+                className="col-span-3"
+              />
+            </div>
+            
+            {/* Image preview area */}
+            {imageUrl && (
+              <div className="mt-2">
+                {imageLoading && (
+                  <div className="flex justify-center items-center p-4 border border-dashed rounded-md">
+                    <Loader2 className="animate-spin h-6 w-6 text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading preview...</span>
+                  </div>
+                )}
+                
+                {imageError && (
+                  <div className="p-4 border border-red-200 bg-red-50 rounded-md">
+                    <p className="text-sm text-red-600">{imageError}</p>
+                  </div>
+                )}
+                
+                {imagePreview && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-sm text-muted-foreground mb-2">Preview:</p>
+                    <div className="border p-2 rounded-md max-h-48 overflow-hidden">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="max-h-40 object-contain mx-auto"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImageDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={addImageFromUrl} 
+              disabled={!imageUrl || imageLoading || !!imageError}
+            >
+              Insert Image
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* YouTube URL Dialog */}
+      <Dialog open={showYoutubeDialog} onOpenChange={setShowYoutubeDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Insert YouTube Video</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="youtubeUrl" className="text-right text-sm font-medium col-span-1">
+                YouTube URL
+              </label>
+              <Input
+                id="youtubeUrl"
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=dQw4w9WgXcQ"
+                className="col-span-3"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Paste any YouTube video URL (watch, share, or embed format)
+            </p>
+            
+            {/* YouTube preview area */}
+            {youtubeUrl && (
+              <div className="mt-2">
+                {youtubeError && (
+                  <div className="p-4 border border-red-200 bg-red-50 rounded-md">
+                    <p className="text-sm text-red-600">{youtubeError}</p>
+                  </div>
+                )}
+                
+                {youtubePreview && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-sm text-muted-foreground mb-2">Preview:</p>
+                    <div className="border rounded-md overflow-hidden">
+                      <iframe
+                        width="100%"
+                        height="250"
+                        src={youtubePreview}
+                        title="YouTube Video Preview"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowYoutubeDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={addYoutubeVideo} 
+              disabled={!youtubeUrl || !!youtubeError}
+            >
+              Insert Video
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Fade overlay for focus mode */}
       {focusMode && (
         <>

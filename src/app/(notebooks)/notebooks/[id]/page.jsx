@@ -482,6 +482,15 @@ export default function PremiumNotebookPage({ params }) {
 
   const handleEditorSave = async (isAutoSave = false) => {
     try {
+      // Validate title before saving
+      if (!title || title.trim() === '') {
+        if (!isAutoSave) {
+          toast.error("Title is required");
+          setIsSaving(false);
+        }
+        return;
+      }
+
       if (!isAutoSave) {
         setIsSaving(true);
       }
@@ -722,13 +731,21 @@ export default function PremiumNotebookPage({ params }) {
               </SheetContent>
             </Sheet>
             
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 relative">
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="h-8 w-full truncate border-none bg-transparent px-0 text-base font-medium focus-visible:ring-0 focus-visible:ring-offset-0"
+                className={`h-8 w-full truncate bg-transparent px-0 text-base font-medium focus-visible:ring-0 focus-visible:ring-offset-0 ${!title || title.trim() === '' ? 'border-red-500 border-b' : 'border-none'}`}
                 placeholder="Untitled Notebook"
+                required
+                aria-invalid={!title || title.trim() === ''}
+                aria-describedby="title-error"
               />
+              {(!title || title.trim() === '') && (
+                <div id="title-error" className="absolute top-full left-0 text-xs text-red-500 mt-1">
+                  Title is required
+                </div>
+              )}
             </div>
           </div>
           
