@@ -86,15 +86,15 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="h-full flex flex-col overflow-hidden bg-background border-r border-border/40"
       initial={{ width: isCollapsed ? 80 : 280 }}
-      animate={{ 
+      animate={{
         width: isCollapsed ? 80 : 280,
         transition: { duration: 0.3, ease: "easeInOut" }
       }}
     >
-      <PremiumSidebarHeader 
+      <PremiumSidebarHeader
         isCollapsed={isCollapsed}
         onClose={onClose}
         onToggleCollapse={onToggleCollapse}
@@ -107,7 +107,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
               "w-full gap-2 h-10 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-600/90 hover:to-indigo-600/90 text-white border-0",
               isCollapsed ? "justify-center px-0" : "justify-start px-4"
             )}
-            onClick={(e) => handleNavigation("/notebooks?new=true", e)}
+            onClick={(e) => handleNavigation("/notebooks/new", e)}
           >
             <Plus className={isCollapsed ? "h-5 w-5" : "h-4 w-4"} />
             {!isCollapsed && <span>New Notebook</span>}
@@ -129,7 +129,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
 
       <AnimatePresence>
         {showSearch && !isCollapsed && (
-          <motion.div 
+          <motion.div
             className="px-3 pb-2"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -151,14 +151,14 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
 
       <nav className="flex-1 px-2 py-2 overflow-y-auto">
         <TooltipProvider delayDuration={300}>
-          <PremiumSidebarNav 
+          <PremiumSidebarNav
             navItems={navItems}
             isCollapsed={isCollapsed}
             isActive={isActive}
             handleNavigation={handleNavigation}
           />
 
-          <PremiumSidebarTags 
+          <PremiumSidebarTags
             isCollapsed={isCollapsed}
             showTags={showTags}
             setShowTags={setShowTags}
@@ -171,7 +171,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
       </nav>
 
       <div className="p-3 mt-auto border-t border-border/20">
-        <PremiumSidebarProfile 
+        <PremiumSidebarProfile
           session={session}
           isCollapsed={isCollapsed}
           handleNavigation={handleNavigation}
@@ -199,10 +199,10 @@ export default function PremiumNotebookSidebar() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-80">
-          <SidebarContent 
+          <SidebarContent
             onClose={() => setIsOpen(false)}
             isCollapsed={false}
-            onToggleCollapse={() => {}}
+            onToggleCollapse={() => { }}
           />
         </SheetContent>
       </Sheet>

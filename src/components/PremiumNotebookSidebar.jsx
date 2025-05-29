@@ -22,7 +22,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
-  
+
   const [showTags, setShowTags] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -111,10 +111,10 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="h-full flex flex-col overflow-hidden bg-background border-r border-border/40"
       initial={{ width: isCollapsed ? 80 : 280 }}
-      animate={{ 
+      animate={{
         width: isCollapsed ? 80 : 280,
         transition: { duration: 0.3, ease: "easeInOut" }
       }}
@@ -145,7 +145,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
             <ChevronRight className="h-5 w-5" />
           </Button>
         )}
-        
+
         {/* Only show collapse button when expanded */}
         {!isCollapsed && (
           <Button
@@ -172,7 +172,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
               "w-full gap-2 h-10 bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-violet-600/90 hover:to-indigo-600/90 text-white border-0",
               isCollapsed ? "justify-center px-0" : "justify-start px-4"
             )}
-            onClick={(e) => handleNavigation("/notebooks?new=true", e)}
+            onClick={(e) => handleNavigation("/notebooks/new", e)}
           >
             <Plus className={isCollapsed ? "h-5 w-5" : "h-4 w-4"} />
             {!isCollapsed && <span>New Notebook</span>}
@@ -195,7 +195,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
       {/* Search Input (visible only when expanded and search is toggled) */}
       <AnimatePresence>
         {showSearch && !isCollapsed && (
-          <motion.div 
+          <motion.div
             className="px-3 pb-2"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -307,8 +307,8 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
                   <Tag className="h-4 w-4 mr-3 text-muted-foreground" />
                   <span className="text-sm font-medium">Tags</span>
                 </div>
-                <ChevronDown 
-                  className="h-4 w-4 transition-transform" 
+                <ChevronDown
+                  className="h-4 w-4 transition-transform"
                   style={{ transform: showTags ? 'rotate(180deg)' : 'rotate(0deg)' }}
                 />
               </div>
@@ -317,7 +317,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
             {/* Tags List (only visible when expanded and tags are open) */}
             <AnimatePresence>
               {showTags && !isCollapsed && (
-                <motion.div 
+                <motion.div
                   className="mt-2 space-y-1 ml-2 mr-1 bg-muted/20 rounded-lg py-1.5 px-1"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -377,8 +377,8 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
                     <div className="px-3 py-4 text-xs text-muted-foreground flex flex-col items-center justify-center space-y-2">
                       <Tag className="h-5 w-5 text-muted-foreground/50" />
                       <span>No tags found</span>
-                      <Button 
-                        variant="link" 
+                      <Button
+                        variant="link"
                         className="text-primary p-0 h-auto font-medium"
                         onClick={(e) => handleNavigation("/tags", e)}
                       >
@@ -411,11 +411,11 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
                     <p className="text-sm font-medium truncate">{session.user.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{session.user.email}</p>
                   </div>
-                  
+
                   <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 rounded-full"
                       onClick={(e) => handleNavigation("/settings", e)}
                     >
@@ -471,7 +471,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
                       <TooltipContent side="right" align="start">Sign out</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  
+
                   <ModeToggle />
                 </div>
               </div>
@@ -486,7 +486,7 @@ const SidebarContent = ({ onClose, isCollapsed, onToggleCollapse }) => {
                   <span className="text-sm">Not signed in</span>
                   <ModeToggle />
                 </div>
-                <Button 
+                <Button
                   className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
                   onClick={(e) => handleNavigation("/login", e)}
                 >
@@ -579,7 +579,7 @@ const SidebarWithParams = () => {
             variant="default"
             size="icon"
             className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
-            onClick={() => router.push("/notebooks?new=true")}
+            onClick={() => router.push("/notebooks/new")}
           >
             <Plus className="h-5 w-5" />
           </Button>
@@ -600,16 +600,16 @@ const SidebarFallback = () => {
         <div className="h-8 w-8 rounded-lg bg-muted animate-pulse"></div>
         <div className="h-6 w-24 bg-muted rounded-md animate-pulse"></div>
       </div>
-      
+
       <div className="h-10 bg-muted rounded-lg w-full animate-pulse"></div>
-      
+
       <div className="space-y-2">
         <div className="h-9 bg-muted rounded-md w-full animate-pulse"></div>
         <div className="h-9 bg-muted rounded-md w-full animate-pulse opacity-70"></div>
         <div className="h-9 bg-muted rounded-md w-full animate-pulse opacity-80"></div>
         <div className="h-9 bg-muted rounded-md w-full animate-pulse opacity-60"></div>
       </div>
-      
+
       <div className="mt-auto">
         <div className="h-14 bg-muted rounded-lg w-full animate-pulse opacity-50"></div>
       </div>
