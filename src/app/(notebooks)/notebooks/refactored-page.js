@@ -84,8 +84,8 @@ function NotebooksContent() {
   const displayedNotebooks = useMemo(() => {
     // First, determine the base set of notebooks based on filters
     let baseNotebooks = searchQuery ? searchResults :
-                       selectedTag ? tagNotebooks :
-                       notebooks;
+      selectedTag ? tagNotebooks :
+        notebooks;
 
     // Then, sort the notebooks based on sortBy and sortDirection
     return [...(baseNotebooks || [])].sort((a, b) => {
@@ -183,16 +183,10 @@ function NotebooksContent() {
     }
   }, [notebookToDelete, mutateNotebooks]);
 
-  // Handle create notebook
+  // Function to handle notebook creation
   const handleCreateNotebook = useCallback(async () => {
     try {
       setIsCreating(true);
-
-      // Process tags
-      const tagsArray = newNotebook.tags
-        ? newNotebook.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-        : [];
-
       const response = await fetch('/api/notebooks', {
         method: 'POST',
         headers: {
@@ -201,7 +195,7 @@ function NotebooksContent() {
         body: JSON.stringify({
           title: newNotebook.title,
           content: newNotebook.content,
-          tags: tagsArray,
+          tags: newNotebook.tags,
         }),
       });
 
@@ -210,25 +204,41 @@ function NotebooksContent() {
       }
 
       const data = await response.json();
-      
-      // Update the notebooks list
-      mutateNotebooks();
-      
-      // Close the dialog and reset form
+
+      // Close dialog and reset form
       setIsDialogOpen(false);
       setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
-      
-      // Navigate to the new notebook
-      router.push(`/notebooks/${data.id}`);
-      
-      toast.success('Notebook created successfully');
+
+      // Show success toast
+      toast.success('Notebook created successfully!');
+
+      // Navigate to the new notebook or refresh the list
+      if (data.id) {
+        router.push(`/notebook/${data.id}`);
+      } else {
+        // Refresh the notebooks list
+        refetchData();
+      }
     } catch (error) {
       console.error('Error creating notebook:', error);
-      toast.error('Failed to create notebook');
+      toast.error('Failed to create notebook. Please try again.');
     } finally {
       setIsCreating(false);
     }
   }, [newNotebook, mutateNotebooks, router]);
+
+  // Function to refetch notebooks data after operations
+  const refetchData = useCallback(() => {
+    if (selectedTag) {
+      // Use mutateNotebooks instead of undefined mutateTagged
+      mutateNotebooks();
+    } else if (searchQuery) {
+      // For search results we also refresh the notebooks data
+      mutateNotebooks();
+    } else {
+      mutateNotebooks();
+    }
+  }, [selectedTag, searchQuery, mutateNotebooks]);
 
   // Reset filters
   const resetFilters = useCallback(() => {
@@ -264,7 +274,7 @@ function NotebooksContent() {
         <p className="text-gray-600 dark:text-gray-300 mb-4">
           Please sign in to view and create notebooks.
         </p>
-        <button 
+        <button
           className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           onClick={() => router.push('/auth/signin')}
         >
@@ -351,23 +361,23 @@ function NotebooksContent() {
           </div>
         </div>
       ) : displayedNotebooks?.length === 0 && !searchQuery && !selectedTag ? (
-        <NotebooksEmpty 
+        <NotebooksEmpty
           onCreateNotebook={() => {
             setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
             setIsDialogOpen(true);
-          }} 
+          }}
         />
       ) : (
         <>
           {/* Mobile view - always shown on small screens */}
-          <MobileNotebookList 
+          <MobileNotebookList
             notebooks={paginatedNotebooks}
             onView={handleViewNotebook}
             onEdit={handleEditNotebook}
             onDelete={openDeleteDialog}
             deletingNotebookId={deletingNotebookId}
           />
-          
+
           {/* Desktop view - grid, list, or table based on viewMode */}
           {viewMode === 'table' ? (
             <NotebooksTable

@@ -59,10 +59,10 @@ const MinimalistTagInput = ({ selectedTags, setSelectedTags, allTags, disabled }
   // Filter available tags based on input and already selected tags
   const filteredTags = allTags
     ? allTags.filter(tag => {
-        const alreadySelected = selectedTags.some(selectedTag => selectedTag.id === tag.id);
-        const matchesInput = tag.name.toLowerCase().includes(inputValue.toLowerCase());
-        return !alreadySelected && matchesInput;
-      })
+      const alreadySelected = selectedTags.some(selectedTag => selectedTag.id === tag.id);
+      const matchesInput = tag.name.toLowerCase().includes(inputValue.toLowerCase());
+      return !alreadySelected && matchesInput;
+    })
     : [];
 
   // Add an existing tag
@@ -93,14 +93,14 @@ const MinimalistTagInput = ({ selectedTags, setSelectedTags, allTags, disabled }
   return (
     <div className="relative flex items-center gap-2">
       {selectedTags.map(tag => (
-        <Badge 
-          key={tag.id} 
-          variant="outline" 
+        <Badge
+          key={tag.id}
+          variant="outline"
           className="px-2 py-0.5 h-6 text-xs gap-1"
         >
           <span>{tag.name}</span>
           {!disabled && (
-            <button 
+            <button
               type="button"
               onClick={() => handleRemoveTag(tag.id)}
               className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
@@ -111,7 +111,7 @@ const MinimalistTagInput = ({ selectedTags, setSelectedTags, allTags, disabled }
           )}
         </Badge>
       ))}
-      
+
       {!disabled && (
         <div className="relative">
           <Input
@@ -129,10 +129,10 @@ const MinimalistTagInput = ({ selectedTags, setSelectedTags, allTags, disabled }
               }
             }}
           />
-          
+
           {showTagSuggestions && inputValue && filteredTags.length > 0 && (
             <AnimatePresence>
-              <motion.div 
+              <motion.div
                 className="absolute top-full left-0 mt-1 w-48 z-10 bg-popover shadow-md rounded-md border border-border/20 p-1"
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -211,7 +211,7 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="h-full overflow-auto"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -224,7 +224,7 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-500/30 to-indigo-500/30 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
-              <motion.div 
+              <motion.div
                 className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary"
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
@@ -251,12 +251,12 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
           </Button>
         </div>
       </div>
-      
+
       <div className="p-5">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-64">
             <motion.div
-              animate={{ 
+              animate={{
                 scale: [1, 1.1, 1],
                 rotate: [0, 180, 360],
                 opacity: [0.5, 1, 0.5]
@@ -275,13 +275,13 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                   <TabsTrigger value="insights">Insights</TabsTrigger>
                   <TabsTrigger value="details">Details</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="insights" className="space-y-5 mt-0">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-muted/30 p-3 rounded-lg border border-border/10 hover:border-border/30 transition-colors">
                       <div className="text-xs text-muted-foreground mb-1">Sentiment</div>
                       <div className="font-medium text-sm flex items-center">
-                        <motion.span 
+                        <motion.span
                           className="h-2.5 w-2.5 bg-green-500 rounded-full mr-2"
                           animate={{ scale: [1, 1.2, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
@@ -297,7 +297,7 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center">
                       <Tag className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
@@ -305,9 +305,9 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {insights.mainTopics.map((topic, i) => (
-                        <Badge 
-                          key={i} 
-                          variant="secondary" 
+                        <Badge
+                          key={i}
+                          variant="secondary"
                           className="px-2 py-0.5 bg-gradient-to-r from-secondary/40 to-secondary hover:from-secondary/50 hover:to-secondary/90 transition-all duration-300"
                         >
                           {topic}
@@ -315,7 +315,7 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-medium mb-2 flex items-center">
                       <Sparkles className="h-3.5 w-3.5 mr-2 text-amber-500" />
@@ -323,8 +323,8 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                     </h4>
                     <ul className="space-y-2">
                       {insights.keyInsights.map((insight, i) => (
-                        <motion.li 
-                          key={i} 
+                        <motion.li
+                          key={i}
                           className="text-sm bg-muted/20 p-2.5 rounded-md border-l-2 border-primary/40 hover:bg-muted/40 transition-colors"
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -335,7 +335,7 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                       ))}
                     </ul>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-medium mb-2 flex items-center">
                       <MessageCircle className="h-3.5 w-3.5 mr-2 text-blue-500" />
@@ -343,8 +343,8 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                     </h4>
                     <ul className="space-y-2">
                       {insights.recommendations.map((rec, i) => (
-                        <motion.li 
-                          key={i} 
+                        <motion.li
+                          key={i}
                           className="text-sm bg-muted/20 p-2.5 rounded-md border-l-2 border-blue-500/40 hover:bg-muted/40 transition-colors"
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -356,7 +356,7 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                     </ul>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="details" className="space-y-5 mt-0">
                   <div>
                     <h4 className="text-sm font-medium mb-2">Word Analysis</h4>
@@ -377,14 +377,14 @@ const AISidebar = ({ notebook, content, selectedTags, setSelectedTags }) => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-medium mb-2">Suggested Tags</h4>
                     <div className="flex flex-wrap gap-2">
                       {insights.suggestedTags.map((tag, i) => (
-                        <Badge 
-                          key={i} 
-                          variant="outline" 
+                        <Badge
+                          key={i}
+                          variant="outline"
                           className="cursor-pointer hover:bg-primary/10 transition-colors"
                           onClick={() => handleAddSuggestedTag(tag)}
                         >
@@ -428,7 +428,7 @@ export default function PremiumNotebookPage({ params }) {
   const [isStarred, setIsStarred] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
-  
+
   // Fetch all available tags
   const { tags: allTags } = useTags();
 
@@ -520,7 +520,7 @@ export default function PremiumNotebookPage({ params }) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
-        
+
         // Provide more specific error messages based on status codes
         let errorMessage = 'Failed to save notebook';
         if (response.status === 400) {
@@ -540,7 +540,7 @@ export default function PremiumNotebookPage({ params }) {
         } else {
           errorMessage = errorData.error || `Failed to update notebook (${response.status})`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -553,10 +553,10 @@ export default function PremiumNotebookPage({ params }) {
       }
     } catch (error) {
       console.error('Error updating notebook:', error);
-      
+
       // More specific error handling for different types of errors
       let errorMessage = 'Failed to save notebook';
-      
+
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         errorMessage = 'Network error - please check your connection';
       } else if (error.message.includes('JSON')) {
@@ -564,7 +564,7 @@ export default function PremiumNotebookPage({ params }) {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       if (!isAutoSave) {
         toast.error(errorMessage, {
           description: 'Your changes may not have been saved. Please try again.',
@@ -623,21 +623,21 @@ export default function PremiumNotebookPage({ params }) {
   const togglePublicStatus = async () => {
     try {
       const newStatus = !notebook.isPublic;
-      
-      const response = await fetch(`/api/notebooks/${notebookId}/public`, {
+
+      const response = await fetch(`/api/notebooks/${notebookId}/toggle-public`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isPublic: newStatus }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to update public status');
       }
 
-      setNotebook({ ...notebook, isPublic: newStatus });
-      toast.success(`Notebook is now ${newStatus ? 'public' : 'private'}`);
+      const data = await response.json();
+      setNotebook({ ...notebook, isPublic: data.isPublic });
+      toast.success(`Notebook is now ${data.isPublic ? 'public' : 'private'}`);
     } catch (error) {
       console.error('Error updating public status:', error);
       toast.error("Failed to update status");
@@ -649,14 +649,14 @@ export default function PremiumNotebookPage({ params }) {
     setIsStarred(!isStarred);
     // We'll save this when the notebook is saved
   };
-  
+
   if (isLoading) {
-    return ;
+    return;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="relative">
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.1, 1],
               opacity: [0.6, 1, 0.6]
             }}
@@ -694,29 +694,29 @@ export default function PremiumNotebookPage({ params }) {
         <div className="container flex h-14 max-w-full items-center justify-between gap-2 px-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {/* Menu Button for mobile */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8 shrink-0 rounded-full"
               onClick={() => router.push('/notebooks')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            
+
             {/* Luna insights trigger - now consistent with navigation icons */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 shrink-0 rounded-full"
                   data-sheet-trigger="true"
                 >
                   <Sparkles className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent 
-                side="bottom" 
+              <SheetContent
+                side="bottom"
                 className="h-[85%] p-0 border-t border-border/20 rounded-t-xl"
               >
                 <div className="flex justify-center py-2">
@@ -730,7 +730,7 @@ export default function PremiumNotebookPage({ params }) {
                 />
               </SheetContent>
             </Sheet>
-            
+
             <div className="min-w-0 flex-1 relative">
               <Input
                 value={title}
@@ -748,7 +748,7 @@ export default function PremiumNotebookPage({ params }) {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-1.5">
             <Button
               variant={isSaving ? "outline" : "ghost"}
@@ -763,7 +763,7 @@ export default function PremiumNotebookPage({ params }) {
                 <Save className="h-4 w-4" />
               )}
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full">
@@ -798,29 +798,29 @@ export default function PremiumNotebookPage({ params }) {
           </div>
         </div>
       </header>
-      
+
       {/* Desktop Header (hidden on mobile) */}
       <header className="sticky top-0 z-10 border-b border-border/10 bg-background/95 backdrop-blur hidden md:block">
         <div className="container max-w-full px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
-              className="h-8 w-8" 
+              className="h-8 w-8"
               onClick={() => router.push('/notebooks')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            
+
             <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-lg font-medium border-none bg-transparent px-0 h-9 w-[400px] focus-visible:ring-0 focus-visible:ring-offset-0"
-            placeholder="Unteditled Notebook"
-          />
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-lg font-medium border-none bg-transparent px-0 h-9 w-[400px] focus-visible:ring-0 focus-visible:ring-offset-0"
+              placeholder="Unteditled Notebook"
+            />
 
             <MinimalistTagInput
-            className="md:flex-1 hidden sm:flex"
+              className="md:flex-1 hidden sm:flex"
               selectedTags={selectedTags}
               setSelectedTags={setSelectedTags}
               allTags={allTags}
@@ -828,7 +828,7 @@ export default function PremiumNotebookPage({ params }) {
             />
 
           </div>
-          
+
           <div className="flex items-center gap-2">
             {/* Last saved indicator (subtle) */}
             {lastSaved && (
@@ -836,13 +836,13 @@ export default function PremiumNotebookPage({ params }) {
                 Saved {format(lastSaved, 'h:mm a')}
               </span>
             )}
-            
+
             {/* Only most important actions in header */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     className="h-8 w-8"
                     onClick={toggleStarred}
@@ -883,7 +883,7 @@ export default function PremiumNotebookPage({ params }) {
               )}
               <span className="hidden sm:inline-block ml-1">Save</span>
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -906,10 +906,10 @@ export default function PremiumNotebookPage({ params }) {
                     <span>Public</span>
                   </div>
                   <div className="flex items-center h-4">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-4 p-0" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 p-0"
                       onClick={togglePublicStatus}
                     >
                       {notebook?.isPublic ? (
@@ -926,10 +926,10 @@ export default function PremiumNotebookPage({ params }) {
                     <span>Auto-save</span>
                   </div>
                   <div className="flex items-center h-4">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-4 p-0" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 p-0"
                       onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
                     >
                       {autoSaveEnabled ? (
@@ -949,8 +949,8 @@ export default function PremiumNotebookPage({ params }) {
                   <span>Export</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="cursor-pointer text-red-600 dark:text-red-400" 
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-600 dark:text-red-400"
                   onClick={() => setConfirmDeleteDialog(true)}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -972,13 +972,13 @@ export default function PremiumNotebookPage({ params }) {
                   {/* Tag Manager - Simplified */}
                   <div className="mb-2 hidden   items-center gap-2 text-xs text-muted-foreground">
                     <Tag className="h-3 w-3" />
-                    <MinimalistTagInput 
+                    <MinimalistTagInput
                       selectedTags={selectedTags}
                       setSelectedTags={setSelectedTags}
                       allTags={allTags}
                     />
                   </div>
-                  
+
                   {/* Mobile Tag Display - Simplified */}
                   <div className="md:hidden mb-2">
                     <div className="flex flex-wrap gap-1.5">
@@ -993,10 +993,10 @@ export default function PremiumNotebookPage({ params }) {
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Editor Area - Maximized with TipTap */}
                   <div className="flex-1 pb-4 md:pb-0">
-                    <ImprovedTipTapEditor 
+                    <ImprovedTipTapEditor
                       initialContent={editorData || ''}
                       onChange={(newContent) => {
                         setEditorData(newContent);
@@ -1010,11 +1010,11 @@ export default function PremiumNotebookPage({ params }) {
                   </div>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="chat" className="mt-0 h-full px-4 py-2">
                 <div className="rounded-md h-full overflow-hidden">
-                  <NotebookChat 
-                    notebookId={notebookId} 
+                  <NotebookChat
+                    notebookId={notebookId}
                     initialContent={notebook?.content || ''}
                   />
                 </div>
@@ -1022,11 +1022,11 @@ export default function PremiumNotebookPage({ params }) {
             </Tabs>
           </div>
         </div>
-        
+
         {/* Right Sidebar with AI Insights */}
         <AnimatePresence>
           {isSidebarOpen && (
-            <motion.div 
+            <motion.div
               className="w-80 border-l border-border/10 h-[calc(100vh-50px)] sticky top-[50px]"
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 320, opacity: 1 }}
@@ -1043,13 +1043,13 @@ export default function PremiumNotebookPage({ params }) {
           )}
         </AnimatePresence>
       </div>
-      
+
       {/* Mobile Bottom Navigation (visible on small screens only) */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border/10 p-2 md:hidden z-20">
         <div className="flex items-center justify-around max-w-md mx-auto">
-          <Button 
+          <Button
             variant={activeTab === 'editor' ? "ghost" : "ghost"}
-            size="sm" 
+            size="sm"
             className={cn(
               "h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl",
               activeTab === 'editor' ? "text-primary" : "text-muted-foreground"
@@ -1062,14 +1062,14 @@ export default function PremiumNotebookPage({ params }) {
             )} />
             <span className="text-[10px]">Editor</span>
             {activeTab === 'editor' && (
-              <motion.div 
+              <motion.div
                 layoutId="activeTabIndicator"
                 className="absolute bottom-1 w-6 h-1 rounded-full bg-primary"
               />
             )}
           </Button>
-          
-          <Button 
+
+          <Button
             variant="ghost"
             size="sm"
             className="h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground relative"
@@ -1083,10 +1083,10 @@ export default function PremiumNotebookPage({ params }) {
           >
             <div className="relative">
               <Sparkles className="h-5 w-5" />
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: [0.8, 1.2, 1] }}
-                transition={{ 
+                transition={{
                   duration: 1.5,
                   repeat: Infinity,
                   repeatType: "reverse"
@@ -1096,10 +1096,10 @@ export default function PremiumNotebookPage({ params }) {
             </div>
             <span className="text-[10px]">Luna</span>
           </Button>
-          
-          <Button 
+
+          <Button
             variant={activeTab === 'chat' ? "ghost" : "ghost"}
-            size="sm" 
+            size="sm"
             className={cn(
               "h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl",
               activeTab === 'chat' ? "text-primary" : "text-muted-foreground"
@@ -1112,16 +1112,16 @@ export default function PremiumNotebookPage({ params }) {
             )} />
             <span className="text-[10px]">Chat</span>
             {activeTab === 'chat' && (
-              <motion.div 
+              <motion.div
                 layoutId="activeTabIndicator"
                 className="absolute bottom-1 w-6 h-1 rounded-full bg-primary"
               />
             )}
           </Button>
-          
-          <Button 
+
+          <Button
             variant="ghost"
-            size="sm" 
+            size="sm"
             className="h-14 flex-1 flex flex-col items-center justify-center gap-1 rounded-xl text-muted-foreground"
             onClick={() => router.push('/notebooks')}
           >
@@ -1135,7 +1135,7 @@ export default function PremiumNotebookPage({ params }) {
           </Button>
         </div>
       </div>
-      
+
       {/* Add padding at the bottom on mobile to account for the navigation bar */}
       <div className="h-16 md:hidden"></div>
 
@@ -1150,7 +1150,7 @@ export default function PremiumNotebookPage({ params }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-600 text-white hover:bg-red-700"
               disabled={isDeleting}
@@ -1169,7 +1169,7 @@ export default function PremiumNotebookPage({ params }) {
       </AlertDialog>
 
       {/* Floating Action Button for quick save on mobile */}
-      <Button 
+      <Button
         variant="primary"
         size="icon"
         className="fixed bottom-20 right-4 z-50 h-12 w-12 rounded-full shadow-lg md:hidden bg-primary text-primary-foreground hover:bg-primary/90"

@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "name": "reflecto-pwa-fallback",
+    "routes": [
+        {
+            "handle": "filesystem"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/offline.html",
+            "status": 200
+        }
+    ]
+}

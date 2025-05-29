@@ -5,6 +5,7 @@ import { SWRProvider } from "@/lib/swr-config";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import ensureDatabaseSchema from "@/lib/db-init";
+import ClientPWAWrapper from "@/components/ClientPWAWrapper";
 
 // Initialize database schema on app startup
 // This is run server-side only
@@ -33,6 +34,13 @@ export const metadata = {
   icons: {
     icon: "/favicon.svg",
   },
+  manifest: "/manifest.json",
+  themeColor: "#7b1fa2",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: "Reflecto",
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -53,6 +61,7 @@ export default function RootLayout({ children }) {
             </SWRProvider>
           </AuthProvider>
           <Toaster />
+          <ClientPWAWrapper />
         </ThemeProvider>
       </body>
     </html>
