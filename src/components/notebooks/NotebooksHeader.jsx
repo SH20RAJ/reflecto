@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tag, ArrowUpDown, Sparkles, LayoutGrid, List, Loader2, CalendarDays } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu, 
@@ -244,17 +245,18 @@ const NotebooksHeader = ({
           </DropdownMenu>
 
           {/* Create Notebook Button */}
-          <Button
-            className="gap-1.5 hidden md:inline-flex"
+          <Link
+            className="gap-1.5 hidden md:inline-flex items-center px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             variant="default"
+            href="/notebooks/new"
             // style={{ backgroundColor: 'rgb(251 191 36)', color: 'black' }}
-            onClick={() => {
-              setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
-              setIsDialogOpen(true);
-            }}
+            // onClick={() => {
+            //   setNewNotebook({ title: 'New Notebook', content: '', tags: '' });
+            //   setIsDialogOpen(true);
+            // }}
           >
             <Sparkles className="h-4 w-4" /> New Notebook
-          </Button>
+          </Link>
         </div>
       </div>
     </div>
